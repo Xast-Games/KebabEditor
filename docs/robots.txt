@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://halal-foursome.github.io/KebabEditor/sitemap.xml
+Sitemap: https://kebab.xast.org/sitemap.xml

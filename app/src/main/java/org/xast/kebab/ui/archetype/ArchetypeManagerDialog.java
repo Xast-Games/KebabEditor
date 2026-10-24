@@ -1,0 +1,202 @@
+package org.xast.kebab.ui.archetype;
+
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.io.IOException;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.swing.*;
+
+import org.xast.kebab.archetype.definition.ArchetypeDefinition;
+import org.xast.kebab.editor.Editor;
+import org.xast.kebab.utils.DialogKeys;
+import org.xast.kebab.utils.ErrorDialogs;
+import org.xast.kebab.utils.KebabStyle;
+
+public class ArchetypeManagerDialog extends JDialog {
+
+    private final Editor editor;
+    private final DefaultListModel<ArchetypeDefinition> model = new DefaultListModel<>();
+
+    private JList<ArchetypeDefinition> archetypeList;
+    private JButton createButton;
+    private JButton editButton;
+    private JButton duplicateAsButton;
+    private JButton deleteButton;
+
+    public ArchetypeManagerDialog(JFrame owner, Editor editor) {
+        super(owner, "Manage archetypes", true);
+
+        this.editor = editor;
+
+        KebabStyle style = KebabStyle.getCurrent();
+
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        setLayout(new BorderLayout());
+        setMinimumSize(new Dimension(640, 480));
+
+        add(buildCenter(style), BorderLayout.CENTER);
+        add(buildFooter(style), BorderLayout.SOUTH);
+
+        pack();
+
+        DialogKeys.closeOnEscape(this);
+        setLocationRelativeTo(owner);
+    }
+
+    private JComponent buildCenter(KebabStyle style) {
+        reload();
+
+        archetypeList = new JList<>(model);
+        archetypeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        archetypeList.setFont(style.uiFont());
+        archetypeList.setCellRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(
+                JList<?> list, Object value, int index,
+                boolean selected, boolean focus
+            ) {
+                ArchetypeDefinition def = (ArchetypeDefinition) value;
+                return super.getListCellRendererComponent(
+                    list,
+                    def.getDisplayName() + "  (" + def.getId() + ")",
+                    index, selected, focus
+                );
+            }
+        });
+        archetypeList.addListSelectionListener(e -> updateButtons());
+
+        JScrollPane scroll = new JScrollPane(archetypeList);
+        scroll.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+        return scroll;
+    }
+
+    private JPanel buildFooter(KebabStyle style) {
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
+
+        createButton = new JButton("Create");
+        createButton.setFont(style.uiFont());
+        createButton.addActionListener(e -> 
+            new CreateArchetypeDialog(this, this::existingIds, this::addArchetype)
+                .setVisible(true)
+        );
+        footer.add(createButton);
+
+        editButton = new JButton("Edit");
+        editButton.setFont(style.uiFont());
+        editButton.addActionListener(e -> editSelected());
+        footer.add(editButton);
+
+        duplicateAsButton = new JButton("Duplicate as...");
+        duplicateAsButton.setFont(style.uiFont());
+        duplicateAsButton.addActionListener(e ->
+            new DuplicateAsDialog(this, archetypeList.getSelectedValue(), this::existingIds, this::addArchetype)
+                .setVisible(true)
+        );
+        footer.add(duplicateAsButton);
+
+        deleteButton = new JButton("Delete");
+        deleteButton.setFont(style.uiFont());
+        deleteButton.addActionListener(e -> 
+            removeArchetype(archetypeList.getSelectedValue())
+        );
+        footer.add(deleteButton);
+
+        updateButtons();
+        return footer;
+    }
+
+    private void addArchetype(ArchetypeDefinition definition) {
+        try {
+            editor.addArchetype(definition);
+            reload();
+            archetypeList.setSelectedValue(definition, true);
+        } catch (IOException e) {
+            ErrorDialogs.show(this, "Cannot save archetype", e);
+        }
+    }
+
+    private void removeArchetype(ArchetypeDefinition definition) {
+        try {
+            int instances = editor.instanceCount(definition.getId());
+
+            if (instances > 0) {
+                if (!confirmDeleteWithInstances(definition, instances)) {
+                    return;
+                }
+                editor.removeArchetypeWithInstances(definition);
+            } else {
+                editor.removeArchetype(definition);
+            }
+
+            reload();
+            archetypeList.setSelectedValue(null, true);
+        } catch (IOException e) {
+            ErrorDialogs.show(this, "Cannot save archetypes", e);
+        }
+    }
+
+    private boolean confirmDeleteWithInstances(ArchetypeDefinition definition, int instances) {
+        int objects = editor.nodesUsing(definition.getId()).size();
+        String[] options = { "Delete archetype and instances", "Cancel" };
+
+        int choice = JOptionPane.showOptionDialog(
+            this,
+            "'" + definition.getDisplayName() + "' is used by " + instances + " instance(s) on "
+                + objects + " object(s) in the open scene.\nDeleting it also removes those instances.",
+            "Delete archetype",
+            JOptionPane.DEFAULT_OPTION,
+            JOptionPane.WARNING_MESSAGE,
+            null,
+            options,
+            options[1]
+        );
+
+        return choice == 0;
+    }
+
+    private void editSelected() {
+        ArchetypeDefinition definition = archetypeList.getSelectedValue();
+        ArchetypeDefinition snapshot = definition.duplicateAs(definition.getId());
+
+        new EditArchetypeDialog(this, definition, () -> onArchetypeEdited(definition, snapshot))
+            .setVisible(true);
+    }
+
+    private void onArchetypeEdited(ArchetypeDefinition definition, ArchetypeDefinition snapshot) {
+        try {
+            editor.saveArchetypes();
+        } catch (IOException e) {
+            definition.setDisplayName(snapshot.getDisplayName());
+            definition.setIcon(snapshot.getIcon());
+            definition.setParams(snapshot.getParams());
+            ErrorDialogs.show(this, "Cannot save archetypes", e);
+        }
+        archetypeList.repaint();
+    }
+
+    private Set<String> existingIds() {
+        return editor.archetypes().stream()
+            .map(ArchetypeDefinition::getId)
+            .collect(Collectors.toSet());
+    }
+
+    // the editor holds the real archetypes; the list model is only a view of them
+    private void reload() {
+        model.clear();
+        model.addAll(editor.archetypes());
+    }
+
+    private void updateButtons() {
+        ArchetypeDefinition selection = archetypeList.getSelectedValue();
+        boolean selected = selection != null;
+        // Built-ins are shared and read-only: they can be copied, never edited or deleted
+        boolean editable = selected && !editor.isBuiltinArchetype(selection.getId());
+        editButton.setEnabled(editable);
+        duplicateAsButton.setEnabled(selected);
+        deleteButton.setEnabled(editable);
+    }
+}

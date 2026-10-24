@@ -1,0 +1,33 @@
+package org.xast.kebab.archetype;
+
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
+
+import org.xast.kebab.archetype.ArchetypeIcon.*;
+import org.xast.kebab.utils.Maybe;
+
+public sealed interface ArchetypeIcon 
+    permits
+        Handle,
+        Loaded,
+        Bundled
+{
+    record Handle(String path) implements ArchetypeIcon {
+        public Maybe<Loaded> loaded() {
+            try {
+                BufferedImage image = ImageIO.read(new File(path));
+
+                return Maybe.ofNullable(image).map(Loaded::new);
+            } catch (IOException e) {
+                return Maybe.none();
+            }
+        }
+    }
+
+    public record Loaded(BufferedImage icon) implements ArchetypeIcon {}
+
+    public record Bundled(String resource) implements ArchetypeIcon {}
+}

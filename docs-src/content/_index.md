@@ -5,9 +5,9 @@ title = "KebabEditor"
 lead = '<b>KebabEditor</b> is a desktop 3D level editor with typed, object-oriented <b>archetypes</b>. Place objects, attach colliders, triggers and lights, and save everything as a regular glTF file.'
 url = "/docs/getting-started/introduction/"
 url_button = "Get started"
-repo_version = "Java 25"
+repo_version = "1.0.0"
 repo_license = "Open-source MIT License."
-repo_url = "https://github.com/Halal-Foursome/KebabEditor"
+repo_url = "https://github.com/Xast-Games/KebabEditor"
 
 [[extra.menu.main]]
 name = "Docs"

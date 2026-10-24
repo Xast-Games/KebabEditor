@@ -144,7 +144,7 @@ Unknown archetypes and parameters are kept as they are when a scene is loaded an
 The code is split so that the scene and archetype model has no dependency on the user interface or on OpenGL.
 
 ```text
-app/src/main/java/org/halalfoursome/kebabeditor/
+app/src/main/java/org/xast/kebab/
 ├── math/        vectors, matrices, quaternions, boxes, rays
 ├── scene/       scene graph, glTF reading and writing, model and prefab resolvers
 ├── archetype/   definitions, typed parameters, instances, the catalog

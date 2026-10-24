@@ -40,7 +40,7 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = "org.halalfoursome.kebabeditor.KebabApplication"
+    mainClass = "org.xast.kebab.KebabApplication"
 
     // JOGL loads native libraries and reaches into AWT internals for its GL surfaces.
     applicationDefaultJvmArgs = listOf(

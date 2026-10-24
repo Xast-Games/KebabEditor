@@ -1,0 +1,48 @@
+package org.xast.kebab.utils;
+
+import java.awt.Color;
+
+import org.xast.kebab.archetype.error.UnknownParamException;
+import org.xast.kebab.archetype.instance.ArchetypeInstance;
+import org.xast.kebab.math.Vec3;
+
+public final class Params {
+
+    private Params() {}
+
+    public static Maybe<Vec3> vec3(ArchetypeInstance archetype, String name) {
+        try {
+            return archetype.get(name) instanceof Vec3 value ? Maybe.some(value) : Maybe.none();
+        } catch (UnknownParamException e) {
+            return Maybe.none();
+        }
+    }
+
+    public static Maybe<Float> number(ArchetypeInstance archetype, String name) {
+        try {
+            return archetype.get(name) instanceof Float value ? Maybe.some(value) : Maybe.none();
+        } catch (UnknownParamException e) {
+            return Maybe.none();
+        }
+    }
+
+    public static Maybe<Color> color(ArchetypeInstance archetype, String name) {
+        try {
+            return archetype.get(name) instanceof Color value ? Maybe.some(value) : Maybe.none();
+        } catch (UnknownParamException e) {
+            return Maybe.none();
+        }
+    }
+
+    public static Maybe<String> text(ArchetypeInstance archetype, String name) {
+        try {
+            return archetype.get(name) instanceof String value ? Maybe.some(value) : Maybe.none();
+        } catch (UnknownParamException e) {
+            return Maybe.none();
+        }
+    }
+
+    public static boolean positive(float value) {
+        return Float.isFinite(value) && value > 0f;
+    }
+}

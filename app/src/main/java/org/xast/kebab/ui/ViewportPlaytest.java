@@ -1,0 +1,91 @@
+package org.xast.kebab.ui;
+
+import org.xast.kebab.behavior.BehaviorContext;
+import org.xast.kebab.math.Vec3;
+import org.xast.kebab.playtest.PathRays;
+import org.xast.kebab.playtest.PlaytestSession;
+import org.xast.kebab.playtest.reach.ReachabilityMarks;
+import org.xast.kebab.render.Camera;
+import org.xast.kebab.ui.navigation.NavigationMode;
+import org.xast.kebab.ui.playtest.PlaytestViewport;
+import org.xast.kebab.utils.Maybe;
+
+import lombok.Getter;
+
+/**
+ * The playtest side of an {@link EditorView}: the running session, the paths of
+ * finished ones, and the editor camera to give back when it stops.
+ */
+public final class ViewportPlaytest implements PlaytestViewport {
+
+    /** The editor camera before a playtest took it over. */
+    private record CameraPose(Vec3 position, float yaw, float pitch) {}
+
+    private final EditorView view;
+    private final PathRays pathRays = new PathRays();
+    private final ReachabilityMarks reachabilityMarks = new ReachabilityMarks();
+
+    @Getter
+    private Maybe<PlaytestSession> session = Maybe.none();
+    private NavigationMode editingNavigation;
+    private CameraPose editingCamera;
+
+    ViewportPlaytest(EditorView view) {
+        this.view = view;
+    }
+
+    public boolean isRunning() {
+        return session.isSome();
+    }
+
+    @Override
+    public Maybe<BehaviorContext> behaviorContext() {
+        return view.behaviorContext();
+    }
+
+    /** Recorded paths of finished playtests, drawn in the viewport. */
+    @Override
+    public PathRays pathRays() {
+        return pathRays;
+    }
+
+    @Override
+    public ReachabilityMarks reachabilityMarks() {
+        return reachabilityMarks;
+    }
+
+    /**
+     * Hand the viewport to a playtest: editing input stops, the gizmo, selection
+     * and icons are hidden, and {@code navigation} drives the camera.
+     */
+    @Override
+    public void startPlaytest(PlaytestSession session, NavigationMode navigation) {
+        if (isRunning()) {
+            throw new IllegalStateException("A playtest is already running");
+        }
+
+        view.cancelEditingInput();
+
+        Camera camera = view.getCamera();
+        editingCamera = new CameraPose(camera.getPosition().copy(), camera.getYaw(), camera.getPitch());
+        editingNavigation = view.getNavigationMode();
+        this.session = Maybe.some(session);
+        view.setNavigationMode(navigation);
+    }
+
+    @Override
+    public void stopPlaytest() {
+        if (!isRunning()) {
+            return;
+        }
+
+        session = Maybe.none();
+        view.setNavigationMode(editingNavigation);
+        editingNavigation = null;
+
+        Camera camera = view.getCamera();
+        camera.getPosition().set(editingCamera.position());
+        camera.setOrientation(editingCamera.yaw(), editingCamera.pitch());
+        editingCamera = null;
+    }
+}

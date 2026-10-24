@@ -1,0 +1,121 @@
+package org.xast.kebab.ui.menu;
+
+import java.awt.event.WindowEvent;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.JFrame;
+
+import org.xast.kebab.editor.Editor;
+import org.xast.kebab.project.RecentProjects;
+import org.xast.kebab.scene.error.SceneException;
+import org.xast.kebab.scene.error.SceneFormatException;
+import org.xast.kebab.ui.menu.generic.Menu;
+import org.xast.kebab.ui.menu.generic.MenuItem;
+import org.xast.kebab.ui.menu.generic.SeparatorItem;
+import org.xast.kebab.ui.menu.generic.SingleItem;
+import org.xast.kebab.ui.project.CreateProjectDialog;
+import org.xast.kebab.utils.ErrorDialogs;
+import org.xast.kebab.utils.FileChooser;
+import org.xast.kebab.utils.Maybe;
+import org.xast.kebab.utils.FileChooser.FileChooserMode;
+
+public class FileMenu extends Menu {
+
+    public FileMenu(JFrame frame, Editor editor, Runnable refreshAssets) {
+        super("File");
+
+        Menu openRecent = new Menu("Open recent...");
+        updateRecent(openRecent, frame, editor);
+        editor.addProjectListener(() -> updateRecent(openRecent, frame, editor));
+
+        setItems(new MenuItem[] {
+            new SingleItem("Create new project...", Maybe.some("control N"), () -> {
+                CreateProjectDialog createProjectDialog = new CreateProjectDialog(frame, editor);
+                createProjectDialog.setVisible(true);
+            }),
+
+            new SeparatorItem(),
+
+            new SingleItem("Open project", Maybe.some("control O"), () -> {
+                FileChooser fileChooser = new FileChooser(FileChooserMode.FILES)
+                    .addFilter("glTF scene", "gltf", "glb");
+
+                fileChooser.open(frame, file -> {
+                    try {
+                        editor.openProject(file.toPath());
+                    } catch (SceneException e) {
+                        ErrorDialogs.show(frame, "Scene error, cannot open project", e);
+                    } catch (IOException e) {
+                        ErrorDialogs.show(frame, "I/O error, cannot open project", e);
+                    }
+                });
+            }),
+
+            openRecent,
+
+            new SeparatorItem(),
+
+            new SingleItem("Save", Maybe.some("control S"), () -> {
+                if (editor.isProjectOpen()) {
+                    try {
+                        editor.saveProject();
+                    } catch (SceneFormatException e) {
+                        ErrorDialogs.show(frame, "Scene format error, cannot save project", e);
+                    } catch (IOException e) {
+                        ErrorDialogs.show(frame, "I/O error, cannot save project", e);
+                    }
+                }
+            }),
+
+            new SeparatorItem(),
+
+            new SingleItem("Refresh assets", Maybe.some("control F5"), refreshAssets),
+
+            new SingleItem("Close project", Maybe.none(), editor::closeProject),
+
+            new SingleItem("Exit", Maybe.some("control Q"), () -> {
+                frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+            }),
+        });
+    }
+
+    private static void updateRecent(Menu menu, JFrame frame, Editor editor) {
+        RecentProjects recent = editor.recentProjects();
+        List<Path> paths = recent.paths();
+        List<MenuItem> items = new ArrayList<>();
+
+        for (int i = 0; i < paths.size(); i++) {
+            Path path = paths.get(i);
+            items.add(new SingleItem(
+                path.toString(),
+                i == 0 ? Maybe.some("control shift R") : Maybe.none(),
+                () -> {
+                    try {
+                        editor.openProject(path);
+                    } catch (SceneException e) {
+                        recent.remove(path);
+                        updateRecent(menu, frame, editor);
+                        ErrorDialogs.show(frame, "Scene error, failed to open scene file", e);
+                    } catch (IOException e) {
+                        recent.remove(path);
+                        updateRecent(menu, frame, editor);
+                        ErrorDialogs.show(frame, "I/O error, failed to open scene file", e);
+                    }
+                }
+            ));
+        }
+
+        if (!paths.isEmpty()) {
+            items.add(new SeparatorItem());
+            items.add(new SingleItem("Clear recent projects", Maybe.none(), () -> {
+                recent.clear();
+                updateRecent(menu, frame, editor);
+            }));
+        }
+
+        menu.setItems(items.toArray(MenuItem[]::new));
+    }
+}
