@@ -6,8 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.xast.kebab.math.Aabb;
 import org.xast.kebab.playtest.ActorSettings;
-import org.xast.kebab.playtest.reach.JumpReach;
-import org.xast.kebab.playtest.reach.Platform;
 import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.utils.Maybe;
 

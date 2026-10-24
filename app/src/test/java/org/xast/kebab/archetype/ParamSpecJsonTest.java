@@ -8,8 +8,6 @@ import java.io.IOException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.xast.kebab.archetype.ParamSpec;
-import org.xast.kebab.archetype.ParamType;
 import org.xast.kebab.archetype.definition.ArchetypeDefinition;
 import org.xast.kebab.archetype.definition.ArchetypeRegistry;
 import org.xast.kebab.archetype.definition.ArchetypeRegistryJson;

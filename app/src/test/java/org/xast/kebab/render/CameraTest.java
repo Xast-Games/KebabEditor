@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 import org.xast.kebab.math.Vec3;
-import org.xast.kebab.render.Camera;
 
 class CameraTest {
 

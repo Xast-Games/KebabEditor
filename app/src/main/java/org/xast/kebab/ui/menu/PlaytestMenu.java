@@ -53,7 +53,7 @@ public class PlaytestMenu extends Menu {
         controller.addListener(sync);
 
         ReachabilityCheck reachability = controller.reachability();
-        CheckItem showReachability = new CheckItem("Show reachability", Maybe.some("F6"), reachability::setEnabled);
+        CheckItem showReachability = new CheckItem("Show reachability", Maybe.some("F7"), reachability::setEnabled);
         showReachability.setSelected(reachability.isEnabled());
         reachability.addListener(() -> showReachability.setSelected(reachability.isEnabled()));
 

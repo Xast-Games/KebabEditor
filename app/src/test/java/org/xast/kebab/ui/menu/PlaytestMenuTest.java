@@ -20,7 +20,6 @@ import org.xast.kebab.playtest.PathRecording;
 import org.xast.kebab.project.ModelImporter;
 import org.xast.kebab.project.NoRecentProjects;
 import org.xast.kebab.project.ProjectManager;
-import org.xast.kebab.ui.menu.PlaytestMenu;
 import org.xast.kebab.ui.playtest.PlaytestController;
 import org.xast.kebab.utils.KebabStyle;
 import org.xast.kebab.utils.Maybe;
@@ -93,7 +92,7 @@ class PlaytestMenuTest {
         JMenu menu = menu(new PlaytestMenu(Maybe.some(controller)));
         JCheckBoxMenuItem show = (JCheckBoxMenuItem) menu.getItem(6);
 
-        assertEquals(KeyStroke.getKeyStroke("F6"), show.getAccelerator());
+        assertEquals(KeyStroke.getKeyStroke("F7"), show.getAccelerator());
         assertFalse(show.isSelected());
 
         show.doClick();

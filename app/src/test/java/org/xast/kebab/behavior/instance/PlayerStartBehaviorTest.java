@@ -10,7 +10,6 @@ import static org.xast.kebab.behavior.instance.BehaviorTestSupport.nodeAt;
 import org.junit.jupiter.api.Test;
 import org.xast.kebab.archetype.builtin.BuiltinArchetypes;
 import org.xast.kebab.archetype.instance.ArchetypeInstance;
-import org.xast.kebab.behavior.instance.PlayerStartBehavior;
 import org.xast.kebab.math.Aabb;
 import org.xast.kebab.math.Vec3;
 import org.xast.kebab.playtest.ActorSettings;

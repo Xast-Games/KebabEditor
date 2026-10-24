@@ -20,7 +20,6 @@ import org.xast.kebab.archetype.instance.ArchetypeInstance;
 import org.xast.kebab.behavior.BehaviorContext;
 import org.xast.kebab.behavior.DrawMode;
 import org.xast.kebab.behavior.Drawable;
-import org.xast.kebab.behavior.instance.ModelRefBehavior;
 import org.xast.kebab.math.Aabb;
 import org.xast.kebab.math.Mat4;
 import org.xast.kebab.math.Vec3;

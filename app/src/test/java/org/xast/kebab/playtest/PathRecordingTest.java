@@ -11,10 +11,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.xast.kebab.math.Vec3;
-import org.xast.kebab.playtest.JumpMetrics;
-import org.xast.kebab.playtest.PathRays;
-import org.xast.kebab.playtest.PathRecorder;
-import org.xast.kebab.playtest.PathRecording;
 
 /** Recording paths while playing, and the path rays kept afterwards. */
 class PathRecordingTest {

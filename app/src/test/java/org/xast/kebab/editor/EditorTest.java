@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.xast.kebab.archetype.builtin.BuiltinArchetypes;
 import org.xast.kebab.archetype.instance.ArchetypeInstance;
-import org.xast.kebab.editor.Editor;
 import org.xast.kebab.math.Vec3;
 import org.xast.kebab.project.FileProjectLoader;
 import org.xast.kebab.project.FileProjectWriter;

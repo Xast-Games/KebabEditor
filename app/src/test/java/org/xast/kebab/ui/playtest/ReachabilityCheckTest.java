@@ -28,7 +28,6 @@ import org.xast.kebab.scene.model.GreyboxShape;
 import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.scene.resolve.CompositeModelExtractor;
 import org.xast.kebab.scene.resolve.GltfMeshExtractor;
-import org.xast.kebab.ui.playtest.ReachabilityCheck;
 import org.xast.kebab.utils.Maybe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;

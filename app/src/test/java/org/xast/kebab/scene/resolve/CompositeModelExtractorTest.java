@@ -14,9 +14,6 @@ import org.xast.kebab.model.Material;
 import org.xast.kebab.model.Meshes;
 import org.xast.kebab.model.ModelPart;
 import org.xast.kebab.scene.error.ModelLoadException;
-import org.xast.kebab.scene.resolve.CompositeModelExtractor;
-import org.xast.kebab.scene.resolve.GltfMeshExtractor;
-import org.xast.kebab.scene.resolve.ModelExtractor;
 
 class CompositeModelExtractorTest {
 

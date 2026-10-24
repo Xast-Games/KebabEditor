@@ -16,7 +16,6 @@ import org.xast.kebab.math.Vec3;
 import org.xast.kebab.model.PrimitiveType;
 import org.xast.kebab.playtest.JumpMetrics;
 import org.xast.kebab.playtest.PathRecording;
-import org.xast.kebab.render.PathRayMeshes;
 
 class PathRayMeshesTest {
 

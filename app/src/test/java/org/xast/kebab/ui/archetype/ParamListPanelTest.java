@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.xast.kebab.archetype.ParamSpec;
 import org.xast.kebab.archetype.ParamType;
 import org.xast.kebab.math.Vec3;
-import org.xast.kebab.ui.archetype.ParamListPanel;
 import org.xast.kebab.ui.validation.ValidationGroup;
 import org.xast.kebab.utils.KebabStyle;
 

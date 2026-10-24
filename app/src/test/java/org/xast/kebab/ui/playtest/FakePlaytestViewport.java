@@ -6,7 +6,6 @@ import org.xast.kebab.playtest.PathRays;
 import org.xast.kebab.playtest.PlaytestSession;
 import org.xast.kebab.playtest.reach.ReachabilityMarks;
 import org.xast.kebab.ui.navigation.NavigationMode;
-import org.xast.kebab.ui.playtest.PlaytestViewport;
 import org.xast.kebab.utils.Maybe;
 
 /** A viewport without OpenGL: remembers what the playtest asked of it. */

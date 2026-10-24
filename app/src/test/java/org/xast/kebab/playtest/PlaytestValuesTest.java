@@ -11,10 +11,6 @@ import org.xast.kebab.archetype.instance.ArchetypeInstance;
 import org.xast.kebab.math.Mat4;
 import org.xast.kebab.math.Quat;
 import org.xast.kebab.math.Vec3;
-import org.xast.kebab.playtest.ActorSettings;
-import org.xast.kebab.playtest.JumpMetrics;
-import org.xast.kebab.playtest.PlayerStart;
-import org.xast.kebab.playtest.PlaytestSummary;
 import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.utils.Maybe;
 

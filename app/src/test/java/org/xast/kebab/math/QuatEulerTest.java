@@ -2,8 +2,6 @@ package org.xast.kebab.math;
 
 import java.util.Random;
 import org.junit.jupiter.api.Test;
-import org.xast.kebab.math.Quat;
-import org.xast.kebab.math.Vec3;
 
 import static org.junit.jupiter.api.Assertions.*;
 

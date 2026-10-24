@@ -10,7 +10,6 @@ import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.xast.kebab.project.ModelImporter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 

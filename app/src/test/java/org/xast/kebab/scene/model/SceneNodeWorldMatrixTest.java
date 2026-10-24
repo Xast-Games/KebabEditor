@@ -6,8 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.xast.kebab.math.Quat;
 import org.xast.kebab.math.Transform;
 import org.xast.kebab.math.Vec3;
-import org.xast.kebab.scene.model.Scene;
-import org.xast.kebab.scene.model.SceneNode;
 
 class SceneNodeWorldMatrixTest {
 

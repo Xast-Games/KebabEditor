@@ -7,10 +7,6 @@ import static org.xast.kebab.math.MathAssert.assertMat;
 import static org.xast.kebab.math.MathAssert.assertVec;
 
 import org.junit.jupiter.api.Test;
-import org.xast.kebab.math.Mat4;
-import org.xast.kebab.math.Quat;
-import org.xast.kebab.math.Transform;
-import org.xast.kebab.math.Vec3;
 
 class TransformTest {
 

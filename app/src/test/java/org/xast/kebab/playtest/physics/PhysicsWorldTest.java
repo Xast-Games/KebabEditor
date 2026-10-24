@@ -10,10 +10,6 @@ import org.xast.kebab.math.Aabb;
 import org.xast.kebab.math.Mat4;
 import org.xast.kebab.math.Quat;
 import org.xast.kebab.math.Vec3;
-import org.xast.kebab.playtest.physics.Capsule;
-import org.xast.kebab.playtest.physics.Ellipsoid;
-import org.xast.kebab.playtest.physics.PhysicsVolume;
-import org.xast.kebab.playtest.physics.PhysicsWorld;
 import org.xast.kebab.playtest.physics.PhysicsWorld.Collider;
 
 class PhysicsWorldTest {

@@ -27,7 +27,6 @@ import org.xast.kebab.model.ModelPart;
 import org.xast.kebab.model.PrimitiveType;
 import org.xast.kebab.model.TextureSlot;
 import org.xast.kebab.scene.error.ModelLoadException;
-import org.xast.kebab.scene.resolve.GltfMeshExtractor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 

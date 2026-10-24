@@ -1,15 +1,27 @@
 package org.xast.kebab.ui.inspector;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Image;
 import java.io.File;
-import java.util.*;
-import javax.swing.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 
-import org.xast.kebab.archetype.*;
-import org.xast.kebab.archetype.instance.*;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+
 import org.xast.kebab.archetype.ArchetypeIcon;
 import org.xast.kebab.archetype.ParamSpec;
 import org.xast.kebab.archetype.ParamType;
+import org.xast.kebab.archetype.error.UnknownParamException;
 import org.xast.kebab.archetype.instance.ArchetypeInstance;
 import org.xast.kebab.archetype.instance.NodeArchetype;
 import org.xast.kebab.archetype.instance.UnresolvedArchetype;
@@ -23,6 +35,9 @@ import org.xast.kebab.utils.KebabStyle;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 
 final class ArchetypeSection extends InspectorSection {
+
+    private static final int ICON_SIZE = 18;
+
     private final Editor editor;
     private final SceneNode node;
     private final NodeArchetype archetype;
@@ -37,92 +52,146 @@ final class ArchetypeSection extends InspectorSection {
         this.editor = editor;
         this.node = node;
         this.archetype = archetype;
-        referencesNodes = archetype instanceof ArchetypeInstance i
-            && i.getDefinition().getParams().values().stream().anyMatch(spec -> spec.type() == ParamType.NODE_REF);
+        this.referencesNodes = referencesNodes(archetype);
+
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
-        if (archetype instanceof ArchetypeInstance instance) {
-            for (var entry : instance.getDefinition().getParams().entrySet()) {
-                String name = entry.getKey();
-                ParamSpec spec = entry.getValue();
-                JPanel row = new JPanel(new BorderLayout(0, 3));
-                JLabel label = new JLabel(name + " (" + spec.type().displayName() + ")");
-                label.setFont(KebabStyle.getCurrent().uiFont());
-                row.add(label, BorderLayout.NORTH);
-                ParamValueEditor control = new ParamValueEditor(KebabStyle.getCurrent(), validation, editor::sceneNodes);
-                control.setName("param." + name);
-                control.setPathBase(() -> editor.currentProjectFile().map(file -> file.toAbsolutePath().getParent()));
-                control.addCommitListener(() -> {
-                    if (editor.isPlaytesting() || editor.selection().primary().unwrapOr(null) != node
-                        || !editor.containsNode(node) || !node.getArchetypes().contains(instance)) return;
-                    try {
-                        Object value = control.value();
-                        if (!Objects.equals(value, shown.get(name))) editor.setArchetypeParam(instance, name, value);
-                        else editor.sceneChanged(); // A deferred external update can now replace untouched input.
-                        control.putClientProperty("JComponent.outline", null);
-                        control.setToolTipText(null);
-                    } catch (IllegalArgumentException e) {
-                        control.putClientProperty("JComponent.outline", "error");
-                        control.setToolTipText(e.getMessage());
-                    }
-                });
-                controls.put(name, control);
-                row.add(control, BorderLayout.CENTER);
-                row.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 0));
-                body.add(row);
-            }
-        } else if (archetype instanceof UnresolvedArchetype unresolved) {
-            JTextArea raw = new JTextArea(unresolved.rawJson().toPrettyString());
-            raw.setEditable(false);
-            raw.setLineWrap(true);
-            raw.setWrapStyleWord(true);
-            raw.setFont(KebabStyle.getCurrent().techFont());
-            body.add(raw);
+        switch (archetype) {
+            case ArchetypeInstance instance -> instance.getDefinition()
+                .getParams()
+                .forEach((name, spec) -> body.add(paramRow(instance, name, spec)));
+            case UnresolvedArchetype unresolved -> body.add(rawJson(unresolved));
         }
-        JButton remove = new JButton("Remove archetype");
-        remove.setFont(KebabStyle.getCurrent().uiFont());
-        remove.setAlignmentX(Component.CENTER_ALIGNMENT);
-        remove.addActionListener(e -> {
-            if (editor.isPlaytesting() || editor.selection().primary().unwrapOr(null) != node) return;
-            if (JOptionPane.showConfirmDialog(this, "Remove this archetype from the object?",
-                "Remove archetype", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                editor.detachArchetype(node, archetype);
-            }
-        });
-        body.add(remove);
+        body.add(removeButton());
+
         refresh();
     }
 
     void refresh() {
-        if (!(archetype instanceof ArchetypeInstance instance)) return;
-        boolean referencesChanged = false;
-        if (referencesNodes) {
-            String labels = editor.sceneNodes().stream().map(n -> n.getId() + ":" + n.getName()).toList().toString();
-            referencesChanged = !labels.equals(nodeLabels);
-            nodeLabels = labels;
+        if (!(archetype instanceof ArchetypeInstance instance)) {
+            return;
         }
-        for (var entry : controls.entrySet()) {
-            String name = entry.getKey();
-            ParamValueEditor control = entry.getValue();
+
+        boolean referencesChanged = updateNodeLabels();
+
+        controls.forEach((name, control) -> {
+            if (control.isEditing()) {
+                return;
+            }
+
             Object value = read(instance, name);
             ParamType type = instance.getDefinition().getParams().get(name).type();
-            if (!control.isEditing() && (!shown.containsKey(name) || !Objects.equals(shown.get(name), value)
-                || referencesChanged && type == ParamType.NODE_REF)) {
+            boolean changed = !shown.containsKey(name) || !Objects.equals(shown.get(name), value);
+
+            if (changed || referencesChanged && type == ParamType.NODE_REF) {
                 control.showFor(type, value);
                 shown.put(name, value instanceof Vec3 v ? v.copy() : value);
             }
-        }
-    }
-
-    private static Object read(ArchetypeInstance instance, String name) {
-        try { return instance.get(name); }
-        catch (org.xast.kebab.archetype.error.UnknownParamException e) {
-            throw new IllegalStateException("Parameter vanished from its definition", e);
-        }
+        });
     }
 
     void dispose() {
         controls.values().forEach(ParamValueEditor::dispose);
         validation.hidePopups();
+    }
+
+    private JPanel paramRow(ArchetypeInstance instance, String name, ParamSpec spec) {
+        ParamValueEditor control = new ParamValueEditor(KebabStyle.getCurrent(), validation, editor::sceneNodes);
+        control.setName("param." + name);
+        control.setPathBase(() -> editor.currentProjectFile().map(file -> file.toAbsolutePath().getParent()));
+        control.addCommitListener(() -> commit(instance, name, control));
+        controls.put(name, control);
+
+        JPanel row = new JPanel(new BorderLayout(0, 3));
+        row.add(label(name + " (" + spec.type().displayName() + ")"), BorderLayout.NORTH);
+        row.add(control, BorderLayout.CENTER);
+        row.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 0));
+        return row;
+    }
+
+    private void commit(ArchetypeInstance instance, String name, ParamValueEditor control) {
+        if (!canEdit(editor, node) || !node.getArchetypes().contains(instance)) {
+            return;
+        }
+
+        try {
+            Object value = control.value();
+
+            if (!Objects.equals(value, shown.get(name))) {
+                editor.setArchetypeParam(instance, name, value);
+            } else {
+                // A deferred external update can now replace untouched input
+                editor.sceneChanged();
+            }
+
+            clearError(control);
+        } catch (IllegalArgumentException e) {
+            markError(control, e.getMessage());
+        }
+    }
+
+    private JButton removeButton() {
+        JButton remove = button("Remove archetype");
+
+        remove.addActionListener(e -> {
+            if (!canEdit(editor, node)) {
+                return;
+            }
+
+            int answer = JOptionPane.showConfirmDialog(
+                this,
+                "Remove this archetype from the object?",
+                "Remove archetype",
+                JOptionPane.YES_NO_OPTION
+            );
+
+            if (answer == JOptionPane.YES_OPTION) {
+                editor.detachArchetype(node, archetype);
+            }
+        });
+
+        return remove;
+    }
+
+    private boolean updateNodeLabels() {
+        if (!referencesNodes) {
+            return false;
+        }
+
+        String labels = editor.sceneNodes()
+            .stream()
+            .map(n -> n.getId() + ":" + n.getName())
+            .toList()
+            .toString();
+        boolean changed = !labels.equals(nodeLabels);
+
+        nodeLabels = labels;
+        return changed;
+    }
+
+    private static boolean referencesNodes(NodeArchetype archetype) {
+        return archetype instanceof ArchetypeInstance instance
+            && instance.getDefinition()
+                .getParams()
+                .values()
+                .stream()
+                .anyMatch(spec -> spec.type() == ParamType.NODE_REF);
+    }
+
+    private static Object read(ArchetypeInstance instance, String name) {
+        try {
+            return instance.get(name);
+        } catch (UnknownParamException e) {
+            throw new IllegalStateException("Parameter vanished from its definition", e);
+        }
+    }
+
+    private static JTextArea rawJson(UnresolvedArchetype unresolved) {
+        JTextArea raw = new JTextArea(unresolved.rawJson().toPrettyString());
+        raw.setEditable(false);
+        raw.setLineWrap(true);
+        raw.setWrapStyleWord(true);
+        raw.setFont(KebabStyle.getCurrent().techFont());
+        return raw;
     }
 
     private static String title(NodeArchetype archetype) {
@@ -133,13 +202,34 @@ final class ArchetypeSection extends InspectorSection {
     }
 
     private static Icon icon(NodeArchetype archetype) {
-        if (!(archetype instanceof ArchetypeInstance instance) || instance.getDefinition().getIcon().isNone()) return null;
-        return switch (instance.getDefinition().getIcon().unwrap()) {
-            case ArchetypeIcon.Bundled b -> new FlatSVGIcon(b.resource(), 18, 18);
-            case ArchetypeIcon.Loaded l -> new ImageIcon(l.icon().getScaledInstance(18, 18, Image.SCALE_SMOOTH));
-            case ArchetypeIcon.Handle h -> h.path().toLowerCase(Locale.ROOT).endsWith(".svg")
-                ? new FlatSVGIcon(new File(h.path())).derive(18, 18)
-                : h.loaded().map(l -> (Icon)new ImageIcon(l.icon().getScaledInstance(18, 18, Image.SCALE_SMOOTH))).unwrapOr(null);
+        if (!(archetype instanceof ArchetypeInstance instance)) {
+            return null;
+        }
+        return instance.getDefinition()
+            .getIcon()
+            .map(ArchetypeSection::icon)
+            .unwrapOr(null);
+    }
+
+    private static Icon icon(ArchetypeIcon icon) {
+        return switch (icon) {
+            case ArchetypeIcon.Bundled bundled -> new FlatSVGIcon(bundled.resource(), ICON_SIZE, ICON_SIZE);
+            case ArchetypeIcon.Loaded loaded -> scaled(loaded);
+            case ArchetypeIcon.Handle handle -> handleIcon(handle);
         };
+    }
+
+    private static Icon handleIcon(ArchetypeIcon.Handle handle) {
+        if (handle.path().toLowerCase(Locale.ROOT).endsWith(".svg")) {
+            return new FlatSVGIcon(new File(handle.path())).derive(ICON_SIZE, ICON_SIZE);
+        }
+        return handle.loaded()
+            .map(ArchetypeSection::scaled)
+            .unwrapOr(null);
+    }
+
+    private static Icon scaled(ArchetypeIcon.Loaded loaded) {
+        Image image = loaded.icon().getScaledInstance(ICON_SIZE, ICON_SIZE, Image.SCALE_SMOOTH);
+        return new ImageIcon(image);
     }
 }

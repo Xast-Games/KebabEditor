@@ -11,10 +11,6 @@ import org.xast.kebab.archetype.definition.ArchetypeRegistry;
 import org.xast.kebab.math.Vec3;
 import org.xast.kebab.scene.io.GltfSceneReader;
 import org.xast.kebab.scene.io.GltfSceneWriter;
-import org.xast.kebab.scene.model.Greybox;
-import org.xast.kebab.scene.model.GreyboxShape;
-import org.xast.kebab.scene.model.Scene;
-import org.xast.kebab.scene.model.SceneNode;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 

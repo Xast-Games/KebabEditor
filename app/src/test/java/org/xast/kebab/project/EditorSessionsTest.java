@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.xast.kebab.editor.Editor;
 import org.xast.kebab.math.Vec3;
-import org.xast.kebab.project.EditorSessions;
 
 import static org.junit.jupiter.api.Assertions.*;
 

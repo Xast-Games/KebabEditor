@@ -24,8 +24,6 @@ import org.xast.kebab.math.Vec3;
 import org.xast.kebab.model.Material;
 import org.xast.kebab.model.MeshData;
 import org.xast.kebab.model.ModelPart;
-import org.xast.kebab.render.PickHit;
-import org.xast.kebab.render.Picker;
 import org.xast.kebab.scene.io.GltfSceneReader;
 import org.xast.kebab.scene.model.Greybox;
 import org.xast.kebab.scene.model.GreyboxShape;

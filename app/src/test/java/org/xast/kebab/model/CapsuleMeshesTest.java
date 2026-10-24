@@ -5,9 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 import org.xast.kebab.math.Aabb;
-import org.xast.kebab.model.MeshData;
-import org.xast.kebab.model.Meshes;
-import org.xast.kebab.model.PrimitiveType;
 
 class CapsuleMeshesTest {
 

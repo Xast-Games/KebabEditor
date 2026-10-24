@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.xast.kebab.archetype.ArchetypeCatalog;
 import org.xast.kebab.archetype.builtin.BuiltinArchetypes;
 import org.xast.kebab.archetype.definition.ArchetypeDefinition;
 import org.xast.kebab.archetype.definition.ArchetypeRegistry;

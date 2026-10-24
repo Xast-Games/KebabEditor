@@ -6,11 +6,6 @@ import java.nio.file.*;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.xast.kebab.project.FileProjectWriter;
-import org.xast.kebab.project.ProjectAssets;
-import org.xast.kebab.project.ProjectConfig;
-import org.xast.kebab.project.ProjectConfigStore;
-import org.xast.kebab.project.ProjectTemplates;
 
 import static org.junit.jupiter.api.Assertions.*;
 

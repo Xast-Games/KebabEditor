@@ -6,8 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
-import org.xast.kebab.archetype.ParamSpec;
-import org.xast.kebab.archetype.ParamType;
 import org.xast.kebab.math.Vec3;
 import org.xast.kebab.utils.Maybe;
 

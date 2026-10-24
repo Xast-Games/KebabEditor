@@ -16,7 +16,6 @@ import org.xast.kebab.archetype.instance.ArchetypeInstance;
 import org.xast.kebab.behavior.ArchetypeBehavior;
 import org.xast.kebab.behavior.BehaviorContext;
 import org.xast.kebab.behavior.Drawable;
-import org.xast.kebab.behavior.instance.BuiltinBehaviors;
 import org.xast.kebab.math.Aabb;
 import org.xast.kebab.math.Quat;
 import org.xast.kebab.math.Transform;

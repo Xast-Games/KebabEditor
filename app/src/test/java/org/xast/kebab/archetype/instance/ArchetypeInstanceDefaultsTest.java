@@ -12,8 +12,6 @@ import org.xast.kebab.archetype.ParamType;
 import org.xast.kebab.archetype.builtin.BuiltinArchetypes;
 import org.xast.kebab.archetype.definition.ArchetypeDefinition;
 import org.xast.kebab.archetype.definition.ArchetypeRegistry;
-import org.xast.kebab.archetype.instance.ArchetypeInstance;
-import org.xast.kebab.archetype.instance.ArchetypeInstanceJson;
 import org.xast.kebab.math.Vec3;
 
 import com.fasterxml.jackson.databind.JsonNode;

@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 import org.xast.kebab.archetype.builtin.BuiltinArchetypes;
-import org.xast.kebab.behavior.instance.BuiltinBehaviors;
 
 class BuiltinBehaviorsTest {
 

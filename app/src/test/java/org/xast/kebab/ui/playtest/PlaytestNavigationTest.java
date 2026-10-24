@@ -8,7 +8,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.xast.kebab.math.Vec3;
-import org.xast.kebab.ui.playtest.PlaytestNavigation;
 
 class PlaytestNavigationTest {
 

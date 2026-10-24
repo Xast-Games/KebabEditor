@@ -3,8 +3,6 @@ package org.xast.kebab.math;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.xast.kebab.math.Mat4;
-import org.xast.kebab.math.Vec3;
 
 final class MathAssert {
 

@@ -15,7 +15,6 @@ import org.xast.kebab.archetype.builtin.BuiltinArchetypes;
 import org.xast.kebab.archetype.instance.ArchetypeInstance;
 import org.xast.kebab.behavior.DrawMode;
 import org.xast.kebab.behavior.Drawable;
-import org.xast.kebab.behavior.instance.ColliderBoxBehavior;
 import org.xast.kebab.math.Aabb;
 import org.xast.kebab.math.Vec3;
 import org.xast.kebab.model.GizmoShape;

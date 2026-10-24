@@ -12,7 +12,6 @@ import org.xast.kebab.math.Vec3;
 import org.xast.kebab.playtest.physics.PhysicsVolume;
 import org.xast.kebab.playtest.physics.PhysicsWorld;
 import org.xast.kebab.render.Camera;
-import org.xast.kebab.ui.playtest.ThirdPersonRig;
 
 class ThirdPersonRigTest {
 

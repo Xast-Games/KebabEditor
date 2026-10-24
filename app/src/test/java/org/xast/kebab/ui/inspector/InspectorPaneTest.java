@@ -8,9 +8,6 @@ import javax.swing.*;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
-import org.xast.kebab.archetype.*;
-import org.xast.kebab.archetype.instance.*;
-import org.xast.kebab.math.*;
 import org.xast.kebab.archetype.ParamType;
 import org.xast.kebab.archetype.definition.ArchetypeDefinition;
 import org.xast.kebab.archetype.instance.ArchetypeInstance;
@@ -22,7 +19,6 @@ import org.xast.kebab.math.Vec3;
 import org.xast.kebab.project.EditorSessions;
 import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.ui.archetype.ParamValueEditor;
-import org.xast.kebab.ui.inspector.InspectorPane;
 import org.xast.kebab.utils.KebabStyle;
 
 import static org.junit.jupiter.api.Assertions.*;

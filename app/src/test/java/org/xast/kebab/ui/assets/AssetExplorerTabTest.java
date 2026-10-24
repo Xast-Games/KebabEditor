@@ -11,7 +11,6 @@ import org.junit.jupiter.api.io.TempDir;
 import org.xast.kebab.assets.AssetOpenHandler;
 import org.xast.kebab.editor.Editor;
 import org.xast.kebab.project.EditorSessions;
-import org.xast.kebab.ui.assets.AssetExplorerTab;
 import org.xast.kebab.utils.KebabStyle;
 
 import static org.junit.jupiter.api.Assertions.*;

@@ -31,5 +31,6 @@ top = false
 | Manage archetypes | `Ctrl+Shift+A` |
 | Run or stop playtest | `F5` |
 | Stop playtest | `Esc` |
+| Show or hide reachability | `F7` |
 | Open the documentation | `F1` |
 | About | `F12` |

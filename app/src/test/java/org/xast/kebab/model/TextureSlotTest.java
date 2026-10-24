@@ -9,7 +9,6 @@ import java.io.InputStream;
 import javax.imageio.ImageIO;
 
 import org.junit.jupiter.api.Test;
-import org.xast.kebab.model.TextureSlot;
 
 class TextureSlotTest {
 

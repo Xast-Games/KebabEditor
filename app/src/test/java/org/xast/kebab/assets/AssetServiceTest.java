@@ -6,9 +6,6 @@ import java.util.*;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.xast.kebab.assets.AssetOpenHandler;
-import org.xast.kebab.assets.AssetService;
-import org.xast.kebab.assets.AssetType;
 import org.xast.kebab.project.ProjectAssets;
 
 import static org.junit.jupiter.api.Assertions.*;

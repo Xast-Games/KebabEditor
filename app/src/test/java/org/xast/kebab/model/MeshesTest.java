@@ -5,8 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 import org.xast.kebab.math.Aabb;
-import org.xast.kebab.model.MeshData;
-import org.xast.kebab.model.Meshes;
 
 class MeshesTest {
 

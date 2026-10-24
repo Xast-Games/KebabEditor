@@ -16,7 +16,6 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.xast.kebab.utils.AtomicFiles;
 
 class AtomicFilesTest {
 

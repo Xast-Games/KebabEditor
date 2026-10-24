@@ -322,6 +322,9 @@
   							<li><a href="https://kebab.xast.org/docs/guides/playtest/#path-rays">Path rays</a></li>
   							
   							
+  							<li><a href="https://kebab.xast.org/docs/guides/playtest/#reachability">Reachability</a></li>
+  							
+  							
   					</ul>
   			</nav>
   	</div>
@@ -348,6 +351,19 @@
 <p>Jumps, drops of more than one metre and trigger entries are written to the Logs panel. An actor that falls far below the level respawns at the start.</p>
 <h2 id="path-rays">Path rays</h2>
 <p>After each run its path stays in the viewport, with the newest brightest and the last eight kept. Ground and air segments have different colors, and jumps and trigger hits are marked. Use <strong>Playtest &gt; Show path rays</strong>, <strong>Clear path rays</strong> and <strong>Path thickness</strong>.</p>
+<h2 id="reachability">Reachability</h2>
+<p>Press <code>F7</code> or use <strong>Playtest &gt; Show reachability</strong> to see which platforms the actor can get to, without running a playtest. Every solid counts as a platform, simplified to its bounding box. The check follows the editor while it is on: moving, adding or deleting objects and changing the selection update it a moment later.</p>
+<p>With one object or nothing selected, it checks the whole level from the Player Start. The platforms are outlined in the viewport:</p>
+<ul>
+<li>Blue: the platform under the Player Start.</li>
+<li>Green: reachable, and the actor can get back.</li>
+<li>Yellow: one-way. The actor can get there but not back, so a player who goes there is stuck.</li>
+<li>Red: unreachable.</li>
+</ul>
+<p>With two or more objects selected (<code>Shift</code>+click), it shows the way with the fewest jumps from the first selected to the last, drawn as a line through each take-off and landing. If there is no way, the target is red and everything the actor can get to is green.</p>
+<p>The results are written to the Logs panel, such as how many platforms are reachable, the farthest one and the route with its jump count. A new line appears only when the outcome changes.</p>
+<p><strong>Playtest &gt; Jump limit</strong> counts only platforms the actor gets to within that many jumps. Choose 1 to 5 or <strong>Custom...</strong>, or <strong>No limit</strong>. Walking onto a touching platform is free, and each jump or drop counts as one.</p>
+<p>The check is an estimate: jumps are worked out from the Player Start's settings at full run speed, and walls and ceilings in the way are not checked. It shows the best a player can do, so confirm a tricky jump with a real playtest.</p>
 
         
           

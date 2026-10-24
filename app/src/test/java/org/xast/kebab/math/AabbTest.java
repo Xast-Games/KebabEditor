@@ -3,9 +3,6 @@ package org.xast.kebab.math;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
-import org.xast.kebab.math.Aabb;
-import org.xast.kebab.math.Mat4;
-import org.xast.kebab.math.Vec3;
 
 class AabbTest {
 

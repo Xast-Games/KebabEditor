@@ -18,8 +18,6 @@ import org.xast.kebab.archetype.instance.ArchetypeInstance;
 import org.xast.kebab.archetype.instance.UnresolvedArchetype;
 import org.xast.kebab.scene.error.SceneException;
 import org.xast.kebab.scene.error.SceneFormatException;
-import org.xast.kebab.scene.io.GltfSceneReader;
-import org.xast.kebab.scene.io.GltfSceneWriter;
 import org.xast.kebab.scene.model.Scene;
 import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.utils.Maybe;

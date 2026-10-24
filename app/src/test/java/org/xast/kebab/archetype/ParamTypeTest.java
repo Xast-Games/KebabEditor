@@ -4,8 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
-import org.xast.kebab.archetype.ArchetypeCatalog;
-import org.xast.kebab.archetype.ParamType;
 import org.xast.kebab.archetype.builtin.BuiltinArchetypes;
 import org.xast.kebab.archetype.instance.ArchetypeInstance;
 import org.xast.kebab.archetype.instance.ArchetypeInstanceJson;

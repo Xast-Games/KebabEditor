@@ -10,7 +10,6 @@ import javax.swing.UIManager;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.xast.kebab.ui.menu.generic.MenuButton;
 import org.xast.kebab.utils.LucideIcon;
 
 class MenuButtonTest {
