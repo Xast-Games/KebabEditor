@@ -130,7 +130,7 @@ class EditorTest {
         assertEquals("models/tri/tri.gltf", modelRef.get("path"));
 
         ResolvedModel resolved = assertInstanceOf(ResolvedModel.class,
-            editor.modelResolver().unwrap().resolve(editor.currentProjectFile().unwrap(), "models/tri/tri.gltf"));
+            editor.modelResolver().unwrap().resolve(editor.currentSceneFile().unwrap(), "models/tri/tri.gltf"));
         assertEquals(1, resolved.parts().size());
         assertSame(node, editor.selection().primary().unwrap());
     }
@@ -257,5 +257,65 @@ class EditorTest {
             }
             """);
         return gltf;
+    }
+
+    @Test
+    void openingAProjectRemembersItsProjectFileAndOpensItsFirstScene() {
+        Path project = projectDir.resolve("kebab-project.json");
+
+        assertEquals(project, editor.currentProjectFile().unwrap());
+        assertEquals(projectDir.resolve("level.gltf"), editor.currentSceneFile().unwrap());
+        assertEquals(List.of(project), editor.recentProjects().paths());
+    }
+
+    @Test
+    void openingAnotherSceneKeepsTheProjectAndDropsTheEdits() throws Exception {
+        Files.copy(projectDir.resolve("level.gltf"), projectDir.resolve("assets/town.gltf"));
+        editor.spawnEmpty(Vec3.zero());
+
+        editor.openScene(projectDir.resolve("assets/town.gltf"));
+
+        assertEquals(projectDir.resolve("assets/town.gltf"), editor.currentSceneFile().unwrap());
+        assertEquals(projectDir.resolve("kebab-project.json"), editor.currentProjectFile().unwrap());
+        assertTrue(editor.sceneNodes().isEmpty());
+        assertFalse(editor.hasUnsavedChanges());
+        assertTrue(editor.history().canUndo() == false);
+        assertEquals(1, editor.recentProjects().paths().size());
+    }
+
+    @Test
+    void aSceneOutsideTheProjectCannotBeOpenedInIt() throws Exception {
+        Path outside = elsewhere.resolve("other.gltf");
+        Files.copy(projectDir.resolve("level.gltf"), outside);
+
+        assertThrows(java.io.IOException.class, () -> editor.openScene(outside));
+        assertEquals(projectDir.resolve("level.gltf"), editor.currentSceneFile().unwrap());
+    }
+
+    @Test
+    void modelsOfAScenesFolderGoToTheSharedModelsFolder() throws Exception {
+        Path dir = elsewhere.resolve("game");
+        editor.createProject(dir, "scenes", "world");
+        Path model = elsewhere.resolve("tri.gltf");
+        Files.writeString(model, "{\"asset\":{\"version\":\"2.0\"}}");
+
+        editor.importModel(model, Vec3.zero());
+
+        assertTrue(Files.isRegularFile(dir.resolve("models/tri/tri.gltf")), "models: " + dir.resolve("models"));
+        ArchetypeInstance ref = (ArchetypeInstance) editor.sceneNodes().getFirst().getArchetypes().getFirst();
+        assertEquals("../models/tri/tri.gltf", ref.get("path"));
+    }
+
+    @Test
+    void movingTheAssetRootTakesTheArchetypesAlong() throws Exception {
+        Path game = elsewhere.resolve("game");
+        editor.createProject(game.resolve("level"), "world");
+        editor.addArchetype(new org.xast.kebab.archetype.definition.ArchetypeDefinition("door"));
+
+        editor.updateAssetScope(game, List.of("level/assets"), List.of("level/world.gltf"));
+
+        assertEquals(game.resolve("kebab-project.json"), editor.currentProjectFile().unwrap());
+        assertTrue(Files.readString(game.resolve("archetypes.json")).contains("door"));
+        assertTrue(editor.archetypes().stream().anyMatch(definition -> definition.getId().equals("door")));
     }
 }

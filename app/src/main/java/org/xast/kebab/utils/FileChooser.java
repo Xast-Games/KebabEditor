@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class FileChooser {
@@ -54,8 +55,27 @@ public class FileChooser {
         return this;
     }
 
+    /** Shows only files with exactly this name, plus folders to get to them. */
+    public FileChooser addFileNameFilter(String description, String fileName) {
+        FileFilter filter = new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                return file.isDirectory() || file.getName().equals(fileName);
+            }
+
+            @Override
+            public String getDescription() {
+                return description;
+            }
+        };
+        return addFilter(filter);
+    }
+
     public FileChooser addFilter(String description, String... extensions) {
-        FileNameExtensionFilter filter = new FileNameExtensionFilter(description, extensions);
+        return addFilter(new FileNameExtensionFilter(description, extensions));
+    }
+
+    private FileChooser addFilter(FileFilter filter) {
         fileChooser.setAcceptAllFileFilterUsed(false);
         fileChooser.addChoosableFileFilter(filter);
         if (fileChooser.getChoosableFileFilters().length == 1) {

@@ -9,9 +9,11 @@ import java.util.List;
 import javax.swing.JFrame;
 
 import org.xast.kebab.editor.Editor;
+import org.xast.kebab.project.ProjectConfigStore;
 import org.xast.kebab.project.RecentProjects;
 import org.xast.kebab.scene.error.SceneException;
 import org.xast.kebab.scene.error.SceneFormatException;
+import org.xast.kebab.ui.UnsavedChanges;
 import org.xast.kebab.ui.menu.generic.Menu;
 import org.xast.kebab.ui.menu.generic.MenuItem;
 import org.xast.kebab.ui.menu.generic.SeparatorItem;
@@ -33,6 +35,9 @@ public class FileMenu extends Menu {
 
         setItems(new MenuItem[] {
             new SingleItem("Create new project...", Maybe.some("control N"), () -> {
+                if (!UnsavedChanges.confirm(frame, editor, "create another project", "create")) {
+                    return;
+                }
                 CreateProjectDialog createProjectDialog = new CreateProjectDialog(frame, editor);
                 createProjectDialog.setVisible(true);
             }),
@@ -41,9 +46,13 @@ public class FileMenu extends Menu {
 
             new SingleItem("Open project", Maybe.some("control O"), () -> {
                 FileChooser fileChooser = new FileChooser(FileChooserMode.FILES)
-                    .addFilter("glTF scene", "gltf", "glb");
+                    .addFileNameFilter("Kebab project (" + ProjectConfigStore.FILE_NAME + ")", ProjectConfigStore.FILE_NAME)
+                    .addFilter("glTF scene of a project without " + ProjectConfigStore.FILE_NAME, "gltf", "glb");
 
                 fileChooser.open(frame, file -> {
+                    if (!UnsavedChanges.confirm(frame, editor, "open another project", "open")) {
+                        return;
+                    }
                     try {
                         editor.openProject(file.toPath());
                     } catch (SceneException e) {
@@ -74,7 +83,11 @@ public class FileMenu extends Menu {
 
             new SingleItem("Refresh assets", Maybe.some("control F5"), refreshAssets),
 
-            new SingleItem("Close project", Maybe.none(), editor::closeProject),
+            new SingleItem("Close project", Maybe.none(), () -> {
+                if (UnsavedChanges.confirm(frame, editor, "close the project", "close")) {
+                    editor.closeProject();
+                }
+            }),
 
             new SingleItem("Exit", Maybe.some("control Q"), () -> {
                 frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
@@ -93,6 +106,9 @@ public class FileMenu extends Menu {
                 path.toString(),
                 i == 0 ? Maybe.some("control shift R") : Maybe.none(),
                 () -> {
+                    if (!UnsavedChanges.confirm(frame, editor, "open another project", "open")) {
+                        return;
+                    }
                     try {
                         editor.openProject(path);
                     } catch (SceneException e) {

@@ -20,6 +20,7 @@ import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -34,8 +35,12 @@ import org.xast.kebab.utils.FileChooser.FileChooserMode;
 
 public class CreateProjectDialog extends JDialog {
 
+    private static final String DEFAULT_SCENES_FOLDER = "scenes";
+
     private final JTextField locationField = new JTextField(24);
     private final JTextField nameField = new JTextField("Untitled", 24);
+    // The first scene goes here; empty puts it next to kebab-project.json
+    private final JTextField scenesField = new JTextField(DEFAULT_SCENES_FOLDER, 24);
 
     private final JComboBox<String> templateField = new JComboBox<>(new String[] {
         "blank",
@@ -125,10 +130,21 @@ public class CreateProjectDialog extends JDialog {
         constraints.gridy = 0;
         content.add(labeledRow(style, "Location", Maybe.none(), buildLocationRow(owner)), constraints);
 
+        constraints.insets = new Insets(8, 16, 8, 16);
         constraints.gridy = 1;
-        content.add(labeledRow(style, "Level name", Maybe.some(".gltf"), nameField), constraints);
+        content.add(labeledRow(style, "Scenes folder", Maybe.some("/"), scenesField), constraints);
 
         constraints.gridy = 2;
+        content.add(labeledRow(style, "Level name", Maybe.some(".gltf"), nameField), constraints);
+
+        constraints.gridy = 3;
+        JLabel hint = new JLabel("<html>Creates kebab-project.json and archetypes.json in the location, "
+            + "and the level in the scenes folder. Leave the folder empty to keep them together.</html>");
+        hint.setFont(style.uiFont().deriveFont(style.uiFont().getSize2D() - 1f));
+        hint.setForeground(UIManager.getColor("Label.disabledForeground"));
+        content.add(hint, constraints);
+
+        constraints.gridy = 4;
         constraints.weighty = 1.0;
         content.add(new JPanel(), constraints);
 
@@ -178,7 +194,7 @@ public class CreateProjectDialog extends JDialog {
             }
 
             try {
-                editor.createProject(Path.of(locationField.getText().trim()), name);
+                editor.createProject(Path.of(locationField.getText().trim()), scenesField.getText().trim(), name);
                 dispose();
             } catch (SceneException ex) {
                 ErrorDialogs.show(this, "Scene error, cannot create project", ex);

@@ -307,6 +307,12 @@
   							<li><a href="https://kebab.xast.org/docs/guides/viewport/#camera">Camera</a></li>
   							
   							
+  							<li><a href="https://kebab.xast.org/docs/guides/viewport/#outliner">Outliner</a></li>
+  							
+  							
+  							<li><a href="https://kebab.xast.org/docs/guides/viewport/#opening-prefabs">Opening prefabs</a></li>
+  							
+  							
   							<li><a href="https://kebab.xast.org/docs/guides/viewport/#selecting-and-transforming">Selecting and transforming</a></li>
   							
   							
@@ -339,9 +345,15 @@
 <tr><td>Look around</td><td>Drag with the mouse</td></tr>
 <tr><td>Move</td><td><code>W</code> <code>A</code> <code>S</code> <code>D</code></td></tr>
 <tr><td>Up and down</td><td><code>Space</code> and <code>Ctrl</code></td></tr>
-<tr><td>Speed up</td><td>Hold <code>Shift</code></td></tr>
-<tr><td>Dolly</td><td>Mouse wheel</td></tr>
+<tr><td>Fly speed, 1 to 500 m/s</td><td>Mouse wheel</td></tr>
+<tr><td>Fly three times faster</td><td>Hold <code>Shift</code></td></tr>
+<tr><td>Frame the selection</td><td><code>F</code></td></tr>
 </tbody></table>
+<p>The fly speed starts at 10 m/s and shows briefly in the corner of the viewport when you change it. <code>F</code> jumps the camera to the selected objects and their children, keeping the direction it looks in.</p>
+<h2 id="outliner">Outliner</h2>
+<p>The Outliner above the Inspector lists every object in the scene as a tree. Selecting there selects in the viewport and the other way round. Double-click an object, or press <code>Enter</code> or <code>F</code>, to fly the camera to it. Right-click an object to frame it or open its prefab.</p>
+<h2 id="opening-prefabs">Opening prefabs</h2>
+<p>Select an object with a <strong>Prefab Reference</strong> and choose <strong>Edit &gt; Open prefab</strong> (<code>Ctrl+Shift+O</code>) to open the scene it points at in the editor. This is how you go from a world map into one of its locations. The scene must be inside the project's asset root. If the current scene has unsaved changes, you are asked to save or discard them first.</p>
 <h2 id="selecting-and-transforming">Selecting and transforming</h2>
 <p>Click an object or its icon to select it. The gizmo has three modes: <code>1</code> move, <code>2</code> rotate and <code>3</code> scale. Press <code>Ctrl+Shift+G</code> to snap to the grid. The grid step comes from a <strong>Snap Distance</strong> object in the scene, or defaults to 0.5.</p>
 <h2 id="adding-objects">Adding objects</h2>
@@ -357,7 +369,7 @@
 <p>Every archetype on an object is drawn as a billboard icon. Several icons are arranged in a pyramid. Empty objects get an icon too, so they stay selectable. Toggle them in <strong>View &gt; Show icons</strong>.</p>
 <p>Greyboxes with the <strong>No Volume</strong> archetype are hidden. Turn on <strong>View &gt; Render No Volume</strong> to draw them as wireframes, which can then be clicked.</p>
 <h2 id="panels">Panels</h2>
-<p>Press <code>N</code> to hide or show the Inspector, and <code>T</code> to hide or show the bottom panel with the Asset Explorer and Logs. The viewport takes the freed space, and showing a panel again puts its divider back where it was. The same check boxes are in <strong>View &gt; Show side panel</strong> and <strong>Show bottom panel</strong>. You can also drag a divider to bring a hidden panel back.</p>
+<p>Press <code>N</code> to hide or show the Outliner and Inspector, and <code>T</code> to hide or show the bottom panel with the Asset Explorer and Logs. The viewport takes the freed space, and showing a panel again puts its divider back where it was. The same check boxes are in <strong>View &gt; Show side panel</strong> and <strong>Show bottom panel</strong>. You can also drag a divider to bring a hidden panel back.</p>
 <h2 id="undo-and-redo">Undo and redo</h2>
 <p><code>Ctrl+Z</code> and <code>Ctrl+Y</code> undo and redo scene edits while the viewport has focus. Undo is disabled during a playtest.</p>
 

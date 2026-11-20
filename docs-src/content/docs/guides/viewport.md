@@ -17,8 +17,19 @@ top = false
 | Look around | Drag with the mouse |
 | Move | `W` `A` `S` `D` |
 | Up and down | `Space` and `Ctrl` |
-| Speed up | Hold `Shift` |
-| Dolly | Mouse wheel |
+| Fly speed, 1 to 500 m/s | Mouse wheel |
+| Fly three times faster | Hold `Shift` |
+| Frame the selection | `F` |
+
+The fly speed starts at 10 m/s and shows briefly in the corner of the viewport when you change it. `F` jumps the camera to the selected objects and their children, keeping the direction it looks in.
+
+## Outliner
+
+The Outliner above the Inspector lists every object in the scene as a tree. Selecting there selects in the viewport and the other way round. Double-click an object, or press `Enter` or `F`, to fly the camera to it. Right-click an object to frame it or open its prefab.
+
+## Opening prefabs
+
+Select an object with a **Prefab Reference** and choose **Edit > Open prefab** (`Ctrl+Shift+O`) to open the scene it points at in the editor. This is how you go from a world map into one of its locations. The scene must be inside the project's asset root. If the current scene has unsaved changes, you are asked to save or discard them first.
 
 ## Selecting and transforming
 
@@ -45,7 +56,7 @@ Greyboxes with the **No Volume** archetype are hidden. Turn on **View > Render N
 
 ## Panels
 
-Press `N` to hide or show the Inspector, and `T` to hide or show the bottom panel with the Asset Explorer and Logs. The viewport takes the freed space, and showing a panel again puts its divider back where it was. The same check boxes are in **View > Show side panel** and **Show bottom panel**. You can also drag a divider to bring a hidden panel back.
+Press `N` to hide or show the Outliner and Inspector, and `T` to hide or show the bottom panel with the Asset Explorer and Logs. The viewport takes the freed space, and showing a panel again puts its divider back where it was. The same check boxes are in **View > Show side panel** and **Show bottom panel**. You can also drag a divider to bring a hidden panel back.
 
 ## Undo and redo
 

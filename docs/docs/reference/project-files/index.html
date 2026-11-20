@@ -324,7 +324,7 @@
 
       <main class="docs-content col-lg-11 col-xl-9">
         <h1>Project files</h1>
-        <p class="lead">The scene file, archetypes.json and kebab-project.json.</p>
+        <p class="lead">kebab-project.json, the scene file and archetypes.json.</p>
         <h2 id="scene-file">Scene file</h2>
 <p>A standard glTF 2.0 file. Archetype instances live under <code>extras.kebab</code> on each node:</p>
 <pre><code data-lang="json">{
@@ -342,15 +342,15 @@
 </code></pre>
 <p>A greybox is stored as <code>extras.kebab.greybox</code> with a <code>shape</code>, a <code>size</code> and a <code>color</code>.</p>
 <h2 id="archetypes-json">archetypes.json</h2>
-<p>Your own archetype definitions, next to the scene. Each has an id, a display name, an optional icon, a <code>single</code> flag and typed parameters with defaults.</p>
+<p>Your own archetype definitions, next to <code>kebab-project.json</code> and shared by all scenes and prefabs of the project. A project without <code>kebab-project.json</code> keeps it next to its scene. Each has an id, a display name, an optional icon, a <code>single</code> flag and typed parameters with defaults.</p>
 <h2 id="kebab-project-json">kebab-project.json</h2>
 <table><thead><tr><th>Field</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>version</code></td><td>Always <code>1</code></td></tr>
 <tr><td><code>assetRoot</code></td><td>The explorer root, relative to the folder containing the file</td></tr>
 <tr><td><code>assetFolders</code></td><td>Folders shown under the root, relative to <code>assetRoot</code></td></tr>
-<tr><td><code>scenes</code></td><td>Scene files that open as editable scenes, relative to <code>assetRoot</code></td></tr>
+<tr><td><code>scenes</code></td><td>Scene files that open as editable scenes, relative to <code>assetRoot</code>. The first existing one opens with the project</td></tr>
 </tbody></table>
-<p>All paths must stay inside the project.</p>
+<p>All paths must stay inside the project. <code>kebab-project.json</code> is the file you open with <strong>File &gt; Open project</strong>.</p>
 
         
           

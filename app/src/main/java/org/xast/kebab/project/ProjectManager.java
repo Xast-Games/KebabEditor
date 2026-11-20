@@ -33,20 +33,39 @@ public class ProjectManager {
     private Maybe<ProjectRepository> repository = Maybe.none();
     private byte[] savedSceneHash;
 
-    public void create(Path dir, String name) throws SceneException, IOException {
-        open(writer.createProject(dir, name));
+    public void create(Path dir, String scenesFolder, String name) throws SceneException, IOException {
+        open(writer.createProject(dir, scenesFolder, name));
     }
 
+    /** Opens a kebab-project.json at its first scene, or a bare scene file with the project that registers it. */
     public void open(Path file) throws SceneException, IOException {
         if (!Files.isRegularFile(file)) {
             throw new IOException("Not a file: " + file);
         }
 
-        byte[] hash = sceneHash(file);
-        ProjectRepository loaded = loader.load(file);
+        SceneScope scope = loader.scopeFor(file);
+        show(scope);
+        recentProjects.add(scope.projectFile());
+    }
+
+    /** Switches to another scene of the open project, which keeps its project file and asset scope. */
+    public void openScene(Path scene) throws SceneException, IOException {
+        ProjectRepository current = repository.expect("No project is open");
+        Path file = scene.toAbsolutePath().normalize();
+        ProjectAssets.requireInside(current.assets().root(), file);
+        if (!Files.isRegularFile(file)) {
+            throw new IOException("Not a file: " + file);
+        }
+
+        show(new SceneScope(file, current.projectFile(), current.assets()));
+    }
+
+    // The hash is taken before reading, so an edit on disk during loading is caught on the next save
+    private void show(SceneScope scope) throws SceneException, IOException {
+        byte[] hash = sceneHash(scope.scene());
+        ProjectRepository loaded = loader.load(scope);
         repository = Maybe.some(loaded);
         savedSceneHash = hash;
-        recentProjects.add(file);
         notifyListeners();
     }
 
@@ -59,8 +78,12 @@ public class ProjectManager {
         return repository.isSome();
     }
 
-    public Maybe<Path> currentFile() {
+    public Maybe<Path> currentScene() {
         return repository.map(ProjectRepository::filePath);
+    }
+
+    public Maybe<Path> projectFile() {
+        return repository.map(ProjectRepository::projectFile);
     }
 
     public List<ArchetypeDefinition> archetypes() {
@@ -113,7 +136,7 @@ public class ProjectManager {
         registry.add(definition);
 
         try {
-            writer.saveArchetypes(current.filePath(), registry);
+            writer.saveArchetypes(current.projectFile(), registry);
         } catch (IOException e) {
             registry.remove(definition);
             throw e;
@@ -140,7 +163,7 @@ public class ProjectManager {
         registry.remove(definition);
 
         try {
-            writer.saveArchetypes(current.filePath(), registry);
+            writer.saveArchetypes(current.projectFile(), registry);
         } catch (IOException e) {
             registry.add(definition);
             throw e;
@@ -156,7 +179,7 @@ public class ProjectManager {
         }
 
         ProjectRepository current = repository.unwrap();
-        writer.saveArchetypes(current.filePath(), current.archetypeCatalog().getRegistry());
+        writer.saveArchetypes(current.projectFile(), current.archetypeCatalog().getRegistry());
         current.prefabResolver().invalidateAll();
     }
 
@@ -173,7 +196,7 @@ public class ProjectManager {
     public void save() throws SceneFormatException, IOException {
         saveScene();
         ProjectRepository current = repository.unwrap();
-        writer.saveArchetypes(current.filePath(), current.archetypeCatalog().getRegistry());
+        writer.saveArchetypes(current.projectFile(), current.archetypeCatalog().getRegistry());
     }
 
     private static byte[] sceneHash(Path file) throws IOException {
@@ -193,6 +216,12 @@ public class ProjectManager {
             repository = Maybe.some(current.withAssets(assets));
             notifyListeners();
         } else {
+            // The archetypes go along with the project file, unless the new root already has its own
+            Path movedProject = loader.scopeFor(current.filePath()).projectFile();
+            boolean moved = !movedProject.equals(current.projectFile());
+            if (moved && !Files.exists(ProjectTemplates.archetypesFileFor(movedProject))) {
+                writer.saveArchetypes(movedProject, current.archetypeCatalog().getRegistry());
+            }
             open(current.filePath());
         }
     }

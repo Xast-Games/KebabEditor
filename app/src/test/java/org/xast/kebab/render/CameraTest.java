@@ -36,6 +36,30 @@ class CameraTest {
     }
 
     @Test
+    void framingKeepsTheDirectionAndBacksOffUntilTheSphereFits() {
+        Camera camera = levelCamera();
+        Vec3 center = new Vec3(800, 0, -1600);
+
+        camera.frame(center, 10f, 1f);
+
+        Vec3 toCenter = center.sub(camera.getPosition());
+        assertTrue(new Vec3(0, 0, -1).approxEquals(toCenter.normalize(), EPS), "was " + toCenter);
+        float halfFov = camera.getFovY() / 2;
+        assertEquals(10f / Math.sin(halfFov), toCenter.length(), 1e-2);
+    }
+
+    @Test
+    void framingInANarrowWindowBacksOffFurther() {
+        Camera wide = levelCamera();
+        Camera narrow = levelCamera();
+
+        wide.frame(Vec3.zero(), 5f, 2f);
+        narrow.frame(Vec3.zero(), 5f, 0.5f);
+
+        assertTrue(narrow.getPosition().length() > wide.getPosition().length());
+    }
+
+    @Test
     void viewMatrixMovesTheEyeToTheOrigin() {
         Camera camera = levelCamera();
         camera.move(new Vec3(3, 4, 5));

@@ -1,6 +1,11 @@
 package org.xast.kebab.ui;
 
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.awt.event.KeyAdapter;
@@ -34,6 +39,7 @@ import org.xast.kebab.render.GizmoRenderer;
 import org.xast.kebab.render.GreyboxRenderer;
 import org.xast.kebab.render.GridRenderer;
 import org.xast.kebab.render.IconLayout;
+import org.xast.kebab.render.NodeBounds;
 import org.xast.kebab.render.PathRayRenderer;
 import org.xast.kebab.render.PickHit;
 import org.xast.kebab.render.Picker;
@@ -46,6 +52,7 @@ import org.xast.kebab.scene.model.Scene;
 import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.ui.navigation.NavigationMode;
 import org.xast.kebab.ui.placement.PlacementTool;
+import org.xast.kebab.utils.KebabStyle;
 import org.xast.kebab.utils.Maybe;
 
 import com.jogamp.opengl.GL3;
@@ -69,7 +76,7 @@ import lombok.Getter;
  * cursor, or places an object while the {@link PlacementTool} is active.
  * Shift+click adds an object to the selection, or takes it out.
  * Pressing on a gizmo handle drags it instead; 1, 2 and 3 switch the gizmo
- * between move, rotate and scale.
+ * between move, rotate and scale, and F frames the selection.
  */
 public class EditorView extends GLJPanel implements GLEventListener, GizmoInteraction.Viewport {
 
@@ -78,6 +85,13 @@ public class EditorView extends GLJPanel implements GLEventListener, GizmoIntera
     private static final float SPAWN_DISTANCE = 8f;
     private static final float MAX_GROUND_DISTANCE = 60f;
     private static final int CLICK_SLOP_PIXELS = 4;
+    private static final float MIN_FRAME_RADIUS = 0.5f;
+    // Leaves some room around what is framed
+    private static final float FRAME_MARGIN = 1.2f;
+    private static final int NOTICE_MILLIS = 1500;
+    private static final int NOTICE_MARGIN = 12;
+    private static final int NOTICE_PADDING = 8;
+    private static final Color NOTICE_BACKGROUND = new Color(0, 0, 0, 160);
 
     private final Editor editor;
     private final Camera camera = new Camera();
@@ -105,6 +119,11 @@ public class EditorView extends GLJPanel implements GLEventListener, GizmoIntera
     private Maybe<Point> pressedAt = Maybe.none();
     private Maybe<Point> gizmoPressedAt = Maybe.none();
     private final List<Consumer<SceneNode>> nodeActivatedListeners = new ArrayList<>();
+    private volatile String notice;
+    private final Timer noticeTimer = new Timer(NOTICE_MILLIS, e -> {
+        notice = null;
+        repaint();
+    });
 
     public EditorView(Editor editor) {
         this(editor, true);
@@ -145,6 +164,7 @@ public class EditorView extends GLJPanel implements GLEventListener, GizmoIntera
 
         lastTime = System.nanoTime();
         timer = new Timer(FRAME_MILLIS, e -> tick());
+        noticeTimer.setRepeats(false);
 
     }
 
@@ -170,6 +190,7 @@ public class EditorView extends GLJPanel implements GLEventListener, GizmoIntera
     /** Stop input and the render timer, then release this window's OpenGL resources. */
     public void close() {
         timer.stop();
+        noticeTimer.stop();
         setNavigationMode(null);
         nodeActivatedListeners.clear();
         gizmoModeListeners.clear();
@@ -225,7 +246,7 @@ public class EditorView extends GLJPanel implements GLEventListener, GizmoIntera
     public Maybe<BehaviorContext> behaviorContext() {
         return editor.modelResolver().andThen(models ->
             editor.prefabResolver().andThen(prefabs ->
-                editor.currentProjectFile().map(file -> new BehaviorContext(models, prefabs, file))));
+                editor.currentSceneFile().map(file -> new BehaviorContext(models, prefabs, file))));
     }
 
     /**
@@ -366,6 +387,7 @@ public class EditorView extends GLJPanel implements GLEventListener, GizmoIntera
                 }
                 if (!e.isControlDown() && !e.isAltDown() && !gizmoInteraction.isDragging()) {
                     switch (e.getKeyCode()) {
+                        case KeyEvent.VK_F -> frameSelection();
                         case KeyEvent.VK_1, KeyEvent.VK_NUMPAD1 -> setGizmoMode(GizmoMode.TRANSLATE);
                         case KeyEvent.VK_2, KeyEvent.VK_NUMPAD2 -> setGizmoMode(GizmoMode.ROTATE);
                         case KeyEvent.VK_3, KeyEvent.VK_NUMPAD3 -> setGizmoMode(GizmoMode.SCALE);
@@ -440,6 +462,58 @@ public class EditorView extends GLJPanel implements GLEventListener, GizmoIntera
 
         return IconLayout.hit(IconLayout.of(scene, camera, getWidth(), getHeight(), icons), x, y)
             .map(IconLayout.Placement::node);
+    }
+
+    /** Jumps the camera to the selected objects, keeping its direction. */
+    public void frameSelection() {
+        frame(editor.selection().nodes());
+    }
+
+    /** Jumps the camera so the nodes and their children fill the view, keeping its direction. */
+    public void frame(List<SceneNode> nodes) {
+        if (isPlaytesting()) {
+            return;
+        }
+        NodeBounds.of(nodes, behaviorContext()).ifSome(box -> {
+            Vec3 min = new Vec3(box.getMinX(), box.getMinY(), box.getMinZ());
+            Vec3 max = new Vec3(box.getMaxX(), box.getMaxY(), box.getMaxZ());
+            float radius = Math.max(max.distance(min) / 2, MIN_FRAME_RADIUS);
+            float aspect = Math.max(getWidth(), 1) / (float) Math.max(getHeight(), 1);
+            camera.frame(min.lerp(max, 0.5f), radius * FRAME_MARGIN, aspect);
+        });
+    }
+
+    /** Shows a short message over the viewport for a moment, e.g. the new fly speed. */
+    public void showNotice(String text) {
+        notice = text;
+        noticeTimer.restart();
+        repaint();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        String text = notice;
+        if (text == null) {
+            return;
+        }
+        Graphics2D g2 = (Graphics2D) g.create();
+        try {
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            g2.setFont(KebabStyle.getCurrent().uiFont());
+            FontMetrics metrics = g2.getFontMetrics();
+            int width = metrics.stringWidth(text) + 2 * NOTICE_PADDING;
+            int height = metrics.getHeight() + NOTICE_PADDING;
+            int x = NOTICE_MARGIN;
+            int y = getHeight() - NOTICE_MARGIN - height;
+            g2.setColor(NOTICE_BACKGROUND);
+            g2.fillRoundRect(x, y, width, height, 8, 8);
+            g2.setColor(Color.WHITE);
+            g2.drawString(text, x + NOTICE_PADDING, y + NOTICE_PADDING / 2 + metrics.getAscent());
+        } finally {
+            g2.dispose();
+        }
     }
 
     public boolean isShowIcons() {
@@ -562,7 +636,7 @@ public class EditorView extends GLJPanel implements GLEventListener, GizmoIntera
             drawable.getSurfaceWidth(),
             drawable.getSurfaceHeight(),
             editor.scene(),
-            editor.currentProjectFile(),
+            editor.currentSceneFile(),
             behaviorContext(),
             // While playing, nothing is selected or being placed, so no gizmo or ghost shows.
             isPlaytesting() ? List.of() : editor.selection().nodes(),

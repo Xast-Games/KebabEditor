@@ -193,7 +193,7 @@ public class ArchetypeInstanceDialog extends JDialog {
             parameters.add(label(entry.getKey() + "  (" + spec.type().displayName() + ")"), labelConstraints);
 
             ParamValueEditor valueEditor = new ParamValueEditor(style, validation, editor::sceneNodes);
-            valueEditor.setPathBase(() -> editor.currentProjectFile().map(file -> file.toAbsolutePath().getParent()));
+            valueEditor.setPathBase(() -> editor.currentSceneFile().map(file -> file.toAbsolutePath().getParent()));
             valueEditor.showFor(spec.type(), initialValue(definition, entry.getKey(), spec));
             GridBagConstraints editorConstraints = rowAt(row, 1);
             editorConstraints.weightx = 1.0;

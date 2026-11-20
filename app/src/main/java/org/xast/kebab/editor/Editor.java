@@ -137,7 +137,12 @@ public class Editor {
     }
 
     public void createProject(Path dir, String name) throws SceneException, IOException {
-        projectManager.create(dir, name);
+        createProject(dir, "", name);
+    }
+
+    /** @param scenesFolder where the first scene goes, relative to dir; empty for dir itself */
+    public void createProject(Path dir, String scenesFolder, String name) throws SceneException, IOException {
+        projectManager.create(dir, scenesFolder, name);
     }
 
     public void closeProject() {
@@ -146,6 +151,11 @@ public class Editor {
 
     public void openProject(Path file) throws SceneException, IOException {
         projectManager.open(file);
+    }
+
+    /** Replaces the edited scene with another one of the same project; unsaved edits are dropped. */
+    public void openScene(Path scene) throws SceneException, IOException {
+        projectManager.openScene(scene);
     }
 
     public void saveScene() throws SceneFormatException, IOException {
@@ -172,8 +182,14 @@ public class Editor {
         savedState = scene().map(scene -> SceneSnapshot.capture(scene, selection));
     }
 
+    /** The kebab-project.json the project was opened from, or its scene file for a project without one. */
     public Maybe<Path> currentProjectFile() {
-        return projectManager.currentFile();
+        return projectManager.projectFile();
+    }
+
+    /** The scene being edited. */
+    public Maybe<Path> currentSceneFile() {
+        return projectManager.currentScene();
     }
 
     public Maybe<Scene> scene() {
@@ -478,9 +494,11 @@ public class Editor {
     }
 
     public SceneNode importModel(Path modelFile, Vec3 base) throws IOException {
-        Path sceneFile = projectManager.currentFile().expect("No project is open").toAbsolutePath();
+        Path sceneFile = projectManager.currentScene().expect("No project is open").toAbsolutePath();
         Path sceneDir = sceneFile.getParent();
-        Path inside = modelImporter.importInto(sceneDir, modelFile);
+        // Models go to the asset root's models/, shared by scenes in any folder; the reference is scene-relative
+        Path assetRoot = projectManager.assets().map(ProjectAssets::root).unwrapOr(sceneDir);
+        Path inside = modelImporter.importInto(assetRoot, modelFile);
         String reference = sceneDir.relativize(inside).toString().replace('\\', '/');
 
         ArchetypeInstance modelRef = newInstance(BuiltinArchetypes.MODEL_REF);

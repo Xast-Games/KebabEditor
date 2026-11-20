@@ -1,7 +1,9 @@
 package org.xast.kebab.project;
 
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
@@ -24,23 +26,30 @@ public class FileProjectWriter implements ProjectWriter {
     private final ObjectMapper mapper;
 
     @Override
-    public Path createProject(Path dir, String name) throws IOException {
+    public Path createProject(Path dir, String scenesFolder, String name) throws IOException {
         Files.createDirectories(dir);
+        Path projectDir = dir.toAbsolutePath().normalize();
+        String folder = scenesFolder.strip().replace('\\', '/');
+        Path sceneDir = folder.isEmpty() || folder.equals(".")
+            ? projectDir
+            : ProjectAssets.resolveInside(projectDir, folder);
 
-        Path scene = dir.resolve(name + ".gltf");
-        ProjectAssets.requireInside(dir, scene);
-        if (Files.exists(scene, java.nio.file.LinkOption.NOFOLLOW_LINKS)) {
-            throw new java.nio.file.FileAlreadyExistsException(scene.toString());
+        Path scene = sceneDir.resolve(name + ".gltf");
+        ProjectAssets.requireInside(sceneDir, scene);
+        if (Files.exists(scene, LinkOption.NOFOLLOW_LINKS)) {
+            throw new FileAlreadyExistsException(scene.toString());
         }
-        new ProjectConfigStore(mapper).prepareNewScene(scene);
+        new ProjectConfigStore(mapper).prepareNewScene(projectDir, scene);
+        Files.createDirectories(sceneDir);
         Files.writeString(scene, ProjectTemplates.MINIMAL_GLTF, StandardOpenOption.CREATE_NEW);
 
-        Path archetypes = ProjectTemplates.archetypesFileFor(scene);
+        Path project = projectDir.resolve(ProjectConfigStore.FILE_NAME);
+        Path archetypes = ProjectTemplates.archetypesFileFor(project);
         if (!Files.exists(archetypes)) {
             Files.writeString(archetypes, ProjectTemplates.EMPTY_ARCHETYPES, StandardOpenOption.CREATE_NEW);
         }
 
-        return scene;
+        return project;
     }
 
     @Override
@@ -55,9 +64,9 @@ public class FileProjectWriter implements ProjectWriter {
     }
 
     @Override
-    public void saveArchetypes(Path scene, ArchetypeRegistry registry) throws IOException {
+    public void saveArchetypes(Path projectFile, ArchetypeRegistry registry) throws IOException {
         AtomicFiles.write(
-            ProjectTemplates.archetypesFileFor(scene),
+            ProjectTemplates.archetypesFileFor(projectFile),
             mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(ArchetypeRegistryJson.from(registry))
         );
     }

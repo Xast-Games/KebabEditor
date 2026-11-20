@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import javax.swing.JFrame;
@@ -17,7 +18,6 @@ import javax.swing.SwingWorker;
 import org.xast.kebab.assets.AssetOpenHandler;
 import org.xast.kebab.editor.Editor;
 import org.xast.kebab.logging.LogService;
-import org.xast.kebab.project.EditorSessions;
 import org.xast.kebab.project.ProjectAssets;
 import org.xast.kebab.scene.resolve.CachingModelResolver;
 import org.xast.kebab.scene.resolve.GltfMeshExtractor;
@@ -33,17 +33,20 @@ public final class AssetWindows implements AutoCloseable {
 
     private final JFrame owner;
     private final Editor editor;
+    private final Consumer<Path> sceneOpener;
     private final Map<Path, JFrame> windows = new HashMap<>();
     private final Map<Path, SwingWorker<?, ?>> loading = new HashMap<>();
     private boolean closed;
 
-    public AssetWindows(JFrame owner, Editor editor) {
+    /** @param sceneOpener opens a scene in the main editor, in place of the current one */
+    public AssetWindows(JFrame owner, Editor editor, Consumer<Path> sceneOpener) {
         this.owner = owner;
         this.editor = editor;
+        this.sceneOpener = sceneOpener;
     }
 
     public AssetOpenHandler handler() {
-        return new AssetOpenHandler(this::model, this::scene);
+        return new AssetOpenHandler(this::model, sceneOpener);
     }
 
     private void model(Path path) {
@@ -52,18 +55,6 @@ public final class AssetWindows implements AutoCloseable {
             ProjectAssets.requireInside(assets.root(), path);
             ResolvedModel model = resolveModel(assets, path);
             return () -> new ModelPreviewWindow(model);
-        });
-    }
-
-    private void scene(Path path) {
-        boolean isMainScene = editor.currentProjectFile().map(path::equals).unwrapOr(false);
-        if (isMainScene) {
-            owner.toFront();
-            return;
-        }
-        open(path, () -> {
-            Editor session = EditorSessions.open(path);
-            return () -> new SceneEditorWindow(session);
         });
     }
 

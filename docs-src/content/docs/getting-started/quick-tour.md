@@ -12,7 +12,7 @@ top = false
 
 ## 1. Create a project
 
-Choose **File > Create new project...**, pick a folder and a level name. The editor creates the scene file, an `archetypes.json`, an `assets/` folder and a `kebab-project.json`.
+Choose **File > Create new project...**, pick a folder and a level name. The editor creates a `kebab-project.json`, an `archetypes.json`, an `assets/` folder and a `scenes/` folder holding the scene file. Next time, open the project with **File > Open project** and pick its `kebab-project.json`.
 
 ## 2. Add a floor
 

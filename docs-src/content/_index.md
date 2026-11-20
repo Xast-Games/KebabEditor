@@ -33,7 +33,7 @@ content = "Import glTF and GLB models, and draw a whole other scene in place of 
 
 [[extra.list]]
 title = "Projects and assets"
-content = "An Asset Explorer, scenes that open in their own windows, and a kebab-project.json that scopes which folders belong to the project."
+content = "A kebab-project.json that registers scenes and scopes which folders belong to the project, an Asset Explorer to switch between scenes, and an Outliner to fly to any object."
 
 [[extra.list]]
 title = "Playtest"

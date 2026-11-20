@@ -6,7 +6,6 @@ import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.IOException;
 
 import javax.swing.Box;
 import javax.swing.JDialog;
@@ -25,7 +24,6 @@ import javax.swing.WindowConstants;
 import org.xast.kebab.editor.Editor;
 import org.xast.kebab.logging.LogService;
 import org.xast.kebab.math.Vec3;
-import org.xast.kebab.scene.error.SceneFormatException;
 import org.xast.kebab.ui.assets.AssetExplorerTab;
 import org.xast.kebab.ui.assets.AssetWindows;
 import org.xast.kebab.ui.logs.LogsTab;
@@ -39,10 +37,10 @@ import org.xast.kebab.ui.menu.generic.MenuBar;
 import org.xast.kebab.ui.menu.generic.MenuButton;
 import org.xast.kebab.ui.navigation.FreeFlightNavigation;
 import org.xast.kebab.ui.object.ObjectDialog;
+import org.xast.kebab.ui.outliner.OutlinerPane;
 import org.xast.kebab.ui.playtest.PlaytestController;
 import org.xast.kebab.ui.playtest.PlayerStartDialog;
 import org.xast.kebab.utils.AppIdentity;
-import org.xast.kebab.utils.ErrorDialogs;
 import org.xast.kebab.utils.KebabStyle;
 import org.xast.kebab.utils.LucideIcon;
 import org.xast.kebab.utils.Maybe;
@@ -57,6 +55,7 @@ public class MainWindow {
     private static final double WORKSPACE_WEIGHT = 0.75;
     private static final int INSPECTOR_WIDTH = 350;
     private static final int INSPECTOR_MIN_WIDTH = 240;
+    private static final double OUTLINER_WEIGHT = 0.35;
 
     private final JFrame frame;
     private final Editor editor;    
@@ -64,6 +63,8 @@ public class MainWindow {
     private final AssetExplorerTab assetExplorer;
     private final AssetWindows assetWindows;
     private final org.xast.kebab.ui.inspector.InspectorPane inspector;
+    private final SceneNavigator navigator;
+    private final OutlinerPane outliner;
 
     private final MenuBar menuBar;
     private CollapsiblePanel inspectorPanel;
@@ -85,18 +86,26 @@ public class MainWindow {
         frame = new JFrame(APP_TITLE);
         menuBar = new MenuBar(frame);
         logsTab = new LogsTab(LogService.get());
-        assetWindows = new AssetWindows(frame, editor);
+        navigator = new SceneNavigator(frame, editor);
+        assetWindows = new AssetWindows(frame, editor, navigator::open);
         assetExplorer = new AssetExplorerTab(editor, assetWindows.handler());
         inspector = new org.xast.kebab.ui.inspector.InspectorPane(editor);
+        // The viewport is made later, with the layout
+        outliner = new OutlinerPane(editor, nodes -> {
+            if (editorView != null) {
+                editorView.frame(nodes);
+            }
+        }, navigator);
         // File > Exit and the window manager's close (Alt+F4, the title bar) both land here.
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent event) {
-                if (!confirmDiscardChanges()) {
+                if (!UnsavedChanges.confirm(frame, editor, "exit", "exit")) {
                     return;
                 }
                 playtest.ifSome(PlaytestController::stop);
                 inspector.close();
+                outliner.close();
                 assetWindows.close();
                 if (editorView != null) {
                     editorView.close();
@@ -110,49 +119,6 @@ public class MainWindow {
 
         editor.addProjectListener(this::updateTitle);
         updateTitle();
-    }
-
-    /**
-     * Asks what to do with unsaved scene edits before they would be lost.
-     *
-     * @return true when it is fine to go on: nothing to save, saved, or the user chose to discard
-     */
-    private boolean confirmDiscardChanges() {
-        if (!editor.hasUnsavedChanges()) {
-            return true;
-        }
-
-        String scene = editor.currentProjectFile().map(file -> "'" + file.getFileName() + "'").unwrapOr("the scene");
-        Object[] options = { "Save", "Don't save", "Cancel" };
-        int answer = JOptionPane.showOptionDialog(
-            frame,
-            "Save changes to " + scene + " before exiting?\nUnsaved changes will be lost otherwise.",
-            "Unsaved changes",
-            JOptionPane.YES_NO_CANCEL_OPTION,
-            JOptionPane.WARNING_MESSAGE,
-            null,
-            options,
-            options[0]
-        );
-
-        return switch (answer) {
-            case JOptionPane.YES_OPTION -> save();
-            case JOptionPane.NO_OPTION -> true;
-            default -> false; // Cancel, Esc or the dialog's close button
-        };
-    }
-
-    // A failed save keeps the editor open, so the edits are not lost.
-    private boolean save() {
-        try {
-            editor.saveProject();
-            return true;
-        } catch (SceneFormatException e) {
-            ErrorDialogs.show(frame, "Scene format error, cannot save project", e);
-        } catch (IOException e) {
-            ErrorDialogs.show(frame, "I/O error, cannot save project", e);
-        }
-        return false;
     }
 
     private Vec3 spawnPoint() {
@@ -184,7 +150,7 @@ public class MainWindow {
     }
 
     private void updateTitle() {
-        String title = editor.currentProjectFile()
+        String title = editor.currentSceneFile()
             .map(file -> file.getFileName() + " - " + APP_TITLE)
             .unwrapOr(APP_TITLE);
 
@@ -248,14 +214,20 @@ public class MainWindow {
         frame.setLayout(new BorderLayout());
     }
 
-    // The workspace on the left, the inspector on the right
+    // The workspace on the left, the outliner above the inspector on the right
     private JSplitPane createLayout() {
+        JSplitPane side = new JSplitPane(JSplitPane.VERTICAL_SPLIT, outliner, inspector);
+        side.setResizeWeight(OUTLINER_WEIGHT);
+        side.setContinuousLayout(false);
+        side.setMinimumSize(new Dimension(INSPECTOR_MIN_WIDTH, 0));
+        SwingUtilities.invokeLater(() -> side.setDividerLocation(OUTLINER_WEIGHT));
+
         JSplitPane layout = new JSplitPane(
             JSplitPane.HORIZONTAL_SPLIT,
             createWorkspace(),
-            inspector
+            side
         );
-        inspectorPanel = new CollapsiblePanel(layout, inspector);
+        inspectorPanel = new CollapsiblePanel(layout, side);
         layout.setResizeWeight(1.0);
         layout.setContinuousLayout(false);
         SwingUtilities.invokeLater(() -> {
@@ -288,7 +260,7 @@ public class MainWindow {
     private void setupMenuBar() {
         menuBar.addMenu(new FileMenu(frame, editor, assetExplorer::refresh));
         menuBar.addMenu(new ProjectMenu(frame, editor));
-        menuBar.addMenu(new EditMenu(frame, editor, this::spawnPoint, Maybe.ofNullable(editorView)));
+        menuBar.addMenu(new EditMenu(frame, editor, this::spawnPoint, Maybe.ofNullable(editorView), navigator));
         menuBar.addMenu(new ViewMenu(
             frame,
             editor,

@@ -17,6 +17,7 @@ import org.xast.kebab.math.Vec3;
 import org.xast.kebab.render.GizmoMode;
 import org.xast.kebab.scene.model.GreyboxShape;
 import org.xast.kebab.ui.EditorView;
+import org.xast.kebab.ui.SceneNavigator;
 import org.xast.kebab.ui.menu.generic.Menu;
 import org.xast.kebab.ui.menu.generic.MenuItem;
 import org.xast.kebab.ui.menu.generic.RadioItem;
@@ -35,12 +36,14 @@ public class EditMenu extends Menu {
     /**
      * @param spawnPoint where new objects are placed, usually what the viewport camera looks at
      * @param view       the viewport whose gizmo the tool items switch; none when it is unavailable
+     * @param navigator  opens the scene a selected prefab reference points at
      */
     public EditMenu(
         JFrame frame, 
         Editor editor, 
         Supplier<Vec3> spawnPoint, 
-        Maybe<EditorView> view
+        Maybe<EditorView> view,
+        SceneNavigator navigator
     ) {
         super("Edit");
 
@@ -90,6 +93,8 @@ public class EditMenu extends Menu {
             importModelItem(frame, editor, spawnPoint),
             new SeparatorItem(),
             editObjectItem(frame, editor),
+            openPrefabItem(frame, editor, navigator),
+            frameSelectedItem(view),
             spawnItem(
                 frame,
                 editor,
@@ -164,6 +169,27 @@ public class EditMenu extends Menu {
         );
 
         return spawnItem(frame, editor, "Edit selected object...", Maybe.some("control E"), editObject);
+    }
+
+    private static SingleItem openPrefabItem(JFrame frame, Editor editor, SceneNavigator navigator) {
+        Runnable openPrefab = () -> editor.selection().primary().ifSomeOrElse(
+            navigator::openPrefab,
+            () -> JOptionPane.showMessageDialog(
+                frame,
+                "Select an object with a Prefab Reference first.",
+                "Open prefab",
+                JOptionPane.INFORMATION_MESSAGE
+            )
+        );
+
+        return spawnItem(frame, editor, "Open prefab", Maybe.some("control shift O"), openPrefab);
+    }
+
+    // F is handled by the viewport and the outliner, so typing an F in a text field never moves the camera
+    private static SingleItem frameSelectedItem(Maybe<EditorView> view) {
+        SingleItem item = new SingleItem("Frame selected  (F)", Maybe.none(), () -> view.ifSome(EditorView::frameSelection));
+        item.setEnabled(view.isSome());
+        return item;
     }
 
     private static void deleteSelected(JFrame frame, Editor editor) {

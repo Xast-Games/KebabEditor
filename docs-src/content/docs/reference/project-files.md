@@ -5,7 +5,7 @@ weight = 30
 template = "docs/page.html"
 
 [extra]
-lead = 'The scene file, archetypes.json and kebab-project.json.'
+lead = 'kebab-project.json, the scene file and archetypes.json.'
 toc = true
 top = false
 +++
@@ -33,7 +33,7 @@ A greybox is stored as `extras.kebab.greybox` with a `shape`, a `size` and a `co
 
 ## archetypes.json
 
-Your own archetype definitions, next to the scene. Each has an id, a display name, an optional icon, a `single` flag and typed parameters with defaults.
+Your own archetype definitions, next to `kebab-project.json` and shared by all scenes and prefabs of the project. A project without `kebab-project.json` keeps it next to its scene. Each has an id, a display name, an optional icon, a `single` flag and typed parameters with defaults.
 
 ## kebab-project.json
 
@@ -42,6 +42,6 @@ Your own archetype definitions, next to the scene. Each has an id, a display nam
 | `version` | Always `1` |
 | `assetRoot` | The explorer root, relative to the folder containing the file |
 | `assetFolders` | Folders shown under the root, relative to `assetRoot` |
-| `scenes` | Scene files that open as editable scenes, relative to `assetRoot` |
+| `scenes` | Scene files that open as editable scenes, relative to `assetRoot`. The first existing one opens with the project |
 
-All paths must stay inside the project.
+All paths must stay inside the project. `kebab-project.json` is the file you open with **File > Open project**.

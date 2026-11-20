@@ -97,7 +97,7 @@ final class ArchetypeSection extends InspectorSection {
     private JPanel paramRow(ArchetypeInstance instance, String name, ParamSpec spec) {
         ParamValueEditor control = new ParamValueEditor(KebabStyle.getCurrent(), validation, editor::sceneNodes);
         control.setName("param." + name);
-        control.setPathBase(() -> editor.currentProjectFile().map(file -> file.toAbsolutePath().getParent()));
+        control.setPathBase(() -> editor.currentSceneFile().map(file -> file.toAbsolutePath().getParent()));
         control.addCommitListener(() -> commit(instance, name, control));
         controls.put(name, control);
 

@@ -37,6 +37,18 @@ public class Camera {
         position.addLocal(delta);
     }
 
+    /**
+     * Keeps the view direction and backs the camera off until a sphere fills about
+     * the view, whatever the window's shape.
+     */
+    public void frame(Vec3 center, float radius, float aspect) {
+        float halfY = fovY / 2;
+        float halfX = (float) Math.atan(Math.tan(halfY) * aspect);
+        float half = Math.min(halfY, halfX);
+        float distance = Math.max(radius / (float) Math.sin(half), near * 4);
+        position.set(center.sub(forward().mulLocal(distance)));
+    }
+
     public Vec3 forward() {
         float cosPitch = (float) Math.cos(pitch);
         return new Vec3(

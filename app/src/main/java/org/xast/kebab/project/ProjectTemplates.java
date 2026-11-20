@@ -6,9 +6,14 @@ public class ProjectTemplates {
     
     public static final String ARCHETYPES_FILE = "archetypes.json";
 
-    // One archetypes file is shared by all scenes in the same folder
-    public static Path archetypesFileFor(Path scene) {
-        return scene.toAbsolutePath().resolveSibling(ARCHETYPES_FILE);
+    /**
+     * One archetypes file serves the whole project, so its scenes and the prefabs they
+     * reference resolve the same archetypes, whatever folder they are in.
+     *
+     * @param projectFile the kebab-project.json, or the scene of a project without one
+     */
+    public static Path archetypesFileFor(Path projectFile) {
+        return projectFile.toAbsolutePath().resolveSibling(ARCHETYPES_FILE);
     }
 
     public static final String MINIMAL_GLTF = """

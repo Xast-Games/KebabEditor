@@ -51,7 +51,7 @@ public class AssetScopeDialog extends JDialog {
         super(owner, "Asset folders", true);
         this.editor = editor;
         ProjectAssets assets = editor.projectAssets().unwrap();
-        scene = editor.currentProjectFile().unwrap().toAbsolutePath().normalize();
+        scene = editor.currentSceneFile().unwrap().toAbsolutePath().normalize();
         originalRoot = assets.root();
         root = originalRoot;
         folders.addAll(assets.folders());

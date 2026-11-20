@@ -62,7 +62,9 @@ class ProjectConfigStoreTest {
     @Test void creationDoesNotOverwriteConfigSceneOrArchetypes() throws Exception {
         var writer = new FileProjectWriter(new org.xast.kebab.scene.io.GltfSceneWriter(new ObjectMapper()), new ObjectMapper());
         Files.writeString(dir.resolve("archetypes.json"), "KEEP");
-        Path scene = writer.createProject(dir, "level");
+        Path project = writer.createProject(dir, "level");
+        Path scene = dir.resolve("level.gltf");
+        assertEquals(dir.resolve(ProjectConfigStore.FILE_NAME), project);
         assertTrue(Files.isDirectory(dir.resolve("assets")));
         assertTrue(store.loadForScene(scene).isScene(scene));
         String originalConfig = Files.readString(dir.resolve(ProjectConfigStore.FILE_NAME));

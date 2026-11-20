@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import org.xast.kebab.archetype.ArchetypeCatalog;
 import org.xast.kebab.archetype.definition.ArchetypeRegistry;
 import org.xast.kebab.archetype.definition.ArchetypeRegistryJson;
+import org.xast.kebab.logging.LogService;
 import org.xast.kebab.scene.error.SceneException;
 import org.xast.kebab.scene.io.SceneReader;
 import org.xast.kebab.scene.model.Scene;
@@ -20,7 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 
-// A project keeps its scene-file entry point, extended by optional kebab-project.json scope.
+// A project opens from its kebab-project.json, or from a bare scene file for a project without one.
 @RequiredArgsConstructor
 public class FileProjectLoader implements ProjectLoader {
 
@@ -29,10 +30,15 @@ public class FileProjectLoader implements ProjectLoader {
     private final ModelExtractor modelExtractor;
 
     @Override
-    public ProjectRepository load(Path file) throws SceneException, IOException {
-        ProjectAssets assets = new ProjectConfigStore(mapper).loadForScene(file);
-        Path registryPath = ProjectTemplates.archetypesFileFor(file);
-        ArchetypeRegistry registry = loadRegistry(registryPath);
+    public SceneScope scopeFor(Path file) throws IOException {
+        return new ProjectConfigStore(mapper).scopeFor(file);
+    }
+
+    @Override
+    public ProjectRepository load(SceneScope scope) throws SceneException, IOException {
+        Path file = scope.scene();
+        ProjectAssets assets = scope.assets();
+        ArchetypeRegistry registry = loadRegistry(registryPath(scope));
         ArchetypeCatalog catalog = new ArchetypeCatalog(registry);
 
         Scene scene = sceneReader.read(file, catalog);
@@ -43,7 +49,19 @@ public class FileProjectLoader implements ProjectLoader {
 
         PrefabResolver prefabResolver = new CachingPrefabResolver(sceneReader, catalog, projectRoot);
 
-        return new ProjectRepository(file, scene, catalog, modelResolver, prefabResolver, assets);
+        return new ProjectRepository(file, scene, catalog, modelResolver, prefabResolver, assets, scope.projectFile());
+    }
+
+    // Projects made before archetypes moved to the project folder kept them next to the scene.
+    // That file is read until the next save writes the project's own.
+    private static Path registryPath(SceneScope scope) {
+        Path projectRegistry = ProjectTemplates.archetypesFileFor(scope.projectFile());
+        Path sceneRegistry = scope.scene().resolveSibling(ProjectTemplates.ARCHETYPES_FILE);
+        if (!Files.exists(projectRegistry) && Files.isRegularFile(sceneRegistry)) {
+            LogService.get().info("Using " + sceneRegistry + " for archetypes; saving moves them to " + projectRegistry);
+            return sceneRegistry;
+        }
+        return projectRegistry;
     }
 
     // A missing registry is just an empty one; 

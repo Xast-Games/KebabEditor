@@ -29,14 +29,42 @@ public final class ProjectConfigStore {
 
     private record Located(Path directory, ProjectConfig config, ProjectAssets assets) {}
 
-    public ProjectAssets loadForScene(Path scene) throws IOException {
-        Path file = scene.toAbsolutePath().normalize();
-        Maybe<Located> located = locate(file);
-        if (located.isSome()) {
-            return located.unwrap().assets();
+    public static boolean isProjectFile(Path file) {
+        Path name = file.getFileName();
+        return name != null && name.toString().equals(FILE_NAME);
+    }
+
+    /**
+     * What opening a file means: a kebab-project.json opens its first registered scene,
+     * and a scene file opens inside the project that registers it.
+     */
+    public SceneScope scopeFor(Path file) throws IOException {
+        Path path = file.toAbsolutePath().normalize();
+        if (isProjectFile(path)) {
+            ProjectAssets assets = resolve(path.getParent(), read(path));
+            return new SceneScope(mainScene(assets, path), path, assets);
         }
-        Path dir = file.getParent();
-        return new ProjectAssets(dir, List.of(dir), List.of(file));
+        Maybe<Located> located = locate(path);
+        if (located.isSome()) {
+            Located found = located.unwrap();
+            return new SceneScope(path, found.directory().resolve(FILE_NAME), found.assets());
+        }
+        Path dir = path.getParent();
+        return new SceneScope(path, path, new ProjectAssets(dir, List.of(dir), List.of(path)));
+    }
+
+    // The first registered scene that exists is the one a project opens with
+    private static Path mainScene(ProjectAssets assets, Path projectFile) throws IOException {
+        for (Path scene : assets.scenes()) {
+            if (Files.isRegularFile(scene)) {
+                return scene;
+            }
+        }
+        throw new IOException("The project registers no existing scene: " + projectFile);
+    }
+
+    public ProjectAssets loadForScene(Path scene) throws IOException {
+        return scopeFor(scene).assets();
     }
 
     // The config lives in the asset root when it moves; a deeper config that would shadow the new one is removed
@@ -139,28 +167,35 @@ public final class ProjectConfigStore {
     }
 
     // An existing config is never replaced: it has to register the new scene itself
-    public void prepareNewScene(Path scene) throws IOException {
-        Path dir = scene.toAbsolutePath().normalize().getParent();
+    public void prepareNewScene(Path projectDir, Path scene) throws IOException {
+        Path dir = projectDir.toAbsolutePath().normalize();
+        Path file = scene.toAbsolutePath().normalize();
+        ProjectAssets.requireInside(dir, file);
         Path configFile = dir.resolve(FILE_NAME);
         Path assets = ProjectAssets.resolveInside(dir, ASSETS_DIR);
         requireDirectoryIfPresent(assets, ASSETS_DIR);
         if (Files.exists(configFile, LinkOption.NOFOLLOW_LINKS)) {
-            if (!resolve(dir, read(configFile)).isScene(scene)) {
-                throw new IOException("Register " + scene.getFileName() + " in the existing " + FILE_NAME
+            if (!resolve(dir, read(configFile)).isScene(file)) {
+                throw new IOException("Register " + file.getFileName() + " in the existing " + FILE_NAME
                     + " before creating it");
             }
             Files.createDirectories(assets);
             return;
         }
-        ProjectConfig config = new ProjectConfig(
-            VERSION,
-            ".",
-            List.of(ASSETS_DIR, ModelImporter.MODELS_DIR),
-            List.of(scene.getFileName().toString())
-        );
+        // A scenes folder is browsable as a whole, so the scenes and prefabs added to it later show up
+        List<String> folders = new ArrayList<>(List.of(ASSETS_DIR, ModelImporter.MODELS_DIR));
+        Path sceneDir = file.getParent();
+        if (!sceneDir.equals(dir)) {
+            folders.add(relative(dir, sceneDir));
+        }
+        ProjectConfig config = new ProjectConfig(VERSION, ".", folders, List.of(relative(dir, file)));
         Files.createDirectories(assets);
         byte[] json = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(config);
         Files.write(configFile, json, StandardOpenOption.CREATE_NEW);
+    }
+
+    private static String relative(Path root, Path path) {
+        return root.relativize(path).toString().replace('\\', '/');
     }
 
     private static void requireDirectoryIfPresent(Path path, String what) throws IOException {

@@ -19,7 +19,12 @@ import org.xast.kebab.ui.EditorView;
 public class FreeFlightNavigation implements NavigationMode {
  
     private static final double LOOK_DEGREES_PER_PIXEL = 0.2;
-    private static final float WHEEL_STEP = 1.5f;
+    public static final double MIN_SPEED = 1;
+    public static final double MAX_SPEED = 500;
+    private static final double DEFAULT_SPEED = 10;
+    private static final double SHIFT_FACTOR = 3;
+    // Each wheel notch scales the speed, so 1 to 500 m/s is about 30 notches
+    private static final double WHEEL_FACTOR = 1.25;
     // Ctrl doubles as "fly down" and the shortcut modifier: it only flies once held
     // alone this long, so Ctrl+B, Ctrl+S, ... don't nudge the camera.
     private static final long CTRL_ALONE_NANOS = 250_000_000L;
@@ -28,6 +33,7 @@ public class FreeFlightNavigation implements NavigationMode {
     private final Set<Integer> keys = new HashSet<>();
     private int lastMouseX, lastMouseY;
     private boolean dragging = false;
+    private double speed = DEFAULT_SPEED;
  
     private long ctrlPressedAt;
     private boolean ctrlUsedForShortcut;
@@ -98,9 +104,9 @@ public class FreeFlightNavigation implements NavigationMode {
         @Override
         public void mouseWheelMoved(MouseWheelEvent e) {
             if (e.isConsumed()) return; // e.g. the placement tool is using the wheel
-            // dolly along the view direction; wheel towards the user moves back
-            Camera cam = view.getCamera();
-            cam.move(cam.forward().mulLocal((float) -e.getPreciseWheelRotation() * WHEEL_STEP));
+            // wheel away from the user flies faster
+            setSpeed(speed * Math.pow(WHEEL_FACTOR, -e.getPreciseWheelRotation()));
+            view.showNotice(String.format("Fly speed: %.0f m/s", speed));
         }
     };
  
@@ -126,6 +132,15 @@ public class FreeFlightNavigation implements NavigationMode {
         view = null;
     }
  
+    /** Meters per second, before Shift triples it. */
+    public double getSpeed() {
+        return speed;
+    }
+
+    public void setSpeed(double metersPerSecond) {
+        speed = Math.clamp(metersPerSecond, MIN_SPEED, MAX_SPEED);
+    }
+
     private boolean keyDown(int... codes) {
         for (int c : codes) if (keys.contains(c)) return true;
         return false;
@@ -141,8 +156,8 @@ public class FreeFlightNavigation implements NavigationMode {
     public void update(double deltaSeconds) {
         if (view == null) return;
         Camera cam = view.getCamera();
-        double moveSpeed = 10.0; // units per second
-        if (keys.contains(KeyEvent.VK_SHIFT)) moveSpeed *= 3;
+        double moveSpeed = speed;
+        if (keys.contains(KeyEvent.VK_SHIFT)) moveSpeed *= SHIFT_FACTOR;
  
         float fwdInput = 0, rightInput = 0, upInput = 0;
         // W moves forward along camera forward vector, S moves backward
