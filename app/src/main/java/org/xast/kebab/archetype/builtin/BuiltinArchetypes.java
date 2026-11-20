@@ -19,6 +19,7 @@ public final class BuiltinArchetypes {
     public static final String COLLIDER_BOX = "collider_box";
     public static final String COLLIDER_SPHERE = "collider_sphere";
     public static final String TRIGGER = "trigger";
+    public static final String NO_VOLUME = "no_volume";
     public static final String POINT_LIGHT = "point_light";
     public static final String DIR_LIGHT = "dir_light";
     public static final String SPOT_LIGHT = "spot_light";
@@ -52,6 +53,10 @@ public final class BuiltinArchetypes {
         new ArchetypeDefinition(TRIGGER)
             .withDisplayName("Trigger")
             .withParam("size", ParamType.VEC3, Vec3.one()),
+
+        new ArchetypeDefinition(NO_VOLUME)
+            .withDisplayName("No Volume")
+            .withSingle(),
 
         new ArchetypeDefinition(POINT_LIGHT)
             .withDisplayName("Point Light")

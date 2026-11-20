@@ -18,7 +18,7 @@ import org.xast.kebab.utils.Maybe;
 
 /**
  * A snapshot of a scene's physics and player starts, taken when a playtest starts.
- * Greyboxes are solid unless they carry a trigger; archetypes add their behavior's {@code physicsVolumes}.
+ * Greyboxes are solid unless they carry a trigger or no_volume; archetypes add their behavior's {@code physicsVolumes}.
  */
 public record PlaytestLevel(PhysicsWorld world, List<PlayerStart> starts) {
 
@@ -48,7 +48,7 @@ public record PlaytestLevel(PhysicsWorld world, List<PlayerStart> starts) {
     public static List<PhysicsVolume> volumesOf(SceneNode node, BehaviorContext context) {
         List<PhysicsVolume> volumes = new ArrayList<>();
 
-        if (!isTriggerZone(node)) {
+        if (isSolidGreybox(node)) {
             Greybox.of(node).ifSome(greybox -> volumes.add(greyboxVolume(node, greybox)));
         }
 
@@ -81,12 +81,9 @@ public record PlaytestLevel(PhysicsWorld world, List<PlayerStart> starts) {
         return world.solids().isEmpty();
     }
 
-    // A greybox that carries a trigger is a zone to walk into, not a wall
-    private static boolean isTriggerZone(SceneNode node) {
-        return node.getArchetypes().stream().anyMatch(archetype ->
-            archetype instanceof ArchetypeInstance instance
-                && instance.archetypeId().equals(BuiltinArchetypes.TRIGGER)
-        );
+    // A greybox that carries a trigger is a zone to walk into, and one with no volume is not there at all
+    private static boolean isSolidGreybox(SceneNode node) {
+        return !node.hasArchetype(BuiltinArchetypes.TRIGGER) && !node.hasArchetype(BuiltinArchetypes.NO_VOLUME);
     }
 
     // Placed like GreyboxRenderer draws it: the unit shape stretched to its size on top of the node.

@@ -14,6 +14,7 @@ import org.xast.kebab.playtest.PlaytestLevel;
 import org.xast.kebab.playtest.PlaytestSession;
 import org.xast.kebab.playtest.PlaytestSummary;
 import org.xast.kebab.scene.model.Scene;
+import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.utils.Maybe;
 
 /**
@@ -26,21 +27,37 @@ public class PlaytestController {
     private final PlaytestViewport viewport;
     private final UserNotice notice;
     private final LogService log;
+    private final StartChooser chooser;
     private final ReachabilityCheck reachability;
     private final List<Runnable> listeners = new ArrayList<>();
 
     private Maybe<PlaytestSession> session = Maybe.none();
     private Maybe<Scene> playedScene = Maybe.none();
     private Maybe<Scene> raysScene = Maybe.none();
+    // Offered first next time, so running the same start again is one key press
+    private Maybe<SceneNode> lastStart = Maybe.none();
+
+    /** Takes the selected player start, or the first one, without asking. */
+    public PlaytestController(Editor editor, PlaytestViewport viewport, UserNotice notice, LogService log) {
+        this(editor, viewport, notice, StartChooser.SUGGESTED, log);
+    }
 
     /**
-     * @param notice tells the user why a playtest cannot start
-     * @param log    where starts, stops and the run's events are written
+     * @param notice  tells the user why a playtest cannot start
+     * @param chooser asks which player start to use when the level has several
+     * @param log     where starts, stops and the run's events are written
      */
-    public PlaytestController(Editor editor, PlaytestViewport viewport, UserNotice notice, LogService log) {
+    public PlaytestController(
+        Editor editor,
+        PlaytestViewport viewport,
+        UserNotice notice,
+        StartChooser chooser,
+        LogService log
+    ) {
         this.editor = editor;
         this.viewport = viewport;
         this.notice = notice;
+        this.chooser = chooser;
         this.log = log;
         this.reachability = new ReachabilityCheck(editor, viewport, log);
 
@@ -107,8 +124,7 @@ public class PlaytestController {
             return;
         }
 
-        Maybe<PlayerStart> chosen = chooseStart(level);
-        if (chosen.isNone()) {
+        if (level.starts().isEmpty()) {
             log.warn("Playtest not started: the level has no player start");
             notice.show(
                 "No player start",
@@ -117,7 +133,13 @@ public class PlaytestController {
             return;
         }
 
+        Maybe<PlayerStart> chosen = chooseStart(level);
+        if (chosen.isNone()) {
+            return; // the user cancelled the choice
+        }
+
         PlayerStart start = chosen.unwrap();
+        lastStart = Maybe.some(start.node());
         if (start.settings().isNone()) {
             log.warn("Playtest not started: player start '" + start.name() + "' is invalid");
             notice.show(
@@ -186,18 +208,16 @@ public class PlaytestController {
         stop();
     }
 
-    // A selected player start wins, so a designer can test from any of several.
+    // With several starts the user picks one; the selected start, else the last one played, is offered first.
     private Maybe<PlayerStart> chooseStart(PlaytestLevel level) {
-        Maybe<PlayerStart> chosen = level.startFor(editor.selection().primary());
+        boolean startSelected = editor.selection().primary()
+            .isSomeAnd(node -> level.starts().stream().anyMatch(start -> start.node() == node));
+        PlayerStart suggested = level.startFor(startSelected ? editor.selection().primary() : lastStart).unwrap();
 
-        chosen.ifSome(start -> {
-            boolean selected = editor.selection().primary().isSomeAnd(node -> node == start.node());
-            if (level.starts().size() > 1 && !selected) {
-                log.info(level.starts().size() + " player starts in the level, using '" + start.name()
-                    + "'. Select another one to start there.");
-            }
-        });
-        return chosen;
+        if (level.starts().size() == 1) {
+            return Maybe.some(suggested);
+        }
+        return chooser.choose(level.starts(), suggested);
     }
 
     private boolean sameScene(Maybe<Scene> scene) {

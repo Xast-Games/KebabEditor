@@ -17,6 +17,7 @@ top = false
 | `collider_box` | no | `size` (1, 1, 1) |
 | `collider_sphere` | no | `radius` (0.5) |
 | `trigger` | no | `size` (1, 1, 1) |
+| `no_volume` | yes | none |
 | `point_light` | yes | `color` (white), `intensity` (1000), `range` (10), `shadows` (false) |
 | `dir_light` | yes | `color` (white), `intensity` (1), `shadows` (false) |
 | `spot_light` | yes | `color` (white), `intensity` (1000), `range` (10), `inner_angle` (25), `outer_angle` (35), `shadows` (false) |
@@ -28,3 +29,4 @@ top = false
 - `model_ref` draws a glTF model in place of the object. `prefab_ref` draws a whole other scene file, and prefabs that contain themselves are rejected.
 - Missing models and textures are shown as a visible placeholder.
 - `collider_box` and `trigger` are sized in the object's local space and follow its transform.
+- `no_volume` hides the object's greybox in the viewport and makes it not solid in a playtest. Unlike a trigger it reports nothing. Turn on **View > Render No Volume** to see such greyboxes as wireframes and click them; a selected one is always outlined.

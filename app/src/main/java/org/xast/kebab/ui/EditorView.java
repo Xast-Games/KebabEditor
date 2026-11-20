@@ -85,8 +85,10 @@ public class EditorView extends GLJPanel implements GLEventListener, GizmoIntera
     private final GizmoRenderer gizmo = new GizmoRenderer();
     private final ArchetypeIcons icons = new ArchetypeIcons();
     private volatile boolean showIcons = true;
+    private volatile boolean renderNoVolume = true;
     private final GizmoInteraction gizmoInteraction;
-    private final Picker picker = new Picker();
+    // No-volume greyboxes can be clicked only while they are drawn.
+    private final Picker picker = new Picker(() -> renderNoVolume);
     private final PlacementTool placement;
     private final List<Runnable> gizmoModeListeners = new ArrayList<>();
     private final List<RenderPass> passes = new ArrayList<>();
@@ -119,7 +121,7 @@ public class EditorView extends GLJPanel implements GLEventListener, GizmoIntera
         if (interactive) {
             // Order matters: opaque scene geometry, then the translucent grid and placement
             // ghost over it, then the gizmo, which clears depth to stay on top.
-            passes.add(new GreyboxRenderer(drawableObjects));
+            passes.add(new GreyboxRenderer(drawableObjects, () -> renderNoVolume));
             passes.add(new ArchetypeRenderer(drawableObjects));
             passes.add(new PathRayRenderer(drawableObjects, playtest.pathRays()));
             passes.add(new ReachabilityRenderer(drawableObjects, playtest.reachabilityMarks()));
@@ -446,6 +448,15 @@ public class EditorView extends GLJPanel implements GLEventListener, GizmoIntera
 
     public void setShowIcons(boolean showIcons) {
         this.showIcons = showIcons;
+    }
+
+    /** Whether greyboxes with the No Volume archetype are drawn as wireframes (and pickable) or hidden. */
+    public boolean isRenderNoVolume() {
+        return renderNoVolume;
+    }
+
+    public void setRenderNoVolume(boolean renderNoVolume) {
+        this.renderNoVolume = renderNoVolume;
     }
 
     private void activate(SceneNode node) {

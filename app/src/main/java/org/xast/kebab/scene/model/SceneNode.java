@@ -75,6 +75,10 @@ public class SceneNode {
         archetypes.remove(archetype);
     }
 
+    public boolean hasArchetype(String archetypeId) {
+        return archetypes.stream().anyMatch(archetype -> archetype.archetypeId().equals(archetypeId));
+    }
+
     public Mat4 worldMatrix() {
         Mat4 local = transform.toMat4();
 

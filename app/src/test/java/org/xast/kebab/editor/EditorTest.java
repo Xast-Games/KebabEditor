@@ -136,6 +136,33 @@ class EditorTest {
     }
 
     @Test
+    void unsavedChangesFollowEditsSavesAndUndo() throws Exception {
+        assertFalse(editor.hasUnsavedChanges(), "a freshly opened scene");
+
+        SceneNode box = editor.spawnGreybox(GreyboxShape.BOX, Vec3.zero());
+        assertTrue(editor.hasUnsavedChanges());
+
+        editor.saveProject();
+        assertFalse(editor.hasUnsavedChanges());
+
+        editor.selection().clear();
+        assertFalse(editor.hasUnsavedChanges(), "selecting is not an edit");
+
+        editor.renameNode(box, "crate");
+        assertTrue(editor.hasUnsavedChanges());
+        editor.undo();
+        assertFalse(editor.hasUnsavedChanges(), "undone back to the saved scene");
+        editor.undo();
+        assertTrue(editor.hasUnsavedChanges(), "undone past the save");
+
+        editor.openProject(editor.currentProjectFile().unwrap());
+        assertFalse(editor.hasUnsavedChanges(), "reopened from disk");
+
+        editor.closeProject();
+        assertFalse(editor.hasUnsavedChanges(), "no scene open");
+    }
+
+    @Test
     void undoRemovesASpawnedObjectAndRedoBringsItBack() {
         SceneNode box = editor.spawnGreybox(GreyboxShape.BOX, Vec3.zero());
 

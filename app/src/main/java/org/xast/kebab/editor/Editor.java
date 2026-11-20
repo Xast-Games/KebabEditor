@@ -46,6 +46,8 @@ public class Editor {
     private final List<Runnable> sceneListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
     private Scene observedScene;
     private final Runnable structureListener = this::sceneChanged;
+    // The scene as it is on disk: taken when a scene is opened and after each save
+    private Maybe<SceneSnapshot> savedState = Maybe.none();
 
     public void addSceneListener(Runnable listener) { sceneListeners.add(listener); }
     public void removeSceneListener(Runnable listener) { sceneListeners.remove(listener); }
@@ -121,11 +123,13 @@ public class Editor {
                 observedScene = next;
                 if (next != null) next.addListener(structureListener);
                 selection.clear();
+                markSaved();
             }
             sceneChanged();
         });
         observedScene = scene().unwrapOr(null);
         if (observedScene != null) observedScene.addListener(structureListener);
+        markSaved();
         // The history goes with the scene, and a changed archetype registry can make old steps unrestorable.
         projectManager.addListener(history::clear);
         // Undo and redo restore nodes in place, so the inspector must hear about them too.
@@ -146,10 +150,26 @@ public class Editor {
 
     public void saveScene() throws SceneFormatException, IOException {
         projectManager.saveScene();
+        markSaved();
     }
 
     public void saveProject() throws SceneFormatException, IOException {
         projectManager.save();
+        markSaved();
+    }
+
+    /**
+     * Whether the open scene differs from what was last opened or saved. Undoing
+     * back to the saved state counts as no change; the selection is not an edit.
+     */
+    public boolean hasUnsavedChanges() {
+        return scene().isSomeAnd(scene ->
+            savedState.isNone() || !savedState.unwrap().sameScene(SceneSnapshot.capture(scene, selection))
+        );
+    }
+
+    private void markSaved() {
+        savedState = scene().map(scene -> SceneSnapshot.capture(scene, selection));
     }
 
     public Maybe<Path> currentProjectFile() {

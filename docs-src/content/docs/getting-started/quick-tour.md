@@ -32,4 +32,4 @@ Press `F5`. Walk with `W` `A` `S` `D`, jump with `Space`, look around by draggin
 
 ## 6. Save
 
-Press `Ctrl+S`.
+Press `Ctrl+S`. If you exit with unsaved changes, the editor asks whether to save them first.

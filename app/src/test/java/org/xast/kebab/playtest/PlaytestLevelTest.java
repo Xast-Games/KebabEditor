@@ -65,6 +65,21 @@ class PlaytestLevelTest {
         assertTrue(level.starts().isEmpty());
     }
 
+    @Test
+    void greyboxWithNoVolumeIsNeitherSolidNorTrigger() throws Exception {
+        Scene scene = new Scene();
+        scene.add(greybox("floor", GreyboxShape.BOX, new Vec3(0, -0.5f, 0), new Vec3(10, 1, 10)));
+
+        SceneNode marker = greybox("marker", GreyboxShape.BOX, new Vec3(0, 1, 0), Vec3.one());
+        marker.addArchetype(instanceOf(BuiltinArchetypes.NO_VOLUME));
+        scene.add(marker);
+
+        PlaytestLevel level = PlaytestLevel.build(scene, PhysicsTestSupport.NO_ASSETS);
+
+        assertEquals(List.of("floor"), level.world().solids().stream().map(c -> c.name()).toList());
+        assertTrue(level.world().triggers().isEmpty());
+    }
+
     private static SceneNode playerStart(String name) {
         SceneNode node = node(name, Vec3.zero());
         node.addArchetype(instanceOf(BuiltinArchetypes.PLAYER_START));

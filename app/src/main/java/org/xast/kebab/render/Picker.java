@@ -3,7 +3,9 @@ package org.xast.kebab.render;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.function.BooleanSupplier;
 
+import org.xast.kebab.archetype.builtin.BuiltinArchetypes;
 import org.xast.kebab.behavior.BehaviorContext;
 import org.xast.kebab.behavior.Drawable;
 import org.xast.kebab.math.Aabb;
@@ -19,7 +21,9 @@ import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.utils.Maybe;
 
 /**
- * Finds an object a ray hits first. Each candidate is tested in its own local space
+ * Finds an object a ray hits first. Each candidate is tested in its own local space.
+ * Greyboxes with the no_volume archetype are only hit while {@code pickNoVolume} says so,
+ * i.e. while they are drawn.
  */
 public final class Picker {
 
@@ -29,13 +33,23 @@ public final class Picker {
     // MeshData returns copies, so keep one per mesh while it is alive.
     private final Map<MeshData, float[]> positions = new WeakHashMap<>();
     private final Map<MeshData, int[]> indices = new WeakHashMap<>();
+    private final BooleanSupplier pickNoVolume;
+
+    public Picker() {
+        this(() -> false);
+    }
+
+    public Picker(BooleanSupplier pickNoVolume) {
+        this.pickNoVolume = pickNoVolume;
+    }
 
     public Maybe<PickHit> pick(Scene scene, Maybe<BehaviorContext> behaviors, Ray ray, boolean ground) {
         Nearest nearest = new Nearest();
+        boolean noVolume = pickNoVolume.getAsBoolean();
 
-        scene.traverse().forEach(node ->
-            Greybox.of(node).ifSome(greybox -> pickGreybox(node, greybox, ray, nearest))
-        );
+        scene.traverse()
+            .filter(node -> noVolume || !node.hasArchetype(BuiltinArchetypes.NO_VOLUME))
+            .forEach(node -> Greybox.of(node).ifSome(greybox -> pickGreybox(node, greybox, ray, nearest)));
 
         behaviors.ifSome(context -> SceneArchetypes.of(scene).forEach(entry -> {
             List<Drawable> solids = entry.behavior().drawableObjects(entry.node(), entry.archetype(), context).stream()

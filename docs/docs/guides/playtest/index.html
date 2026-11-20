@@ -335,13 +335,13 @@
         <h1>Playtest</h1>
         <p class="lead">A playtest runs a capsule actor through the level with simple physics.</p>
         <h2 id="starting">Starting</h2>
-<p>Press <code>F5</code>, use <strong>Playtest &gt; Run / stop level</strong>, or use the run button. <code>Esc</code> stops it. A playtest needs something solid to stand on and a <strong>Player Start</strong>. If several exist, the selected one is used, otherwise the first.</p>
+<p>Press <code>F5</code>, use <strong>Playtest &gt; Run / stop level</strong>, or use the run button. <code>Esc</code> stops it. A playtest needs something solid to stand on and a <strong>Player Start</strong>. If several exist, a dialog asks which one to start from. The selected Player Start is highlighted, otherwise the one played last; press <code>Enter</code> or <strong>Play</strong> to run it, or <code>Esc</code> to cancel.</p>
 <p>During a playtest the scene is read-only: editing, undo and the Inspector are disabled.</p>
 <h2 id="controls">Controls</h2>
 <p><code>W</code> <code>A</code> <code>S</code> <code>D</code> or the arrow keys run, <code>Space</code> jumps and dragging looks around.</p>
 <h2 id="what-is-solid">What is solid</h2>
 <ul>
-<li>Greyboxes are solid, except a greybox that carries a <strong>Trigger</strong>.</li>
+<li>Greyboxes are solid, except a greybox that carries a <strong>Trigger</strong> or <strong>No Volume</strong>.</li>
 <li>Box and sphere colliders are solid.</li>
 <li>Triggers are not solid. They report the actor entering them, and a trigger the actor is inside lights up green.</li>
 </ul>

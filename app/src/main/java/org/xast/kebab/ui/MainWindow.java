@@ -6,6 +6,7 @@ import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
 
 import javax.swing.Box;
 import javax.swing.JDialog;
@@ -24,6 +25,7 @@ import javax.swing.WindowConstants;
 import org.xast.kebab.editor.Editor;
 import org.xast.kebab.logging.LogService;
 import org.xast.kebab.math.Vec3;
+import org.xast.kebab.scene.error.SceneFormatException;
 import org.xast.kebab.ui.assets.AssetExplorerTab;
 import org.xast.kebab.ui.assets.AssetWindows;
 import org.xast.kebab.ui.logs.LogsTab;
@@ -38,6 +40,8 @@ import org.xast.kebab.ui.menu.generic.MenuButton;
 import org.xast.kebab.ui.navigation.FreeFlightNavigation;
 import org.xast.kebab.ui.object.ObjectDialog;
 import org.xast.kebab.ui.playtest.PlaytestController;
+import org.xast.kebab.ui.playtest.PlayerStartDialog;
+import org.xast.kebab.utils.ErrorDialogs;
 import org.xast.kebab.utils.KebabStyle;
 import org.xast.kebab.utils.LucideIcon;
 import org.xast.kebab.utils.Maybe;
@@ -83,15 +87,21 @@ public class MainWindow {
         assetWindows = new AssetWindows(frame, editor);
         assetExplorer = new AssetExplorerTab(editor, assetWindows.handler());
         inspector = new org.xast.kebab.ui.inspector.InspectorPane(editor);
+        // File > Exit and the window manager's close (Alt+F4, the title bar) both land here.
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent event) {
+                if (!confirmDiscardChanges()) {
+                    return;
+                }
                 playtest.ifSome(PlaytestController::stop);
                 inspector.close();
                 assetWindows.close();
                 if (editorView != null) {
                     editorView.close();
                 }
+                frame.dispose();
+                System.exit(0);
             }
         });
 
@@ -99,6 +109,49 @@ public class MainWindow {
 
         editor.addProjectListener(this::updateTitle);
         updateTitle();
+    }
+
+    /**
+     * Asks what to do with unsaved scene edits before they would be lost.
+     *
+     * @return true when it is fine to go on: nothing to save, saved, or the user chose to discard
+     */
+    private boolean confirmDiscardChanges() {
+        if (!editor.hasUnsavedChanges()) {
+            return true;
+        }
+
+        String scene = editor.currentProjectFile().map(file -> "'" + file.getFileName() + "'").unwrapOr("the scene");
+        Object[] options = { "Save", "Don't save", "Cancel" };
+        int answer = JOptionPane.showOptionDialog(
+            frame,
+            "Save changes to " + scene + " before exiting?\nUnsaved changes will be lost otherwise.",
+            "Unsaved changes",
+            JOptionPane.YES_NO_CANCEL_OPTION,
+            JOptionPane.WARNING_MESSAGE,
+            null,
+            options,
+            options[0]
+        );
+
+        return switch (answer) {
+            case JOptionPane.YES_OPTION -> save();
+            case JOptionPane.NO_OPTION -> true;
+            default -> false; // Cancel, Esc or the dialog's close button
+        };
+    }
+
+    // A failed save keeps the editor open, so the edits are not lost.
+    private boolean save() {
+        try {
+            editor.saveProject();
+            return true;
+        } catch (SceneFormatException e) {
+            ErrorDialogs.show(frame, "Scene format error, cannot save project", e);
+        } catch (IOException e) {
+            ErrorDialogs.show(frame, "I/O error, cannot save project", e);
+        }
+        return false;
     }
 
     private Vec3 spawnPoint() {
@@ -116,6 +169,7 @@ public class MainWindow {
                 editor,
                 editorView.getPlaytest(),
                 (title, message) -> JOptionPane.showMessageDialog(frame, message, title, JOptionPane.ERROR_MESSAGE),
+                PlayerStartDialog.chooser(frame),
                 LogService.get()
             ));
             return editorView;
@@ -185,7 +239,8 @@ public class MainWindow {
     private void setupFrame() {
         KebabStyle style = KebabStyle.getCurrent();
 
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        // The close listener exits, after asking about unsaved changes.
+        frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         frame.setSize(style.windowSize().width, style.windowSize().height);
         frame.setLocationRelativeTo(null);
         frame.setIconImage(style.favicon().getImage());

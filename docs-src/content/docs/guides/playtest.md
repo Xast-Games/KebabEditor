@@ -12,7 +12,7 @@ top = false
 
 ## Starting
 
-Press `F5`, use **Playtest > Run / stop level**, or use the run button. `Esc` stops it. A playtest needs something solid to stand on and a **Player Start**. If several exist, the selected one is used, otherwise the first.
+Press `F5`, use **Playtest > Run / stop level**, or use the run button. `Esc` stops it. A playtest needs something solid to stand on and a **Player Start**. If several exist, a dialog asks which one to start from. The selected Player Start is highlighted, otherwise the one played last; press `Enter` or **Play** to run it, or `Esc` to cancel.
 
 During a playtest the scene is read-only: editing, undo and the Inspector are disabled.
 
@@ -22,7 +22,7 @@ During a playtest the scene is read-only: editing, undo and the Inspector are di
 
 ## What is solid
 
-- Greyboxes are solid, except a greybox that carries a **Trigger**.
+- Greyboxes are solid, except a greybox that carries a **Trigger** or **No Volume**.
 - Box and sphere colliders are solid.
 - Triggers are not solid. They report the actor entering them, and a trigger the actor is inside lights up green.
 

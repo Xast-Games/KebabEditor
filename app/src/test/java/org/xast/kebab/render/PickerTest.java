@@ -102,6 +102,19 @@ class PickerTest {
     }
 
     @Test
+    void noVolumeGreyboxIsHitOnlyWhileItIsDrawn() throws Exception {
+        Scene scene = new Scene();
+        SceneNode floor = greybox(scene, GreyboxShape.BOX, new Vec3(0, 0, 0), Vec3.one());
+        SceneNode marker = greybox(scene, GreyboxShape.BOX, new Vec3(0, 3, 0), Vec3.one());
+        marker.addArchetype(new ArchetypeInstance(BuiltinArchetypes.find(BuiltinArchetypes.NO_VOLUME).unwrap()));
+
+        // Hidden: the ray passes through to what is below.
+        assertSame(floor, picker.pick(scene, Maybe.none(), down(0, 0), false).unwrap().node().unwrap());
+        // Drawn as a wireframe: it can be clicked.
+        assertSame(marker, new Picker(() -> true).pick(scene, Maybe.none(), down(0, 0), false).unwrap().node().unwrap());
+    }
+
+    @Test
     void groundIsHitOnlyWhenAsked() throws Exception {
         Scene scene = new Scene();
 

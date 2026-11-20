@@ -2,6 +2,7 @@ package org.xast.kebab.ui.playtest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
@@ -18,6 +19,7 @@ import org.xast.kebab.logging.LogLevel;
 import org.xast.kebab.logging.LogService;
 import org.xast.kebab.math.Vec3;
 import org.xast.kebab.playtest.ActorSettings;
+import org.xast.kebab.playtest.PlayerStart;
 import org.xast.kebab.playtest.PlaytestSession;
 import org.xast.kebab.project.FileProjectLoader;
 import org.xast.kebab.project.FileProjectWriter;
@@ -31,6 +33,7 @@ import org.xast.kebab.scene.model.GreyboxShape;
 import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.scene.resolve.CompositeModelExtractor;
 import org.xast.kebab.scene.resolve.GltfMeshExtractor;
+import org.xast.kebab.utils.Maybe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -151,6 +154,88 @@ class PlaytestControllerTest {
         controller.start();
 
         assertEquals(chosen, running().getStart().node());
+    }
+
+    // Remembers what it was offered and answers with the start at a given index, or cancels (-1).
+    private static final class RecordingChooser implements StartChooser {
+        int answer;
+        int asked;
+        List<PlayerStart> offered = List.of();
+        PlayerStart suggested;
+
+        @Override
+        public Maybe<PlayerStart> choose(List<PlayerStart> starts, PlayerStart suggested) {
+            asked++;
+            offered = starts;
+            this.suggested = suggested;
+            return answer < 0 ? Maybe.none() : Maybe.some(starts.get(answer));
+        }
+    }
+
+    private PlaytestController controllerAsking(RecordingChooser chooser) {
+        return new PlaytestController(editor, viewport, (title, message) -> notices.add(title), chooser, log);
+    }
+
+    @Test
+    void severalStartsAreOfferedAndTheChosenOneIsPlayed() throws Exception {
+        openProjectWithFloor();
+        SceneNode second = editor.spawnArchetype(BuiltinArchetypes.PLAYER_START, new Vec3(3, 0, 0));
+        editor.selection().clear();
+        RecordingChooser chooser = new RecordingChooser();
+        chooser.answer = 1;
+        PlaytestController asking = controllerAsking(chooser);
+
+        asking.start();
+
+        assertEquals(1, chooser.asked);
+        assertEquals(2, chooser.offered.size());
+        assertSame(chooser.offered.getFirst(), chooser.suggested, "nothing selected: the first is offered");
+        assertSame(second, running().getStart().node());
+    }
+
+    @Test
+    void theSelectedStartIsSuggestedAndTheLastPlayedOneAfterThat() throws Exception {
+        openProjectWithFloor();
+        SceneNode second = editor.spawnArchetype(BuiltinArchetypes.PLAYER_START, new Vec3(3, 0, 0));
+        RecordingChooser chooser = new RecordingChooser();
+        chooser.answer = 1;
+        PlaytestController asking = controllerAsking(chooser);
+
+        editor.selection().select(second);
+        asking.start();
+        assertSame(second, chooser.suggested.node());
+        asking.stop();
+
+        editor.selection().clear();
+        asking.start();
+        assertSame(second, chooser.suggested.node(), "the last start played is offered again");
+    }
+
+    @Test
+    void cancellingTheChoiceStartsNothing() throws Exception {
+        openProjectWithFloor();
+        editor.spawnArchetype(BuiltinArchetypes.PLAYER_START, new Vec3(3, 0, 0));
+        RecordingChooser chooser = new RecordingChooser();
+        chooser.answer = -1;
+        PlaytestController asking = controllerAsking(chooser);
+
+        asking.start();
+
+        assertFalse(asking.isRunning());
+        assertFalse(editor.isPlaytesting());
+        assertTrue(notices.isEmpty());
+    }
+
+    @Test
+    void aSingleStartIsPlayedWithoutAsking() throws Exception {
+        openProjectWithFloor();
+        RecordingChooser chooser = new RecordingChooser();
+        PlaytestController asking = controllerAsking(chooser);
+
+        asking.start();
+
+        assertTrue(asking.isRunning());
+        assertEquals(0, chooser.asked);
     }
 
     @Test

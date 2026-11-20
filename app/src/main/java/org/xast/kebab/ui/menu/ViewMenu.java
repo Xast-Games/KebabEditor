@@ -43,6 +43,7 @@ public class ViewMenu extends Menu {
             new SeparatorItem(),
 
             showIconsItem(view),
+            renderNoVolumeItem(view),
 
             new SeparatorItem(),
 
@@ -68,6 +69,19 @@ public class ViewMenu extends Menu {
         showIcons.component().setEnabled(view.isSome());
 
         return showIcons;
+    }
+
+    private static CheckItem renderNoVolumeItem(Maybe<EditorView> view) {
+        CheckItem renderNoVolume = new CheckItem(
+            "Render No Volume", 
+            Maybe.none(),
+            on -> view.ifSome(v -> v.setRenderNoVolume(on))
+        );
+
+        renderNoVolume.setSelected(view.map(EditorView::isRenderNoVolume).unwrapOr(false));
+        renderNoVolume.component().setEnabled(view.isSome());
+
+        return renderNoVolume;
     }
 
     private static Menu blockoutMenu(JFrame frame, Editor editor, Maybe<PlacementTool> placement) {

@@ -325,6 +325,7 @@
 <tr><td><code>collider_box</code></td><td>no</td><td><code>size</code> (1, 1, 1)</td></tr>
 <tr><td><code>collider_sphere</code></td><td>no</td><td><code>radius</code> (0.5)</td></tr>
 <tr><td><code>trigger</code></td><td>no</td><td><code>size</code> (1, 1, 1)</td></tr>
+<tr><td><code>no_volume</code></td><td>yes</td><td>none</td></tr>
 <tr><td><code>point_light</code></td><td>yes</td><td><code>color</code> (white), <code>intensity</code> (1000), <code>range</code> (10), <code>shadows</code> (false)</td></tr>
 <tr><td><code>dir_light</code></td><td>yes</td><td><code>color</code> (white), <code>intensity</code> (1), <code>shadows</code> (false)</td></tr>
 <tr><td><code>spot_light</code></td><td>yes</td><td><code>color</code> (white), <code>intensity</code> (1000), <code>range</code> (10), <code>inner_angle</code> (25), <code>outer_angle</code> (35), <code>shadows</code> (false)</td></tr>
@@ -336,6 +337,7 @@
 <li><code>model_ref</code> draws a glTF model in place of the object. <code>prefab_ref</code> draws a whole other scene file, and prefabs that contain themselves are rejected.</li>
 <li>Missing models and textures are shown as a visible placeholder.</li>
 <li><code>collider_box</code> and <code>trigger</code> are sized in the object's local space and follow its transform.</li>
+<li><code>no_volume</code> hides the object's greybox in the viewport and makes it not solid in a playtest. Unlike a trigger it reports nothing. Turn on <strong>View &gt; Render No Volume</strong> to see such greyboxes as wireframes and click them; a selected one is always outlined.</li>
 </ul>
 
         
