@@ -105,10 +105,14 @@ public class PlaytestController {
 
         Maybe<BehaviorContext> context = viewport.behaviorContext();
         if (editor.scene().isNone() || context.isNone()) {
-            notice.show(
-                "No project open",
-                "Open or create a project first (File > Open project / Create new project)."
-            );
+            if (editor.isProjectOpen()) {
+                notice.show("No scene open", "Create or open a scene first (File > New scene).");
+            } else {
+                notice.show(
+                    "No project open",
+                    "Open or create a project first (File > Open project / Create new project)."
+                );
+            }
             return;
         }
 

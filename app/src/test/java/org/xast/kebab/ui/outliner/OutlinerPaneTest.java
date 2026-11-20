@@ -32,7 +32,8 @@ class OutlinerPaneTest {
     @BeforeEach
     void setup() throws Exception {
         editor = EditorSessions.create();
-        editor.createProject(dir, "scene");
+        editor.createProject(dir);
+        editor.createScene("", "scene");
         SwingUtilities.invokeAndWait(() -> {
             KebabStyle.setCurrent(KebabStyle.defaultStyle());
             pane = new OutlinerPane(editor, framed::add, new SceneNavigator(null, editor));

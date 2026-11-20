@@ -65,7 +65,8 @@ class PlaytestControllerTest {
     }
 
     private void openProjectWithFloor() throws Exception {
-        editor.createProject(projectDir, "level");
+        editor.createProject(projectDir);
+        editor.createScene("", "level");
         SceneNode floor = editor.placeGreybox(GreyboxShape.BOX, new Vec3(0, -0.5f, 0));
         new Greybox(GreyboxShape.BOX, new Vec3(20, 1, 20), Greybox.DEFAULT_COLOR).writeTo(floor);
         editor.spawnArchetype(BuiltinArchetypes.PLAYER_START, Vec3.zero());
@@ -91,7 +92,8 @@ class PlaytestControllerTest {
 
     @Test
     void refusesALevelWithNothingToStandOn() throws Exception {
-        editor.createProject(projectDir, "level");
+        editor.createProject(projectDir);
+        editor.createScene("", "level");
 
         controller.start();
 
@@ -116,7 +118,8 @@ class PlaytestControllerTest {
 
     @Test
     void refusesALevelWithoutAPlayerStart() throws Exception {
-        editor.createProject(projectDir, "level");
+        editor.createProject(projectDir);
+        editor.createScene("", "level");
         SceneNode floor = editor.placeGreybox(GreyboxShape.BOX, new Vec3(0, -0.5f, 0));
         new Greybox(GreyboxShape.BOX, new Vec3(20, 1, 20), Greybox.DEFAULT_COLOR).writeTo(floor);
 

@@ -30,9 +30,11 @@ import org.xast.kebab.archetype.definition.ArchetypeDefinition;
 import org.xast.kebab.archetype.instance.ArchetypeInstance;
 import org.xast.kebab.archetype.instance.NodeArchetype;
 import org.xast.kebab.editor.Editor;
+import org.xast.kebab.scene.model.Greybox;
 import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.utils.KebabStyle;
 import org.xast.kebab.utils.LucideIcon;
+import org.xast.kebab.utils.Maybe;
 
 /** Event-driven, headless-testable inspector. Construct and attach on the EDT. */
 public final class InspectorPane extends JPanel implements AutoCloseable {
@@ -57,6 +59,9 @@ public final class InspectorPane extends JPanel implements AutoCloseable {
     private JTextField name;
     private String displayedName;
     private TransformEditor transform;
+    private Maybe<GreyboxSection> greybox = Maybe.none();
+    // Whether the inspected node had a greybox section when it was built
+    private boolean shownGreybox;
     private JButton add;
 
     public InspectorPane(Editor editor) {
@@ -140,7 +145,9 @@ public final class InspectorPane extends JPanel implements AutoCloseable {
         }
 
         List<SectionState> nextStructure = selected == null ? List.of() : structureOf(selected);
-        if (selected != node || !structure.equals(nextStructure) || content.getComponentCount() == 0) {
+        boolean nextGreybox = selected != null && Greybox.of(selected).isSome();
+        if (selected != node || !structure.equals(nextStructure) || nextGreybox != shownGreybox
+            || content.getComponentCount() == 0) {
             rebuild(selected, nextStructure);
         }
 
@@ -152,6 +159,7 @@ public final class InspectorPane extends JPanel implements AutoCloseable {
             showName();
         }
         transform.refresh();
+        greybox.ifSome(GreyboxSection::refresh);
         sections.forEach(ArchetypeSection::refresh);
 
         boolean editable = !editor.isPlaytesting();
@@ -164,6 +172,8 @@ public final class InspectorPane extends JPanel implements AutoCloseable {
         sections.clear();
         node = selected;
         structure = nextStructure;
+        greybox = Maybe.none();
+        shownGreybox = node != null && Greybox.of(node).isSome();
         content.removeAll();
 
         if (node == null) {
@@ -188,6 +198,12 @@ public final class InspectorPane extends JPanel implements AutoCloseable {
 
         transform = new TransformEditor(editor, target);
         stack.add(transform);
+
+        if (shownGreybox) {
+            GreyboxSection section = new GreyboxSection(editor, target);
+            greybox = Maybe.some(section);
+            stack.add(section);
+        }
 
         for (NodeArchetype archetype : target.getArchetypes()) {
             ArchetypeSection section = new ArchetypeSection(editor, target, archetype);

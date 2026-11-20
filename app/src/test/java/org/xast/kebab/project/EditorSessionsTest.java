@@ -13,8 +13,10 @@ class EditorSessionsTest {
     @TempDir Path dir;
     @Test void separateSessionsHaveIndependentSceneSelectionResolversAndSaveTargets() throws Exception {
         Editor one = EditorSessions.create(), two = EditorSessions.create();
-        one.createProject(dir.resolve("one"), "one");
-        two.createProject(dir.resolve("two"), "two");
+        one.createProject(dir.resolve("one"));
+        one.createScene("", "one");
+        two.createProject(dir.resolve("two"));
+        two.createScene("", "two");
         one.spawnEmpty(Vec3.zero());
         one.saveScene();
         assertTrue(two.sceneNodes().isEmpty());
@@ -30,7 +32,8 @@ class EditorSessionsTest {
     }
     @Test void twoWindowsOnSameFileCannotSilentlyOverwriteEachOther() throws Exception {
         Editor one = EditorSessions.create(), two = EditorSessions.create();
-        one.createProject(dir, "scene");
+        one.createProject(dir);
+        one.createScene("", "scene");
         two.openProject(dir.resolve("scene.gltf"));
         one.spawnEmpty(Vec3.zero());
         one.saveScene();

@@ -42,6 +42,7 @@ Your own archetype definitions, next to `kebab-project.json` and shared by all s
 | `version` | Always `1` |
 | `assetRoot` | The explorer root, relative to the folder containing the file |
 | `assetFolders` | Folders shown under the root, relative to `assetRoot` |
-| `scenes` | Scene files that open as editable scenes, relative to `assetRoot`. The first existing one opens with the project |
+| `scenes` | Scene files that open as editable scenes, relative to `assetRoot`. The first existing one opens with the project. **File > New scene** adds to it |
+| `scenesFolder` | Where **File > New scene** puts scenes by default, relative to `assetRoot`; `"."` is `assetRoot` itself. Optional, `"scenes"` when missing |
 
 All paths must stay inside the project. `kebab-project.json` is the file you open with **File > Open project**.

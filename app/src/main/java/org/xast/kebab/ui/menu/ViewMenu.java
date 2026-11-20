@@ -94,7 +94,7 @@ public class ViewMenu extends Menu {
         PlacementTool tool = placement.unwrap();
 
         CheckItem placementRay = new CheckItem("Placement ray", Maybe.some("control shift P"), on -> {
-            if (on && !ProjectRequired.check(frame, editor)) {
+            if (on && !SceneRequired.check(frame, editor)) {
                 on = false;
             }
             tool.setActive(on);
@@ -112,9 +112,9 @@ public class ViewMenu extends Menu {
         };
         sync.run();
         tool.addListener(sync);
-        // A closed project leaves nothing to place into.
+        // A closed project, or one with no scene open, leaves nothing to place into.
         editor.addProjectListener(() -> {
-            if (!editor.isProjectOpen()) {
+            if (!editor.isSceneOpen()) {
                 tool.setActive(false);
             }
         });
@@ -123,7 +123,7 @@ public class ViewMenu extends Menu {
         snapToGrid.setSelected(editor.isSnapping());
 
         SingleItem snapDistance = new SingleItem("Snap distance...", Maybe.none(),
-            ProjectRequired.guard(frame, editor, () -> askSnapDistance(frame, editor)));
+            SceneRequired.guard(frame, editor, () -> askSnapDistance(frame, editor)));
 
         blockout.setItems(new MenuItem[] {
             placementRay,

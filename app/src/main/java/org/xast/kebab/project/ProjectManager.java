@@ -33,11 +33,34 @@ public class ProjectManager {
     private Maybe<ProjectRepository> repository = Maybe.none();
     private byte[] savedSceneHash;
 
-    public void create(Path dir, String scenesFolder, String name) throws SceneException, IOException {
-        open(writer.createProject(dir, scenesFolder, name));
+    /**
+     * Creates a project with no scenes and opens it.
+     *
+     * @param scenesFolder where new scenes go by default, relative to dir; empty for dir itself
+     */
+    public void create(Path dir, String scenesFolder) throws SceneException, IOException {
+        open(writer.createProject(dir, scenesFolder));
     }
 
-    /** Opens a kebab-project.json at its first scene, or a bare scene file with the project that registers it. */
+    /**
+     * Creates an empty scene in the open project and opens it; unsaved edits of the current scene are dropped.
+     *
+     * @param folder relative to the asset root; empty puts the scene in the root itself
+     */
+    public void createScene(String folder, String name) throws SceneException, IOException {
+        ProjectRepository current = repository.expect("No project is open");
+        SceneScope scope = loader.scopeFor(writer.createScene(current.projectFile(), folder, name));
+        show(scope);
+        // A project without a kebab-project.json gets one for its second scene
+        if (!scope.projectFile().equals(current.projectFile())) {
+            recentProjects.add(scope.projectFile());
+        }
+    }
+
+    /**
+     * Opens a kebab-project.json at its first scene, or with no scene when it has none, or a bare
+     * scene file with the project that registers it.
+     */
     public void open(Path file) throws SceneException, IOException {
         if (!Files.isRegularFile(file)) {
             throw new IOException("Not a file: " + file);
@@ -62,7 +85,7 @@ public class ProjectManager {
 
     // The hash is taken before reading, so an edit on disk during loading is caught on the next save
     private void show(SceneScope scope) throws SceneException, IOException {
-        byte[] hash = sceneHash(scope.scene());
+        byte[] hash = scope.scene().isSome() ? sceneHash(scope.scene().unwrap()) : null;
         ProjectRepository loaded = loader.load(scope);
         repository = Maybe.some(loaded);
         savedSceneHash = hash;
@@ -79,7 +102,7 @@ public class ProjectManager {
     }
 
     public Maybe<Path> currentScene() {
-        return repository.map(ProjectRepository::filePath);
+        return repository.andThen(ProjectRepository::filePath);
     }
 
     public Maybe<Path> projectFile() {
@@ -98,7 +121,7 @@ public class ProjectManager {
     }
 
     public Maybe<Scene> scene() {
-        return repository.map(ProjectRepository::sceneData);
+        return repository.andThen(ProjectRepository::sceneData);
     }
 
     public Maybe<ArchetypeCatalog> catalog() {
@@ -185,17 +208,20 @@ public class ProjectManager {
 
     public void saveScene() throws SceneFormatException, IOException {
         ProjectRepository current = repository.expect("No project is open");
-        if (!Arrays.equals(savedSceneHash, sceneHash(current.filePath()))) {
+        ProjectRepository.OpenScene scene = current.scene().expect("No scene is open");
+        if (!Arrays.equals(savedSceneHash, sceneHash(scene.file()))) {
             throw new IOException("Scene changed on disk since it was opened; reopen it before saving: "
-                + current.filePath());
+                + scene.file());
         }
-        writer.saveScene(current.filePath(), current.sceneData());
-        savedSceneHash = sceneHash(current.filePath());
+        writer.saveScene(scene.file(), scene.data());
+        savedSceneHash = sceneHash(scene.file());
     }
 
     public void save() throws SceneFormatException, IOException {
-        saveScene();
-        ProjectRepository current = repository.unwrap();
+        ProjectRepository current = repository.expect("No project is open");
+        if (current.scene().isSome()) {
+            saveScene();
+        }
         writer.saveArchetypes(current.projectFile(), current.archetypeCatalog().getRegistry());
     }
 
@@ -208,21 +234,23 @@ public class ProjectManager {
     }
 
     // A moved asset root rebuilds the resolvers, which means reloading the scene from disk
-    public void updateAssetScope(Path root, List<String> folders, List<String> scenes)
+    public void updateAssetScope(Path root, List<String> folders, List<String> scenes, String scenesFolder)
         throws SceneException, IOException {
         ProjectRepository current = repository.expect("No project is open");
-        ProjectAssets assets = writer.saveAssetScope(current.filePath(), root, folders, scenes);
-        if (assets.root().equals(current.assets().root())) {
-            repository = Maybe.some(current.withAssets(assets));
+        SceneScope saved = writer.saveAssetScope(
+            current.projectFile(), current.filePath(), root, folders, scenes, scenesFolder
+        );
+        if (saved.assets().root().equals(current.assets().root())) {
+            repository = Maybe.some(current.withAssets(saved.assets(), saved.projectFile()));
             notifyListeners();
         } else {
             // The archetypes go along with the project file, unless the new root already has its own
-            Path movedProject = loader.scopeFor(current.filePath()).projectFile();
-            boolean moved = !movedProject.equals(current.projectFile());
-            if (moved && !Files.exists(ProjectTemplates.archetypesFileFor(movedProject))) {
-                writer.saveArchetypes(movedProject, current.archetypeCatalog().getRegistry());
+            boolean moved = !saved.projectFile().equals(current.projectFile());
+            if (moved && !Files.exists(ProjectTemplates.archetypesFileFor(saved.projectFile()))) {
+                writer.saveArchetypes(saved.projectFile(), current.archetypeCatalog().getRegistry());
             }
-            open(current.filePath());
+            show(saved);
+            recentProjects.add(saved.projectFile());
         }
     }
 

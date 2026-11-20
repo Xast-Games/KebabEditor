@@ -66,7 +66,8 @@ class EditorTest {
                 new CompositeModelExtractor(List.of(new GltfMeshExtractor())))
         );
         editor = new Editor(projects, new ModelImporter(mapper));
-        editor.createProject(projectDir, "level");
+        editor.createProject(projectDir);
+        editor.createScene("", "level");
     }
 
     @Test
@@ -295,7 +296,8 @@ class EditorTest {
     @Test
     void modelsOfAScenesFolderGoToTheSharedModelsFolder() throws Exception {
         Path dir = elsewhere.resolve("game");
-        editor.createProject(dir, "scenes", "world");
+        editor.createProject(dir);
+        editor.createScene("scenes", "world");
         Path model = elsewhere.resolve("tri.gltf");
         Files.writeString(model, "{\"asset\":{\"version\":\"2.0\"}}");
 
@@ -309,14 +311,89 @@ class EditorTest {
     @Test
     void movingTheAssetRootTakesTheArchetypesAlong() throws Exception {
         Path game = elsewhere.resolve("game");
-        editor.createProject(game.resolve("level"), "world");
+        editor.createProject(game.resolve("level"));
+        editor.createScene("", "world");
         editor.addArchetype(new org.xast.kebab.archetype.definition.ArchetypeDefinition("door"));
 
-        editor.updateAssetScope(game, List.of("level/assets"), List.of("level/world.gltf"));
+        editor.updateAssetScope(game, List.of("level/assets"), List.of("level/world.gltf"), "level/scenes");
 
         assertEquals(game.resolve("kebab-project.json"), editor.currentProjectFile().unwrap());
         assertTrue(Files.readString(game.resolve("archetypes.json")).contains("door"));
         assertTrue(editor.archetypes().stream().anyMatch(definition -> definition.getId().equals("door")));
+    }
+
+    @Test
+    void aNewProjectHasNoSceneUntilOneIsCreated() throws Exception {
+        Path dir = elsewhere.resolve("fresh");
+        editor.createProject(dir);
+
+        assertTrue(editor.isProjectOpen());
+        assertFalse(editor.isSceneOpen());
+        assertFalse(editor.hasUnsavedChanges());
+        editor.saveProject();
+
+        editor.createScene("scenes", "harbor");
+
+        assertTrue(editor.isSceneOpen());
+        assertEquals(dir.resolve("scenes/harbor.gltf"), editor.currentSceneFile().unwrap());
+        assertEquals(dir.resolve("kebab-project.json"), editor.currentProjectFile().unwrap());
+        assertTrue(editor.projectAssets().unwrap().isScene(dir.resolve("scenes/harbor.gltf")));
+    }
+
+    @Test
+    void aNewSceneReplacesTheOpenOne() throws Exception {
+        editor.spawnEmpty(Vec3.zero());
+
+        editor.createScene("", "second");
+
+        assertEquals(projectDir.resolve("second.gltf"), editor.currentSceneFile().unwrap());
+        assertTrue(editor.sceneNodes().isEmpty());
+        assertTrue(editor.projectAssets().unwrap().isScene(projectDir.resolve("level.gltf")));
+    }
+
+    @Test
+    void theAssetRootOfAProjectWithoutScenesCanMove() throws Exception {
+        Path game = elsewhere.resolve("game");
+        editor.createProject(game.resolve("level"));
+        editor.addArchetype(new org.xast.kebab.archetype.definition.ArchetypeDefinition("door"));
+
+        editor.updateAssetScope(game, List.of("level/assets"), List.of(), "level/scenes");
+
+        assertFalse(editor.isSceneOpen());
+        assertEquals(game.resolve("level/scenes"), editor.projectAssets().unwrap().scenesFolder());
+        assertEquals(game.resolve("kebab-project.json"), editor.currentProjectFile().unwrap());
+        assertTrue(Files.readString(game.resolve("archetypes.json")).contains("door"));
+    }
+
+    @Test
+    void theScenesFolderIsAProjectSettingThatCanChange() throws Exception {
+        Path dir = elsewhere.resolve("custom");
+        editor.createProject(dir, "levels");
+
+        assertEquals(dir.resolve("levels"), editor.projectAssets().unwrap().scenesFolder());
+        assertTrue(Files.isDirectory(dir.resolve("levels")));
+        assertTrue(editor.projectAssets().unwrap().folders().contains(dir.resolve("levels")));
+
+        editor.updateAssetScope(dir, List.of("assets", "models", "levels"), List.of(), ".");
+
+        assertEquals(dir, editor.projectAssets().unwrap().scenesFolder());
+        assertTrue(Files.readString(dir.resolve("kebab-project.json")).contains("\"scenesFolder\" : \".\""));
+    }
+
+    @Test
+    void greyboxSizeMustBeFiniteAndPositiveAndOnlyAGreyboxHasOne() {
+        SceneNode box = editor.spawnGreybox(org.xast.kebab.scene.model.GreyboxShape.BOX, Vec3.zero());
+        var start = org.xast.kebab.scene.model.Greybox.of(box).unwrap();
+
+        for (Vec3 bad : List.of(new Vec3(0, 1, 1), new Vec3(1, -1, 1), new Vec3(1, 1, Float.NaN))) {
+            assertThrows(IllegalArgumentException.class, () -> editor.updateGreybox(box,
+                new org.xast.kebab.scene.model.Greybox(start.shape(), bad, start.color())));
+        }
+        assertEquals(start.size(), org.xast.kebab.scene.model.Greybox.of(box).unwrap().size());
+
+        SceneNode empty = editor.spawnEmpty(Vec3.zero());
+        assertThrows(IllegalArgumentException.class, () -> editor.updateGreybox(empty, start));
+        assertTrue(org.xast.kebab.scene.model.Greybox.of(empty).isNone());
     }
 
     private static void assertSamePlace(org.xast.kebab.math.Mat4 expected, org.xast.kebab.math.Mat4 actual) {
@@ -504,7 +581,9 @@ class EditorTest {
         assertTrue(editor.canPaste());
         assertEquals(1, editor.paste(Vec3.zero()).size());
 
-        editor.createProject(elsewhere.resolve("other"), "level");
+        editor.createProject(elsewhere.resolve("other"));
+
+        editor.createScene("", "level");
         assertFalse(editor.canPaste());
     }
 }

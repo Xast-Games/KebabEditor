@@ -149,8 +149,11 @@ public class MainWindow {
     }
 
     private void updateTitle() {
+        // A project with no scene open yet is named after its folder
         String title = editor.currentSceneFile()
-            .map(file -> file.getFileName() + " - " + APP_TITLE)
+            .map(file -> file.getFileName().toString())
+            .or(editor.currentProjectFile().map(file -> file.toAbsolutePath().getParent().getFileName() + " (no scene)"))
+            .map(name -> name + " - " + APP_TITLE)
             .unwrapOr(APP_TITLE);
 
         frame.setTitle(title);

@@ -17,6 +17,8 @@ import org.xast.kebab.math.Quat;
 import org.xast.kebab.math.Transform;
 import org.xast.kebab.math.Vec3;
 import org.xast.kebab.project.EditorSessions;
+import org.xast.kebab.scene.model.Greybox;
+import org.xast.kebab.scene.model.GreyboxShape;
 import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.ui.archetype.ParamValueEditor;
 import org.xast.kebab.utils.KebabStyle;
@@ -31,7 +33,8 @@ class InspectorPaneTest {
 
     @BeforeEach void setup() throws Exception {
         editor = EditorSessions.create();
-        editor.createProject(dir, "scene");
+        editor.createProject(dir);
+        editor.createScene("", "scene");
         SwingUtilities.invokeAndWait(() -> {
             KebabStyle.setCurrent(KebabStyle.defaultStyle());
             pane = new InspectorPane(editor);
@@ -101,6 +104,42 @@ class InspectorPaneTest {
                 assertEquals(before, node.getTransform());
             }
         });
+    }
+
+    boolean hasField(String name) {
+        return all(pane).stream().anyMatch(c -> name.equals(c.getName()));
+    }
+
+    @Test void greyboxSectionEditsSizePerAxisAndShapeWithUndo() throws Exception {
+        SwingUtilities.invokeAndWait(() -> assertFalse(hasField("greybox.size.x")));
+        SceneNode[] box = {null};
+        SwingUtilities.invokeAndWait(() -> box[0] = editor.spawnGreybox(GreyboxShape.BOX, Vec3.zero()));
+        flush();
+        SwingUtilities.invokeAndWait(() -> {
+            assertEquals("1.0", field("greybox.size.x").getText());
+            enter("greybox.size.x", "4");
+            enter("greybox.size.z", "0.5");
+            assertEquals(new Vec3(4, 1, 0.5f), Greybox.of(box[0]).unwrap().size());
+            assertEquals(1f, box[0].getTransform().getScale());
+
+            for (String invalid : List.of("0", "-2", "NaN", "Infinity", "bad", "")) {
+                enter("greybox.size.y", invalid);
+                assertEquals(new Vec3(4, 1, 0.5f), Greybox.of(box[0]).unwrap().size(), invalid);
+            }
+
+            JComboBox<?> shape = all(pane).stream().filter(c -> "greybox.shape".equals(c.getName()))
+                .map(JComboBox.class::cast).findFirst().orElseThrow();
+            shape.setSelectedItem(GreyboxShape.SPHERE);
+            assertEquals(GreyboxShape.SPHERE, Greybox.of(box[0]).unwrap().shape());
+            assertEquals(new Vec3(4, 1, 0.5f), Greybox.of(box[0]).unwrap().size());
+
+            editor.undo();
+            assertEquals(GreyboxShape.BOX, Greybox.of(box[0]).unwrap().shape());
+            editor.undo();
+            assertEquals(new Vec3(4, 1, 1), Greybox.of(box[0]).unwrap().size());
+        });
+        flush();
+        SwingUtilities.invokeAndWait(() -> assertEquals("1.0", field("greybox.size.z").getText()));
     }
 
     @Test void externalRefreshNeverRoundTripsQuaternionOrWritesBack() throws Exception {

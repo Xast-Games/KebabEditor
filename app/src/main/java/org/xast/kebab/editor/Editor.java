@@ -23,6 +23,7 @@ import org.xast.kebab.math.Transform;
 import org.xast.kebab.math.Vec3;
 import org.xast.kebab.project.ModelImporter;
 import org.xast.kebab.project.ProjectAssets;
+import org.xast.kebab.project.ProjectConfig;
 import org.xast.kebab.project.ProjectManager;
 import org.xast.kebab.project.RecentProjects;
 import org.xast.kebab.scene.error.SceneException;
@@ -71,6 +72,22 @@ public class Editor {
             throw new IllegalArgumentException("Transform values must be finite");
         }
         history.record("transform", () -> node.setTransform(transform.copy()));
+        sceneChanged();
+    }
+
+    /** Replaces a greybox node's shape, per-axis size and colour as one undoable step. */
+    public void updateGreybox(SceneNode node, Greybox greybox) {
+        Vec3 size = greybox.size();
+        if (!allFinite(size.getX(), size.getY(), size.getZ())) {
+            throw new IllegalArgumentException("Greybox size must be finite");
+        }
+        if (size.getX() <= 0 || size.getY() <= 0 || size.getZ() <= 0) {
+            throw new IllegalArgumentException("Greybox size must be positive");
+        }
+        if (Greybox.of(node).isNone()) {
+            throw new IllegalArgumentException("'" + node.getName() + "' is not a greybox");
+        }
+        history.record("edit greybox", () -> greybox.writeTo(node));
         sceneChanged();
     }
 
@@ -149,13 +166,28 @@ public class Editor {
         history.addListener(this::sceneChanged);
     }
 
-    public void createProject(Path dir, String name) throws SceneException, IOException {
-        createProject(dir, "", name);
+    /** Creates and opens a project with no scenes, which go to scenes/ by default. */
+    public void createProject(Path dir) throws SceneException, IOException {
+        createProject(dir, ProjectConfig.DEFAULT_SCENES_FOLDER);
     }
 
-    /** @param scenesFolder where the first scene goes, relative to dir; empty for dir itself */
-    public void createProject(Path dir, String scenesFolder, String name) throws SceneException, IOException {
-        projectManager.create(dir, scenesFolder, name);
+    /**
+     * Creates and opens a project with no scenes; {@link #createScene} adds them.
+     *
+     * @param scenesFolder where new scenes go by default, relative to dir; empty for dir itself
+     */
+    public void createProject(Path dir, String scenesFolder) throws SceneException, IOException {
+        projectManager.create(dir, scenesFolder);
+    }
+
+    /**
+     * Creates an empty scene in the open project and opens it; unsaved edits are dropped.
+     *
+     * @param folder relative to the asset root; empty puts the scene in the root itself
+     * @param name   the file name, with or without the .gltf extension
+     */
+    public void createScene(String folder, String name) throws SceneException, IOException {
+        projectManager.createScene(folder, name);
     }
 
     public void closeProject() {
@@ -235,6 +267,11 @@ public class Editor {
         return projectManager.isOpen();
     }
 
+    /** A project can be open with no scene, e.g. right after it was created. */
+    public boolean isSceneOpen() {
+        return scene().isSome();
+    }
+
     public List<ArchetypeDefinition> archetypes() {
         return projectManager.archetypes();
     }
@@ -302,9 +339,10 @@ public class Editor {
         return projectManager.assets();
     }
 
-    public void updateAssetScope(Path root, List<String> folders, List<String> scenes)
+    /** @param scenesFolder where new scenes go by default, relative to root; empty for root itself */
+    public void updateAssetScope(Path root, List<String> folders, List<String> scenes, String scenesFolder)
         throws SceneException, IOException {
-        projectManager.updateAssetScope(root, folders, scenes);
+        projectManager.updateAssetScope(root, folders, scenes, scenesFolder);
     }
 
     public void removeProjectListener(Runnable listener) {
@@ -393,7 +431,7 @@ public class Editor {
         if (playtesting) {
             return;
         }
-        Scene scene = projectManager.scene().expect("No project is open");
+        Scene scene = projectManager.scene().expect("No scene is open");
         Set<SceneNode> chosen = Set.copyOf(nodes);
         // Scene order, so nodes moved together keep their order
         List<SceneNode> moved = scene.traverse()
@@ -589,7 +627,7 @@ public class Editor {
     }
 
     public void delete(Deletion deletion) {
-        Scene scene = projectManager.scene().expect("No project is open");
+        Scene scene = projectManager.scene().expect("No scene is open");
 
         history.record("delete", () -> {
             for (Deletion.NodeReference reference : deletion.references()) {
@@ -685,7 +723,7 @@ public class Editor {
     }
 
     public SceneNode importModel(Path modelFile, Vec3 base) throws IOException {
-        Path sceneFile = projectManager.currentScene().expect("No project is open").toAbsolutePath();
+        Path sceneFile = projectManager.currentScene().expect("No scene is open").toAbsolutePath();
         Path sceneDir = sceneFile.getParent();
         // Models go to the asset root's models/, shared by scenes in any folder; the reference is scene-relative
         Path assetRoot = projectManager.assets().map(ProjectAssets::root).unwrapOr(sceneDir);
@@ -772,7 +810,7 @@ public class Editor {
     }
 
     private void addToScene(SceneNode node) {
-        Scene scene = projectManager.scene().expect("No project is open");
+        Scene scene = projectManager.scene().expect("No scene is open");
 
         try {
             scene.add(node);

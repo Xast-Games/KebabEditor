@@ -19,6 +19,7 @@ import org.xast.kebab.ui.menu.generic.MenuItem;
 import org.xast.kebab.ui.menu.generic.SeparatorItem;
 import org.xast.kebab.ui.menu.generic.SingleItem;
 import org.xast.kebab.ui.project.CreateProjectDialog;
+import org.xast.kebab.ui.project.NewSceneDialog;
 import org.xast.kebab.utils.ErrorDialogs;
 import org.xast.kebab.utils.FileChooser;
 import org.xast.kebab.utils.Maybe;
@@ -33,6 +34,15 @@ public class FileMenu extends Menu {
         updateRecent(openRecent, frame, editor);
         editor.addProjectListener(() -> updateRecent(openRecent, frame, editor));
 
+        SingleItem newScene = new SingleItem("New scene...", Maybe.some("control shift N"), () -> {
+            if (editor.isProjectOpen()) {
+                new NewSceneDialog(frame, editor).setVisible(true);
+            }
+        });
+        Runnable updateEnabled = () -> newScene.setEnabled(editor.isProjectOpen());
+        updateEnabled.run();
+        editor.addProjectListener(updateEnabled);
+
         setItems(new MenuItem[] {
             new SingleItem("Create new project...", Maybe.some("control N"), () -> {
                 if (!UnsavedChanges.confirm(frame, editor, "create another project", "create")) {
@@ -41,6 +51,8 @@ public class FileMenu extends Menu {
                 CreateProjectDialog createProjectDialog = new CreateProjectDialog(frame, editor);
                 createProjectDialog.setVisible(true);
             }),
+
+            newScene,
 
             new SeparatorItem(),
 

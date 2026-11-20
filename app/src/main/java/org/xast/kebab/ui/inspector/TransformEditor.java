@@ -18,7 +18,8 @@ import org.xast.kebab.utils.KebabStyle;
 /** Edits local TRS, keeping the authoritative quaternion and uniform scale. */
 final class TransformEditor extends InspectorSection {
 
-    private static final String[] GROUPS = {"Position", "Rotation (degrees)", "Scale"};
+    // Uniform by design; a greybox stretches per axis through its own size
+    private static final String[] GROUPS = {"Position", "Rotation (degrees)", "Scale (uniform)"};
     private static final String[] AXES = {"X", "Y", "Z"};
     private static final String[] FIELDS = {
         "position.x", "position.y", "position.z",

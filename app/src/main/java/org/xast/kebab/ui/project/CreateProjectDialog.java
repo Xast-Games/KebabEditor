@@ -15,7 +15,6 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
@@ -25,6 +24,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import org.xast.kebab.editor.Editor;
+import org.xast.kebab.project.ProjectConfig;
 import org.xast.kebab.scene.error.SceneException;
 import org.xast.kebab.utils.DialogKeys;
 import org.xast.kebab.utils.ErrorDialogs;
@@ -35,12 +35,9 @@ import org.xast.kebab.utils.FileChooser.FileChooserMode;
 
 public class CreateProjectDialog extends JDialog {
 
-    private static final String DEFAULT_SCENES_FOLDER = "scenes";
-
     private final JTextField locationField = new JTextField(24);
-    private final JTextField nameField = new JTextField("Untitled", 24);
-    // The first scene goes here; empty puts it next to kebab-project.json
-    private final JTextField scenesField = new JTextField(DEFAULT_SCENES_FOLDER, 24);
+    // New scenes go here by default; empty puts them next to kebab-project.json
+    private final JTextField scenesField = new JTextField(ProjectConfig.DEFAULT_SCENES_FOLDER, 24);
 
     private final JComboBox<String> templateField = new JComboBox<>(new String[] {
         "blank",
@@ -135,16 +132,14 @@ public class CreateProjectDialog extends JDialog {
         content.add(labeledRow(style, "Scenes folder", Maybe.some("/"), scenesField), constraints);
 
         constraints.gridy = 2;
-        content.add(labeledRow(style, "Level name", Maybe.some(".gltf"), nameField), constraints);
-
-        constraints.gridy = 3;
-        JLabel hint = new JLabel("<html>Creates kebab-project.json and archetypes.json in the location, "
-            + "and the level in the scenes folder. Leave the folder empty to keep them together.</html>");
+        JLabel hint = new JLabel("<html>Creates kebab-project.json and archetypes.json in the location. "
+            + "File &gt; New scene puts new scenes in the scenes folder by default; leave it empty "
+            + "to keep them next to kebab-project.json.</html>");
         hint.setFont(style.uiFont().deriveFont(style.uiFont().getSize2D() - 1f));
         hint.setForeground(UIManager.getColor("Label.disabledForeground"));
         content.add(hint, constraints);
 
-        constraints.gridy = 4;
+        constraints.gridy = 3;
         constraints.weighty = 1.0;
         content.add(new JPanel(), constraints);
 
@@ -186,15 +181,8 @@ public class CreateProjectDialog extends JDialog {
         cancelButton.setFont(style.uiFont());
 
         createButton.addActionListener(e -> {
-            String name = nameField.getText().trim();
-
-            if (name.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Level name must not be empty", "New Project", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
             try {
-                editor.createProject(Path.of(locationField.getText().trim()), scenesField.getText().trim(), name);
+                editor.createProject(Path.of(locationField.getText().trim()), scenesField.getText().trim());
                 dispose();
             } catch (SceneException ex) {
                 ErrorDialogs.show(this, "Scene error, cannot create project", ex);

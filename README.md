@@ -23,6 +23,7 @@ On save, the instances are written into the standard glTF `extras` field, so a l
 
 **Inspector**
 - Resizable right sidebar for the selected object, with name, local position, rotation in degrees and uniform scale
+- Greybox section with shape, per-axis size (what the scale gizmo stretches) and colour
 - Collapsible archetype sections with typed parameter controls, add/remove actions, and live gizmo synchronization
 - Enter or focus loss commits text and numeric edits; invalid input preserves the model
 
@@ -81,7 +82,7 @@ If you start the application from an IDE instead of Gradle, copy the JVM argumen
 
 ## Using the editor
 
-Create a project with **File → Create new project…**, then add objects from the **Edit** menu.
+Create a project with **File → Create new project…**, add a scene with **File → New scene…**, then add objects from the **Edit** menu.
 
 | Action | How |
 |---|---|
@@ -98,6 +99,7 @@ Create a project with **File → Create new project…**, then add objects from 
 | Snap to grid | `Ctrl+Shift+G` |
 | Manage archetypes | `Ctrl+Shift+A` |
 | New / open / save project | `Ctrl+N` / `Ctrl+O` / `Ctrl+S` |
+| New scene | `Ctrl+Shift+N` |
 
 ## Project files
 
@@ -113,7 +115,9 @@ my-level/
 ```
 
 New projects create `assets/` and `kebab-project.json` with version 1, `assetRoot: "."`,
-`assetFolders: ["assets", "models"]`, and the new scene in `scenes`. Existing projects
+`assetFolders: ["assets", "models", "scenes"]`, `scenesFolder: "scenes"` and no `scenes`;
+**File → New scene…** puts new scenes in `scenesFolder` by default, registers each one in
+`scenes`, and adds its folder to `assetFolders` when it is not covered yet. Existing projects
 without a config use their scene directory as the browser root. Paths must stay inside
 the project; symbolic links are omitted from the browser. Keep imported models in scope
 if you edit `assetFolders`.
@@ -121,7 +125,7 @@ if you edit `assetFolders`.
 Select a directory in Asset Explorer, double-click a folder to navigate, and double-click
 an asset (or press Enter) to open it. A glTF/GLB file is a model unless registered in
 `scenes`. **File → Close project** clears the browser. **File → Refresh assets** (`Ctrl+F5`) lists filesystem changes, and the explorer also refreshes when the window regains focus;
-use **Project → Asset folders…** to edit the asset root, folders and registered scenes of the open project. The root can be any folder that contains the open scene, for example a `Project/` folder above `Scenes/` and `Models/`. Moving it moves `kebab-project.json` and reloads the scene. Reopen the project after editing `kebab-project.json` by hand.
+use **Project → Asset folders…** to edit the asset root, folders, scenes folder and registered scenes of the open project. The root can be any folder that contains the open scene (any folder when no scene is open), for example a `Project/` folder above `Scenes/` and `Models/`. Moving it moves `kebab-project.json` and reloads the scene. Reopen the project after editing `kebab-project.json` by hand.
 
 Scene windows have independent scenes, selections, cameras and resolver caches. Their
 Save action writes only their own scene; use the main editor to manage shared archetype

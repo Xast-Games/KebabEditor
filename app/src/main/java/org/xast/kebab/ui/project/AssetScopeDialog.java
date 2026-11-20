@@ -33,27 +33,32 @@ import org.xast.kebab.utils.DialogKeys;
 import org.xast.kebab.utils.ErrorDialogs;
 import org.xast.kebab.utils.FileChooser;
 import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Maybe;
 import org.xast.kebab.utils.FileChooser.FileChooserMode;
 
 public class AssetScopeDialog extends JDialog {
 
     private final Editor editor;
-    private final Path scene;
+    private final Maybe<Path> scene;
     private final Path originalRoot;
     private final KebabStyle style = KebabStyle.getCurrent();
     private final JTextField rootField = new JTextField();
+    private final JTextField scenesFolderField = new JTextField();
     private final DefaultListModel<Path> folders = new DefaultListModel<>();
     private final DefaultListModel<Path> scenes = new DefaultListModel<>();
     private final List<JList<Path>> views = new ArrayList<>();
     private Path root;
+    // Where File > New scene puts scenes by default
+    private Path scenesFolder;
 
     public AssetScopeDialog(JFrame owner, Editor editor) {
         super(owner, "Asset folders", true);
         this.editor = editor;
         ProjectAssets assets = editor.projectAssets().unwrap();
-        scene = editor.currentSceneFile().unwrap().toAbsolutePath().normalize();
+        scene = editor.currentSceneFile().map(file -> file.toAbsolutePath().normalize());
         originalRoot = assets.root();
         root = originalRoot;
+        scenesFolder = assets.scenesFolder();
         folders.addAll(assets.folders());
         scenes.addAll(assets.scenes());
 
@@ -61,7 +66,10 @@ public class AssetScopeDialog extends JDialog {
         setLayout(new BorderLayout(0, 8));
         ((JPanel) getContentPane()).setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
 
-        add(rootRow(), BorderLayout.NORTH);
+        JPanel rows = new JPanel(new GridLayout(2, 1, 0, 8));
+        rows.add(rootRow());
+        rows.add(scenesFolderRow());
+        add(rows, BorderLayout.NORTH);
         JPanel lists = new JPanel(new GridLayout(2, 1, 0, 12));
         lists.add(listPanel("Asset folders", folders, this::addFolder));
         lists.add(listPanel("Scenes (open as editable scenes)", scenes, this::addScene));
@@ -91,6 +99,45 @@ public class AssetScopeDialog extends JDialog {
         return row;
     }
 
+    private JPanel scenesFolderRow() {
+        JLabel label = new JLabel("Scenes folder");
+        label.setFont(style.uiFont());
+        label.setToolTipText("Where File > New scene puts scenes by default");
+        scenesFolderField.setFont(style.uiFont());
+        scenesFolderField.setEditable(false);
+        showScenesFolder();
+        JButton change = new JButton("Change...");
+        change.setFont(style.uiFont());
+        change.addActionListener(event -> new FileChooser(FileChooserMode.DIRS)
+            .startIn(scenesFolder)
+            .open(this, this::changeScenesFolder));
+
+        JPanel row = new JPanel(new BorderLayout(8, 0));
+        row.add(label, BorderLayout.WEST);
+        row.add(scenesFolderField, BorderLayout.CENTER);
+        row.add(change, BorderLayout.EAST);
+        return row;
+    }
+
+    private void changeScenesFolder(File file) {
+        Path candidate = file.toPath().toAbsolutePath().normalize();
+        if (!candidate.startsWith(root)) {
+            error("Choose a folder inside the asset root, or change the asset root first:\n" + root);
+            return;
+        }
+        scenesFolder = candidate;
+        showScenesFolder();
+    }
+
+    private void showScenesFolder() {
+        scenesFolderField.setText(relative(scenesFolder));
+    }
+
+    private String relative(Path path) {
+        String text = root.relativize(path).toString().replace('\\', '/');
+        return text.isEmpty() ? "." : text;
+    }
+
     private void chooseRoot() {
         new FileChooser(FileChooserMode.DIRS)
             .startIn(root)
@@ -99,21 +146,22 @@ public class AssetScopeDialog extends JDialog {
 
     private void changeRoot(File file) {
         Path candidate = file.toPath().toAbsolutePath().normalize();
-        if (!scene.startsWith(candidate)) {
-            error("The asset root must be a folder that contains the open scene:\n" + scene);
+        if (scene.isSomeAnd(open -> !open.startsWith(candidate))) {
+            error("The asset root must be a folder that contains the open scene:\n" + scene.unwrap());
             return;
         }
-        List<String> outside = Stream.concat(Collections.list(folders.elements()).stream(),
-                Collections.list(scenes.elements()).stream())
+        List<String> outside = Stream.concat(Stream.concat(Collections.list(folders.elements()).stream(),
+                Collections.list(scenes.elements()).stream()), Stream.of(scenesFolder))
             .filter(path -> !path.startsWith(candidate))
             .map(Path::toString)
             .toList();
         if (!outside.isEmpty()) {
-            error("Remove these entries first, they are outside the new root:\n" + String.join("\n", outside));
+            error("Remove or change these entries first, they are outside the new root:\n" + String.join("\n", outside));
             return;
         }
         root = candidate;
         rootField.setText(root.toString());
+        showScenesFolder();
         views.forEach(JList::repaint);
     }
 
@@ -199,7 +247,7 @@ public class AssetScopeDialog extends JDialog {
             return;
         }
         try {
-            editor.updateAssetScope(root, relatives(folders), relatives(scenes));
+            editor.updateAssetScope(root, relatives(folders), relatives(scenes), relative(scenesFolder));
             dispose();
         } catch (SceneException e) {
             ErrorDialogs.show(this, "Cannot reload the scene", e);

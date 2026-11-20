@@ -7,6 +7,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.Locale;
 
 import org.xast.kebab.archetype.definition.ArchetypeRegistry;
 import org.xast.kebab.archetype.definition.ArchetypeRegistryJson;
@@ -14,6 +15,7 @@ import org.xast.kebab.scene.error.SceneFormatException;
 import org.xast.kebab.scene.io.SceneWriter;
 import org.xast.kebab.scene.model.Scene;
 import org.xast.kebab.utils.AtomicFiles;
+import org.xast.kebab.utils.Maybe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -26,24 +28,10 @@ public class FileProjectWriter implements ProjectWriter {
     private final ObjectMapper mapper;
 
     @Override
-    public Path createProject(Path dir, String scenesFolder, String name) throws IOException {
+    public Path createProject(Path dir, String scenesFolder) throws IOException {
         Files.createDirectories(dir);
-        Path projectDir = dir.toAbsolutePath().normalize();
-        String folder = scenesFolder.strip().replace('\\', '/');
-        Path sceneDir = folder.isEmpty() || folder.equals(".")
-            ? projectDir
-            : ProjectAssets.resolveInside(projectDir, folder);
+        Path project = new ProjectConfigStore(mapper).createProject(dir, scenesFolder);
 
-        Path scene = sceneDir.resolve(name + ".gltf");
-        ProjectAssets.requireInside(sceneDir, scene);
-        if (Files.exists(scene, LinkOption.NOFOLLOW_LINKS)) {
-            throw new FileAlreadyExistsException(scene.toString());
-        }
-        new ProjectConfigStore(mapper).prepareNewScene(projectDir, scene);
-        Files.createDirectories(sceneDir);
-        Files.writeString(scene, ProjectTemplates.MINIMAL_GLTF, StandardOpenOption.CREATE_NEW);
-
-        Path project = projectDir.resolve(ProjectConfigStore.FILE_NAME);
         Path archetypes = ProjectTemplates.archetypesFileFor(project);
         if (!Files.exists(archetypes)) {
             Files.writeString(archetypes, ProjectTemplates.EMPTY_ARCHETYPES, StandardOpenOption.CREATE_NEW);
@@ -53,14 +41,54 @@ public class FileProjectWriter implements ProjectWriter {
     }
 
     @Override
+    public Path createScene(Path projectFile, String folder, String name) throws IOException {
+        String fileName = sceneFileName(name);
+        ProjectConfigStore store = new ProjectConfigStore(mapper);
+        Path root = store.assetsOf(projectFile).root();
+        Path sceneDir = ProjectAssets.resolveFolder(root, folder);
+
+        Path scene = sceneDir.resolve(fileName);
+        ProjectAssets.requireInside(root, scene);
+        if (Files.exists(scene, LinkOption.NOFOLLOW_LINKS)) {
+            throw new FileAlreadyExistsException(scene.toString());
+        }
+        Files.createDirectories(sceneDir);
+        Files.writeString(scene, ProjectTemplates.MINIMAL_GLTF, StandardOpenOption.CREATE_NEW);
+        try {
+            store.registerScene(projectFile, scene);
+        } catch (IOException e) {
+            Files.deleteIfExists(scene);
+            throw e;
+        }
+        return scene;
+    }
+
+    // A plain file name; the .gltf extension is added unless it was typed already
+    private static String sceneFileName(String name) throws IOException {
+        String stripped = name.strip();
+        if (stripped.toLowerCase(Locale.ROOT).endsWith(".gltf")) {
+            stripped = stripped.substring(0, stripped.length() - ".gltf".length()).strip();
+        }
+        boolean invalid = stripped.isEmpty()
+            || stripped.equals(".")
+            || stripped.equals("..")
+            || stripped.contains("/")
+            || stripped.contains("\\");
+        if (invalid) {
+            throw new IOException("Not a valid scene name: '" + name + "'");
+        }
+        return stripped + ".gltf";
+    }
+
+    @Override
     public void saveScene(Path path, Scene sceneData) throws SceneFormatException, IOException {
         sceneWriter.write(sceneData, path);
     }
 
     @Override
-    public ProjectAssets saveAssetScope(Path scene, Path root, List<String> folders, List<String> scenes)
-        throws IOException {
-        return new ProjectConfigStore(mapper).saveScope(scene, root, folders, scenes);
+    public SceneScope saveAssetScope(Path projectFile, Maybe<Path> scene, Path root, List<String> folders,
+        List<String> scenes, String scenesFolder) throws IOException {
+        return new ProjectConfigStore(mapper).saveScope(projectFile, scene, root, folders, scenes, scenesFolder);
     }
 
     @Override

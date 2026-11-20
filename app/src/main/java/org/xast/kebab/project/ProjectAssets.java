@@ -8,7 +8,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public record ProjectAssets(Path root, List<Path> folders, List<Path> scenes) {
+/** @param scenesFolder where new scenes go by default, inside root */
+public record ProjectAssets(Path root, List<Path> folders, List<Path> scenes, Path scenesFolder) {
 
     private static final Pattern SCHEME = Pattern.compile("^[A-Za-z][A-Za-z0-9+.-]*:.*");
 
@@ -16,6 +17,21 @@ public record ProjectAssets(Path root, List<Path> folders, List<Path> scenes) {
         root = root.toAbsolutePath().normalize();
         folders = List.copyOf(folders);
         scenes = List.copyOf(scenes);
+        scenesFolder = scenesFolder.toAbsolutePath().normalize();
+    }
+
+    /** A scope whose new scenes go to the root itself, like a project without a kebab-project.json. */
+    public ProjectAssets(Path root, List<Path> folders, List<Path> scenes) {
+        this(root, folders, scenes, root);
+    }
+
+    /** "." or an empty path is the root itself; anything else must be a relative path inside it. */
+    public static Path resolveFolder(Path root, String relative) throws IOException {
+        String folder = relative.strip().replace('\\', '/');
+        if (folder.isEmpty() || folder.equals(".")) {
+            return root.toAbsolutePath().normalize();
+        }
+        return resolveInside(root, folder);
     }
 
     // Existing ancestors are resolved too, so a missing child of an escaping symlink is rejected

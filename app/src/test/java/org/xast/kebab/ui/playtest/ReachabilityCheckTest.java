@@ -67,7 +67,8 @@ class ReachabilityCheckTest {
 
     // A floor with a ledge too high to jump onto.
     private SceneNode openLevel() throws Exception {
-        editor.createProject(projectDir, "level");
+        editor.createProject(projectDir);
+        editor.createScene("", "level");
         box(new Vec3(0, -0.5f, 0), new Vec3(20, 1, 20));
         SceneNode ledge = box(new Vec3(5, 2, 0), new Vec3(2, 4, 2));
         ledge.setName("ledge");
@@ -144,7 +145,8 @@ class ReachabilityCheckTest {
 
     @Test
     void warnsOnceAboutALevelWithoutAPlayerStart() throws Exception {
-        editor.createProject(projectDir, "level");
+        editor.createProject(projectDir);
+        editor.createScene("", "level");
         box(new Vec3(0, -0.5f, 0), new Vec3(20, 1, 20));
         check.setEnabled(true);
 

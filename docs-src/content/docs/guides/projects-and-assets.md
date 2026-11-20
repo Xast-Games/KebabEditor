@@ -22,9 +22,11 @@ my-game/
 └── models/             imported models (created when importing)
 ```
 
-**File > Create new project...** asks for a location, a scenes folder (`scenes` by default) and a level name. It writes `kebab-project.json` and `archetypes.json` into the location, and the level into the scenes folder. Leave the scenes folder empty to keep everything in one folder.
+**File > Create new project...** asks for a location and a scenes folder (`scenes` by default). It writes `kebab-project.json` and `archetypes.json` into the location and creates the scenes folder. Leave the scenes folder empty to keep scenes next to `kebab-project.json`. A new project has no scenes yet.
 
-**File > Open project** (`Ctrl+O`) opens a `kebab-project.json` at the first scene it registers. A glTF scene file still opens directly, which is how projects without a `kebab-project.json` are opened.
+**File > New scene...** (`Ctrl+Shift+N`) asks for a folder, relative to the asset root, and a name. It writes an empty scene there, registers it in `kebab-project.json` and opens it. The folder starts as the project's scenes folder, which you can change in **Project > Asset folders...**. Leave it empty to put the scene in the asset root. A folder outside the asset folders is added to them, so the scenes and prefabs you put next to the new scene show up in the explorer. If the current scene has unsaved changes, you are asked first.
+
+**File > Open project** (`Ctrl+O`) opens a `kebab-project.json` at the first scene it registers, or with no scene if it registers none. A glTF scene file still opens directly, which is how projects without a `kebab-project.json` are opened.
 
 Every scene and prefab of the project uses the same `archetypes.json`, however deep its folder is. A project whose `archetypes.json` still sits next to its scene keeps working: the editor reads that file and the next save writes the project's own. Moving the asset root takes `archetypes.json` along with `kebab-project.json`, unless the new root already has one.
 
@@ -46,11 +48,12 @@ The Asset Explorer sits beside Logs. Select a folder in the tree, double-click a
 {
   "version": 1,
   "assetRoot": ".",
-  "assetFolders": ["assets", "models"],
-  "scenes": ["level.gltf"]
+  "assetFolders": ["assets", "models", "scenes"],
+  "scenes": ["scenes/level.gltf"],
+  "scenesFolder": "scenes"
 }
 ```
 
-Use **Project > Asset folders...** to change the asset root, the folders and the registered scenes. The root can be any folder that contains the open scene, for example a `Project/` folder above `Scenes/` and `Models/`. Moving the root moves the config file and reloads the scene.
+Use **Project > Asset folders...** to change the asset root, the folders, the scenes folder and the registered scenes. The root can be any folder that contains the open scene, for example a `Project/` folder above `Scenes/` and `Models/`. Moving the root moves the config file and reloads the scene.
 
 Paths must stay inside the project, and symbolic links are left out of the browser. A project without a config uses the scene's folder as its root.

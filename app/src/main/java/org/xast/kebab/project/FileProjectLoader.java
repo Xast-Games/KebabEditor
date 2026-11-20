@@ -10,12 +10,12 @@ import org.xast.kebab.archetype.definition.ArchetypeRegistryJson;
 import org.xast.kebab.logging.LogService;
 import org.xast.kebab.scene.error.SceneException;
 import org.xast.kebab.scene.io.SceneReader;
-import org.xast.kebab.scene.model.Scene;
 import org.xast.kebab.scene.resolve.CachingModelResolver;
 import org.xast.kebab.scene.resolve.CachingPrefabResolver;
 import org.xast.kebab.scene.resolve.ModelExtractor;
 import org.xast.kebab.scene.resolve.ModelResolver;
 import org.xast.kebab.scene.resolve.PrefabResolver;
+import org.xast.kebab.utils.Maybe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -36,12 +36,15 @@ public class FileProjectLoader implements ProjectLoader {
 
     @Override
     public ProjectRepository load(SceneScope scope) throws SceneException, IOException {
-        Path file = scope.scene();
         ProjectAssets assets = scope.assets();
         ArchetypeRegistry registry = loadRegistry(registryPath(scope));
         ArchetypeCatalog catalog = new ArchetypeCatalog(registry);
 
-        Scene scene = sceneReader.read(file, catalog);
+        Maybe<ProjectRepository.OpenScene> scene = Maybe.none();
+        if (scope.scene().isSome()) {
+            Path file = scope.scene().unwrap();
+            scene = Maybe.some(new ProjectRepository.OpenScene(file, sceneReader.read(file, catalog)));
+        }
 
         // Each project gets its own resolver, rooted at the project folder, so models never leak between projects
         Path projectRoot = assets.root();
@@ -49,15 +52,18 @@ public class FileProjectLoader implements ProjectLoader {
 
         PrefabResolver prefabResolver = new CachingPrefabResolver(sceneReader, catalog, projectRoot);
 
-        return new ProjectRepository(file, scene, catalog, modelResolver, prefabResolver, assets, scope.projectFile());
+        return new ProjectRepository(scene, catalog, modelResolver, prefabResolver, assets, scope.projectFile());
     }
 
     // Projects made before archetypes moved to the project folder kept them next to the scene.
     // That file is read until the next save writes the project's own.
     private static Path registryPath(SceneScope scope) {
         Path projectRegistry = ProjectTemplates.archetypesFileFor(scope.projectFile());
-        Path sceneRegistry = scope.scene().resolveSibling(ProjectTemplates.ARCHETYPES_FILE);
-        if (!Files.exists(projectRegistry) && Files.isRegularFile(sceneRegistry)) {
+        if (Files.exists(projectRegistry) || scope.scene().isNone()) {
+            return projectRegistry;
+        }
+        Path sceneRegistry = scope.scene().unwrap().resolveSibling(ProjectTemplates.ARCHETYPES_FILE);
+        if (Files.isRegularFile(sceneRegistry)) {
             LogService.get().info("Using " + sceneRegistry + " for archetypes; saving moves them to " + projectRegistry);
             return sceneRegistry;
         }

@@ -24,11 +24,27 @@ class ProjectConfigStoreTest {
         assertTrue(project.isScene(dir.resolve("level.gltf")));
         assertTrue(project.isScene(dir.resolve("scenes/other.gltf")));
     }
+    @Test void aConfigWithoutScenesFolderDefaultsToScenes() throws Exception {
+        Files.writeString(dir.resolve(ProjectConfigStore.FILE_NAME), VALID);
+        ProjectConfig config = store.read(dir.resolve(ProjectConfigStore.FILE_NAME));
+        assertEquals(ProjectConfig.DEFAULT_SCENES_FOLDER, config.scenesFolder());
+        assertEquals(dir.resolve("scenes"), store.resolve(dir, config).scenesFolder());
+    }
+    @Test void scenesFolderMustBeAStringInsideTheRoot() throws Exception {
+        Path file = dir.resolve(ProjectConfigStore.FILE_NAME);
+        Files.writeString(file, VALID.replace("}", ",\"scenesFolder\":42}"));
+        assertThrows(IOException.class, () -> store.read(file));
+        Files.writeString(file, VALID.replace("}", ",\"scenesFolder\":\"../out\"}"));
+        assertThrows(IOException.class, () -> store.read(file));
+        Files.writeString(file, VALID.replace("}", ",\"scenesFolder\":\".\"}"));
+        assertEquals(dir, store.resolve(dir, store.read(file)).scenesFolder());
+    }
     @Test void missingConfigUsesLegacySceneAndDirectory() throws Exception {
         Path scene = dir.resolve("legacy.gltf");
         ProjectAssets project = store.loadForScene(scene);
         assertEquals(List.of(dir), project.folders());
         assertEquals(List.of(scene), project.scenes());
+        assertEquals(dir, project.scenesFolder());
         assertFalse(Files.exists(dir.resolve(ProjectConfigStore.FILE_NAME)));
     }
     @Test void rejectsMalformedVersionsAndFieldTypes() throws Exception {
@@ -62,17 +78,17 @@ class ProjectConfigStoreTest {
     @Test void creationDoesNotOverwriteConfigSceneOrArchetypes() throws Exception {
         var writer = new FileProjectWriter(new org.xast.kebab.scene.io.GltfSceneWriter(new ObjectMapper()), new ObjectMapper());
         Files.writeString(dir.resolve("archetypes.json"), "KEEP");
-        Path project = writer.createProject(dir, "level");
-        Path scene = dir.resolve("level.gltf");
+        Path project = writer.createProject(dir);
         assertEquals(dir.resolve(ProjectConfigStore.FILE_NAME), project);
         assertTrue(Files.isDirectory(dir.resolve("assets")));
+        assertTrue(store.read(project).scenes().isEmpty());
+        Path scene = writer.createScene(project, "", "level");
         assertTrue(store.loadForScene(scene).isScene(scene));
-        String originalConfig = Files.readString(dir.resolve(ProjectConfigStore.FILE_NAME));
-        assertThrows(IOException.class, () -> writer.createProject(dir, "other"));
-        assertThrows(FileAlreadyExistsException.class, () -> writer.createProject(dir, "level"));
+        String originalConfig = Files.readString(project);
+        assertThrows(FileAlreadyExistsException.class, () -> writer.createProject(dir));
+        assertThrows(FileAlreadyExistsException.class, () -> writer.createScene(project, "", "level"));
         assertEquals("KEEP", Files.readString(dir.resolve("archetypes.json")));
-        assertEquals(originalConfig, Files.readString(dir.resolve(ProjectConfigStore.FILE_NAME)));
+        assertEquals(originalConfig, Files.readString(project));
         assertEquals(ProjectTemplates.MINIMAL_GLTF, Files.readString(scene));
-        assertFalse(Files.exists(dir.resolve("other.gltf")));
     }
 }

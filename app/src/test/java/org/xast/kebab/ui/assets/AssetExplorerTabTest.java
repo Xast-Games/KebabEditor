@@ -19,7 +19,8 @@ class AssetExplorerTabTest {
     @TempDir Path dir;
     @Test void respondsToOpenSwitchRefreshCloseAndDetachesListeners() throws Exception {
         Editor editor = EditorSessions.create();
-        editor.createProject(dir.resolve("one"), "first");
+        editor.createProject(dir.resolve("one"));
+        editor.createScene("", "first");
         AtomicReference<AssetExplorerTab> tab = new AtomicReference<>();
         SwingUtilities.invokeAndWait(() -> {
             KebabStyle.setCurrent(KebabStyle.defaultStyle());
@@ -28,7 +29,8 @@ class AssetExplorerTabTest {
         });
         try {
             waitFor(() -> dir.resolve("one").equals(tab.get().selectedDirectory()));
-            editor.createProject(dir.resolve("two"), "second");
+            editor.createProject(dir.resolve("two"));
+            editor.createScene("", "second");
             waitFor(() -> dir.resolve("two").equals(tab.get().selectedDirectory()));
             Path asset = Files.writeString(dir.resolve("two/new.txt"), "hello");
             SwingUtilities.invokeAndWait(() -> tab.get().refresh());

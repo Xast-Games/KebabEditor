@@ -6,13 +6,13 @@ import javax.swing.JOptionPane;
 import org.xast.kebab.editor.Editor;
 
 /**
- * Guard for actions that edit the scene. They stay enabled without a project so
+ * Guard for actions that edit the scene. They stay enabled without a scene so
  * their shortcuts explain what is missing instead of silently doing nothing.
  * They are refused during a playtest, which plays the scene as it was when it started.
  */
-final class ProjectRequired {
+final class SceneRequired {
 
-    private ProjectRequired() {}
+    private SceneRequired() {}
 
     static boolean check(JFrame frame, Editor editor) {
         if (editor.isPlaytesting()) {
@@ -25,8 +25,18 @@ final class ProjectRequired {
             return false;
         }
 
-        if (editor.isProjectOpen()) {
+        if (editor.isSceneOpen()) {
             return true;
+        }
+
+        if (editor.isProjectOpen()) {
+            JOptionPane.showMessageDialog(
+                frame,
+                "Create or open a scene first (File > New scene, or a scene in the asset explorer).",
+                "No scene open",
+                JOptionPane.INFORMATION_MESSAGE
+            );
+            return false;
         }
 
         JOptionPane.showMessageDialog(

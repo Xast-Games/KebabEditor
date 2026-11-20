@@ -146,7 +146,7 @@ public class EditMenu extends Menu {
         Maybe<String> keyStroke,
         Runnable action
     ) {
-        return new SingleItem(label, keyStroke, ProjectRequired.guard(frame, editor, action));
+        return new SingleItem(label, keyStroke, SceneRequired.guard(frame, editor, action));
     }
 
     // While a text field has focus the shortcut belongs to it, so Ctrl+C there still copies text

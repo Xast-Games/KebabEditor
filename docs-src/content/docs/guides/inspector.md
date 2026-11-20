@@ -14,6 +14,7 @@ Select an object and the Inspector on the right shows:
 
 - **Name.** Press Enter or leave the field to rename.
 - **Transform.** Position, rotation in degrees and a uniform scale. The rotation fields show Euler angles; an untouched rotation is never rewritten.
+- **Greybox**, for greybox boxes and spheres. Shape, size along X, Y and Z, and colour. The size is what the scale gizmo stretches along one axis, so this is where you type exact dimensions. Sizes must be positive. The uniform scale above multiplies the size.
 - **One section per archetype.** Each parameter has its own editor. Values are applied on Enter, on leaving the field or when you change a control. A field that is still being edited is not overwritten by outside changes.
 - **Add Archetype** and **Remove archetype.**
 
