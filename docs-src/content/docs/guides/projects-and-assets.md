@@ -19,7 +19,6 @@ my-game/
 ├── scenes/
 │   └── level.gltf      scene: nodes, transforms and archetype instances
 ├── assets/             project assets
-└── models/             imported models (created when importing)
 ```
 
 **File > Create new project...** asks for a location and a scenes folder (`scenes` by default). It writes `kebab-project.json` and `archetypes.json` into the location and creates the scenes folder. Leave the scenes folder empty to keep scenes next to `kebab-project.json`. A new project has no scenes yet.
@@ -30,14 +29,14 @@ my-game/
 
 Every scene and prefab of the project uses the same `archetypes.json`, however deep its folder is. A project whose `archetypes.json` still sits next to its scene keeps working: the editor reads that file and the next save writes the project's own. Moving the asset root takes `archetypes.json` along with `kebab-project.json`, unless the new root already has one.
 
-Saving is atomic, so a failed write cannot corrupt a level. Imported external models are copied into `models/` under the asset root, so scenes in any folder share them.
+Saving is atomic, so a failed write cannot corrupt a level. The editor never copies models or their textures: put them under the asset root yourself and place them from the Asset Explorer, so one file serves every scene that uses it.
 
 ## Asset Explorer
 
 The Asset Explorer sits beside Logs. Select a folder in the tree, double-click a folder to enter it, and double-click an asset or press Enter to open it.
 
 - A glTF or GLB file opens as a read-only **model preview**, unless it is registered as a scene.
-- Drag a glTF or GLB file into the viewport to place it where the cursor points, on whatever surface or ground is under it. A model becomes an object with a **Model Reference**, and a registered scene an object with a **Prefab Reference**. A scene cannot be placed inside itself, or inside a scene it already contains. You can also drop glTF files from your file manager; a model from outside the project is copied into `models/`, as with **Import glTF model**.
+- Drag a glTF or GLB file into the viewport to place it where the cursor points, on whatever surface or ground is under it. A model becomes an object with a **Model Reference**, and a registered scene an object with a **Prefab Reference**. A scene cannot be placed inside itself, or inside a scene it already contains. Files dropped from your file manager work the same way when they are inside the asset root; a file outside it is refused, not copied.
 - A registered scene opens in the editor in place of the current one. If the current scene has unsaved changes, you choose **Save and open**, **Discard and open** or **Cancel**.
 - The explorer refreshes when the window regains focus. **File > Refresh assets** (`Ctrl+F5`) refreshes it on demand.
 
@@ -49,7 +48,7 @@ The Asset Explorer sits beside Logs. Select a folder in the tree, double-click a
 {
   "version": 1,
   "assetRoot": ".",
-  "assetFolders": ["assets", "models", "scenes"],
+  "assetFolders": ["assets", "scenes"],
   "scenes": ["scenes/level.gltf"],
   "scenesFolder": "scenes"
 }

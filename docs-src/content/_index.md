@@ -29,7 +29,7 @@ content = "Edit the selected object's transform and every archetype parameter in
 
 [[extra.list]]
 title = "Models and prefabs"
-content = "Import glTF and GLB models, and draw a whole other scene in place of an object with a prefab reference."
+content = "Place glTF and GLB models from the project by dragging them in, and draw a whole other scene in place of an object with a prefab reference."
 
 [[extra.list]]
 title = "Projects and assets"

@@ -34,7 +34,7 @@ On save, the instances are written into the standard glTF `extras` field, so a l
 - Invalid setups, such as a bad model path or a duplicate of a single archetype, are reported in the Logs panel or highlighted in the dialog
 
 **Models and prefabs**
-- Import glTF / GLB models (embedded textures included); external models are copied into the project's `models/` folder
+- glTF / GLB models are referenced where they are in the project, never copied: drag one from the Asset Explorer into the viewport
 - A prefab reference draws a whole other scene file in place of its object, with protection against prefabs that contain themselves
 - Missing models and textures are shown as a visible placeholder instead of disappearing
 
@@ -92,7 +92,6 @@ Create a project with **File → Create new project…**, add a scene with **Fil
 | Gizmo mode | `1` move, `2` rotate, `3` scale |
 | Edit the selected object | Double-click, or `Ctrl+E` |
 | Add greybox box / sphere | `Ctrl+B` / `Ctrl+Shift+B` |
-| Import a glTF model | `Ctrl+I` |
 | Place a model or prefab from the Asset Explorer | Drag it into the viewport |
 | Placement ray | `Ctrl+Shift+P` (wheel changes distance, `Alt` ignores surfaces, `Esc` leaves) |
 | Hide / show the Inspector | `N` |
@@ -112,15 +111,14 @@ my-level/
 ├── archetypes.json     your archetype definitions
 ├── kebab-project.json  asset scope and editable scene registration
 ├── assets/             project assets
-└── models/             imported models (created when importing)
 ```
 
 New projects create `assets/` and `kebab-project.json` with version 1, `assetRoot: "."`,
-`assetFolders: ["assets", "models", "scenes"]`, `scenesFolder: "scenes"` and no `scenes`;
+`assetFolders: ["assets", "scenes"]`, `scenesFolder: "scenes"` and no `scenes`;
 **File → New scene…** puts new scenes in `scenesFolder` by default, registers each one in
 `scenes`, and adds its folder to `assetFolders` when it is not covered yet. Existing projects
 without a config use their scene directory as the browser root. Paths must stay inside
-the project; symbolic links are omitted from the browser. Keep imported models in scope
+the project; symbolic links are omitted from the browser. Keep the folders holding your models in scope
 if you edit `assetFolders`.
 
 Select a directory in Asset Explorer, double-click a folder to navigate, and double-click

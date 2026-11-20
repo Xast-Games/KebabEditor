@@ -210,7 +210,7 @@ public final class ProjectConfigStore {
         requireDirectoryIfPresent(scenesDir, "Scenes folder");
 
         String scenes = folderName(dir, scenesDir);
-        List<String> folders = new ArrayList<>(List.of(ASSETS_DIR, ModelImporter.MODELS_DIR));
+        List<String> folders = new ArrayList<>(List.of(ASSETS_DIR));
         if (!scenesDir.equals(dir) && !folders.contains(scenes)) {
             folders.add(scenes);
         }

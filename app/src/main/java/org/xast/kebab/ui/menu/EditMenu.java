@@ -3,7 +3,6 @@ package org.xast.kebab.ui.menu;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.io.IOException;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
@@ -26,10 +25,7 @@ import org.xast.kebab.ui.menu.generic.RadioItem;
 import org.xast.kebab.ui.menu.generic.SeparatorItem;
 import org.xast.kebab.ui.menu.generic.SingleItem;
 import org.xast.kebab.ui.object.ObjectDialog;
-import org.xast.kebab.utils.ErrorDialogs;
-import org.xast.kebab.utils.FileChooser;
 import org.xast.kebab.utils.Maybe;
-import org.xast.kebab.utils.FileChooser.FileChooserMode;
 
 public class EditMenu extends Menu {
 
@@ -96,8 +92,6 @@ public class EditMenu extends Menu {
             lightItem(frame, editor, spawnPoint, "Add directional light", BuiltinArchetypes.DIR_LIGHT),
             lightItem(frame, editor, spawnPoint, "Add spot light", BuiltinArchetypes.SPOT_LIGHT),
             new SeparatorItem(),
-            importModelItem(frame, editor, spawnPoint),
-            new SeparatorItem(),
             editObjectItem(frame, editor),
             openPrefabItem(frame, editor, navigator),
             frameSelectedItem(view),
@@ -156,20 +150,6 @@ public class EditMenu extends Menu {
                 action.run();
             }
         });
-    }
-
-    private static SingleItem importModelItem(JFrame frame, Editor editor, Supplier<Vec3> spawnPoint) {
-        Runnable importModel = () -> new FileChooser(FileChooserMode.FILES)
-            .addFilter("glTF model", "gltf", "glb")
-            .open(frame, file -> {
-                try {
-                    editor.importModel(file.toPath(), spawnPoint.get());
-                } catch (IOException e) {
-                    ErrorDialogs.show(frame, "Cannot import model", e);
-                }
-            });
-
-        return spawnItem(frame, editor, "Import glTF model...", Maybe.some("control I"), importModel);
     }
 
     private static SingleItem editObjectItem(JFrame frame, Editor editor) {

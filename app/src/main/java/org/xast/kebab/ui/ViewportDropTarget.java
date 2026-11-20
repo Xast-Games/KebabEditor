@@ -16,13 +16,12 @@ import javax.swing.TransferHandler;
 
 import org.xast.kebab.editor.Editor;
 import org.xast.kebab.math.Vec3;
-import org.xast.kebab.utils.ErrorDialogs;
 import org.xast.kebab.utils.Maybe;
 
 /**
  * Takes glTF files dropped on the viewport, from the asset explorer or a file manager, and
  * places each where the cursor points: a registered scene as a prefab_ref, any other file as
- * a model_ref. A model from outside the project is copied into it, as with Import glTF model.
+ * a model_ref. Files are only referenced; one from outside the project is refused, not copied.
  */
 final class ViewportDropTarget extends TransferHandler {
 
@@ -76,8 +75,6 @@ final class ViewportDropTarget extends TransferHandler {
             } catch (IllegalArgumentException e) {
                 JOptionPane.showMessageDialog(view, e.getMessage(), "Cannot place " + file.getFileName(),
                     JOptionPane.ERROR_MESSAGE);
-            } catch (IOException e) {
-                ErrorDialogs.show(view, "Cannot place " + file.getFileName(), e);
             }
         }
     }

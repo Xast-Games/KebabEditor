@@ -43,7 +43,6 @@ Click an object or its icon to select it. The gizmo has three modes: `1` move, `
 |---|---|
 | Greybox box | `Ctrl+B` |
 | Greybox sphere | `Ctrl+Shift+B` |
-| Import a glTF model | `Ctrl+I` |
 | Empty, player start, lights | **Edit** menu |
 
 ## Copy, paste and duplicate

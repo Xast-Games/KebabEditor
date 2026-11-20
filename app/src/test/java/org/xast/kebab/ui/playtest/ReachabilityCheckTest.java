@@ -18,7 +18,6 @@ import org.xast.kebab.math.Vec3;
 import org.xast.kebab.playtest.reach.ReachabilityReport;
 import org.xast.kebab.project.FileProjectLoader;
 import org.xast.kebab.project.FileProjectWriter;
-import org.xast.kebab.project.ModelImporter;
 import org.xast.kebab.project.NoRecentProjects;
 import org.xast.kebab.project.ProjectManager;
 import org.xast.kebab.scene.io.GltfSceneReader;
@@ -51,9 +50,7 @@ class ReachabilityCheckTest {
                 new FileProjectWriter(new GltfSceneWriter(mapper), mapper),
                 new FileProjectLoader(new GltfSceneReader(mapper), mapper,
                     new CompositeModelExtractor(List.of(new GltfMeshExtractor())))
-            ),
-            new ModelImporter(mapper)
-        );
+            ));
         viewport = new FakePlaytestViewport();
         // Updates run at once instead of after a pause.
         check = new ReachabilityCheck(editor, viewport, log, update -> update);

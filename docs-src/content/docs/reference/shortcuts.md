@@ -22,7 +22,6 @@ top = false
 | Copy / paste objects | `Ctrl+C` / `Ctrl+V` |
 | Duplicate objects | `Ctrl+D` |
 | Add greybox box / sphere | `Ctrl+B` / `Ctrl+Shift+B` |
-| Import a glTF model | `Ctrl+I` |
 | Edit selected object | `Ctrl+E` |
 | Open the selected prefab's scene | `Ctrl+Shift+O` |
 | Frame the selection (viewport or Outliner) | `F` |

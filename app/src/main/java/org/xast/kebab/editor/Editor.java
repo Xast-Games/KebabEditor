@@ -21,7 +21,6 @@ import org.xast.kebab.behavior.instance.SnapDistanceBehavior;
 import org.xast.kebab.logging.LogService;
 import org.xast.kebab.math.Transform;
 import org.xast.kebab.math.Vec3;
-import org.xast.kebab.project.ModelImporter;
 import org.xast.kebab.project.ProjectAssets;
 import org.xast.kebab.project.ProjectConfig;
 import org.xast.kebab.project.ProjectManager;
@@ -41,7 +40,6 @@ import lombok.Getter;
 public class Editor {
 
     private final ProjectManager projectManager;
-    private final ModelImporter modelImporter;
     private final Selection selection = new Selection();
     private final History history;
     private boolean snapping = true;
@@ -131,9 +129,8 @@ public class Editor {
         return scene().map(scene -> scene.find(node.getId()).unwrapOr(null) == node).unwrapOr(false);
     }
 
-    public Editor(ProjectManager projectManager, ModelImporter modelImporter) {
+    public Editor(ProjectManager projectManager) {
         this.projectManager = projectManager;
-        this.modelImporter = modelImporter;
         this.history = new History(projectManager::scene, selection);
 
         // Selected nodes belong to the scene that was just replaced or closed.
@@ -722,25 +719,22 @@ public class Editor {
         });
     }
 
-    /** Adds a model_ref node for a glTF model; a model from outside the project is copied into its models/ first. */
-    public SceneNode importModel(Path modelFile, Vec3 base) throws IOException {
-        Path sceneDir = currentSceneDir();
-        // Models go to the asset root's models/, shared by scenes in any folder; the reference is scene-relative
-        Path assetRoot = projectManager.assets().map(ProjectAssets::root).unwrapOr(sceneDir);
-        Path inside = modelImporter.importInto(assetRoot, modelFile);
-        return addReference(BuiltinArchetypes.MODEL_REF, inside, base, "import model");
-    }
-
     /**
      * Adds a node for a glTF file of the project, e.g. one dragged in from the asset explorer:
-     * a registered scene becomes a prefab_ref, any other file a model_ref as in {@link #importModel}.
+     * a registered scene becomes a prefab_ref, any other file a model_ref. Files are only
+     * referenced, never copied, so one outside the asset root is refused.
      *
-     * @throws IllegalArgumentException when the scene would end up containing itself
+     * @throws IllegalArgumentException when the file is outside the project, or the scene would end up containing itself
      */
-    public SceneNode placeAsset(Path file, Vec3 base) throws IOException {
+    public SceneNode placeAsset(Path file, Vec3 base) {
         Path target = file.toAbsolutePath().normalize();
-        if (projectManager.assets().isSomeAnd(assets -> !assets.isScene(target))) {
-            return importModel(target, base);
+        ProjectAssets assets = projectManager.assets().expect("No project is open");
+        if (!target.startsWith(assets.root())) {
+            throw new IllegalArgumentException(target.getFileName() + " is outside the project. "
+                + "Put it under the asset root (" + assets.root() + ") first, then drag it in from the Asset Explorer.");
+        }
+        if (!assets.isScene(target)) {
+            return addReference(BuiltinArchetypes.MODEL_REF, target, base, "add model");
         }
 
         Path sceneFile = projectManager.currentScene().expect("No scene is open").toAbsolutePath().normalize();

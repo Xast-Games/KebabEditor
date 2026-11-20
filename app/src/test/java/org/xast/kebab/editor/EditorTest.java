@@ -23,7 +23,6 @@ import org.xast.kebab.archetype.instance.ArchetypeInstance;
 import org.xast.kebab.math.Vec3;
 import org.xast.kebab.project.FileProjectLoader;
 import org.xast.kebab.project.FileProjectWriter;
-import org.xast.kebab.project.ModelImporter;
 import org.xast.kebab.project.ProjectManager;
 import org.xast.kebab.project.RecentProjects;
 import org.xast.kebab.scene.io.GltfSceneReader;
@@ -65,7 +64,7 @@ class EditorTest {
             new FileProjectLoader(new GltfSceneReader(mapper), mapper,
                 new CompositeModelExtractor(List.of(new GltfMeshExtractor())))
         );
-        editor = new Editor(projects, new ModelImporter(mapper));
+        editor = new Editor(projects);
         editor.createProject(projectDir);
         editor.createScene("", "level");
     }
@@ -118,22 +117,32 @@ class EditorTest {
     }
 
     @Test
-    void importedModelIsCopiedInAndShownThroughModelRef() throws Exception {
-        Path model = writeTriangleGltf(elsewhere.resolve("tri.gltf"));
+    void aModelInTheProjectIsShownThroughModelRef() throws Exception {
+        Files.createDirectories(projectDir.resolve("assets/models/tri"));
+        Path model = writeTriangleGltf(projectDir.resolve("assets/models/tri/tri.gltf"));
 
-        SceneNode node = editor.importModel(model, new Vec3(1, 0, 2));
-
-        assertTrue(Files.isRegularFile(projectDir.resolve("models/tri/tri.gltf")));
-        assertTrue(Files.isRegularFile(projectDir.resolve("models/tri/tri.bin")));
+        SceneNode node = editor.placeAsset(model, new Vec3(1, 0, 2));
 
         ArchetypeInstance modelRef = assertInstanceOf(ArchetypeInstance.class, node.getArchetypes().getFirst());
         assertEquals(BuiltinArchetypes.MODEL_REF, modelRef.archetypeId());
-        assertEquals("models/tri/tri.gltf", modelRef.get("path"));
+        assertEquals("assets/models/tri/tri.gltf", modelRef.get("path"));
 
         ResolvedModel resolved = assertInstanceOf(ResolvedModel.class,
-            editor.modelResolver().unwrap().resolve(editor.currentSceneFile().unwrap(), "models/tri/tri.gltf"));
+            editor.modelResolver().unwrap().resolve(editor.currentSceneFile().unwrap(), "assets/models/tri/tri.gltf"));
         assertEquals(1, resolved.parts().size());
         assertSame(node, editor.selection().primary().unwrap());
+    }
+
+    @Test
+    void aModelOutsideTheProjectIsRefusedNotCopied() throws Exception {
+        Path model = writeTriangleGltf(elsewhere.resolve("tri.gltf"));
+
+        assertThrows(IllegalArgumentException.class, () -> editor.placeAsset(model, Vec3.zero()));
+
+        assertTrue(editor.sceneNodes().isEmpty());
+        try (var files = Files.walk(projectDir)) {
+            assertTrue(files.noneMatch(path -> path.getFileName().toString().startsWith("tri")));
+        }
     }
 
     @Test
@@ -291,21 +300,6 @@ class EditorTest {
 
         assertThrows(java.io.IOException.class, () -> editor.openScene(outside));
         assertEquals(projectDir.resolve("level.gltf"), editor.currentSceneFile().unwrap());
-    }
-
-    @Test
-    void modelsOfAScenesFolderGoToTheSharedModelsFolder() throws Exception {
-        Path dir = elsewhere.resolve("game");
-        editor.createProject(dir);
-        editor.createScene("scenes", "world");
-        Path model = elsewhere.resolve("tri.gltf");
-        Files.writeString(model, "{\"asset\":{\"version\":\"2.0\"}}");
-
-        editor.importModel(model, Vec3.zero());
-
-        assertTrue(Files.isRegularFile(dir.resolve("models/tri/tri.gltf")), "models: " + dir.resolve("models"));
-        ArchetypeInstance ref = (ArchetypeInstance) editor.sceneNodes().getFirst().getArchetypes().getFirst();
-        assertEquals("../models/tri/tri.gltf", ref.get("path"));
     }
 
     @Test

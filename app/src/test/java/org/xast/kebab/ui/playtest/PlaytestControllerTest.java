@@ -23,7 +23,6 @@ import org.xast.kebab.playtest.PlayerStart;
 import org.xast.kebab.playtest.PlaytestSession;
 import org.xast.kebab.project.FileProjectLoader;
 import org.xast.kebab.project.FileProjectWriter;
-import org.xast.kebab.project.ModelImporter;
 import org.xast.kebab.project.NoRecentProjects;
 import org.xast.kebab.project.ProjectManager;
 import org.xast.kebab.scene.io.GltfSceneReader;
@@ -57,9 +56,7 @@ class PlaytestControllerTest {
                 new FileProjectWriter(new GltfSceneWriter(mapper), mapper),
                 new FileProjectLoader(new GltfSceneReader(mapper), mapper,
                     new CompositeModelExtractor(List.of(new GltfMeshExtractor())))
-            ),
-            new ModelImporter(mapper)
-        );
+            ));
         viewport = new FakePlaytestViewport();
         controller = new PlaytestController(editor, viewport, (title, message) -> notices.add(title), log);
     }

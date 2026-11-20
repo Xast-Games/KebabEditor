@@ -29,6 +29,6 @@ public final class EditorSessions {
                 new CompositeModelExtractor(List.of(new GltfMeshExtractor()))
             )
         );
-        return new Editor(manager, new ModelImporter(mapper));
+        return new Editor(manager);
     }
 }
