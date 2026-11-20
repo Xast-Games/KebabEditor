@@ -35,7 +35,7 @@ class PlaytestLevelTest {
 
     static SceneNode greybox(String name, GreyboxShape shape, Vec3 at, Vec3 size) {
         SceneNode node = node(name, at);
-        new Greybox(shape, size, Color.GRAY).writeTo(node);
+        new Greybox(shape, size).writeTo(node);
         return node;
     }
 

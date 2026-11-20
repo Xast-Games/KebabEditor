@@ -18,6 +18,7 @@ import org.xast.kebab.math.Transform;
 import org.xast.kebab.math.Vec3;
 import org.xast.kebab.project.EditorSessions;
 import org.xast.kebab.scene.model.Greybox;
+import org.xast.kebab.scene.model.GreyboxColor;
 import org.xast.kebab.scene.model.GreyboxShape;
 import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.ui.archetype.ParamValueEditor;
@@ -106,6 +107,10 @@ class InspectorPaneTest {
         });
     }
 
+    JComboBox<?> combo(String name) {
+        return all(pane).stream().filter(c -> name.equals(c.getName())).map(JComboBox.class::cast).findFirst().orElseThrow();
+    }
+
     boolean hasField(String name) {
         return all(pane).stream().anyMatch(c -> name.equals(c.getName()));
     }
@@ -127,12 +132,20 @@ class InspectorPaneTest {
                 assertEquals(new Vec3(4, 1, 0.5f), Greybox.of(box[0]).unwrap().size(), invalid);
             }
 
-            JComboBox<?> shape = all(pane).stream().filter(c -> "greybox.shape".equals(c.getName()))
-                .map(JComboBox.class::cast).findFirst().orElseThrow();
-            shape.setSelectedItem(GreyboxShape.SPHERE);
+            assertEquals(GreyboxColor.ORANGE, combo("greybox.color").getSelectedItem());
+            assertEquals(1, combo("greybox.pattern").getSelectedItem());
+            combo("greybox.shape").setSelectedItem(GreyboxShape.SPHERE);
             assertEquals(GreyboxShape.SPHERE, Greybox.of(box[0]).unwrap().shape());
             assertEquals(new Vec3(4, 1, 0.5f), Greybox.of(box[0]).unwrap().size());
 
+            combo("greybox.color").setSelectedItem(GreyboxColor.GREEN);
+            combo("greybox.pattern").setSelectedItem(7);
+            assertEquals(GreyboxColor.GREEN, Greybox.of(box[0]).unwrap().color());
+            assertEquals(7, Greybox.of(box[0]).unwrap().pattern());
+            assertEquals(GreyboxShape.SPHERE, Greybox.of(box[0]).unwrap().shape());
+
+            editor.undo();
+            editor.undo();
             editor.undo();
             assertEquals(GreyboxShape.BOX, Greybox.of(box[0]).unwrap().shape());
             editor.undo();

@@ -61,7 +61,7 @@ class ReachabilityCheckTest {
 
     private SceneNode box(Vec3 center, Vec3 size) {
         SceneNode node = editor.placeGreybox(GreyboxShape.BOX, center);
-        new Greybox(GreyboxShape.BOX, size, Greybox.DEFAULT_COLOR).writeTo(node);
+        new Greybox(GreyboxShape.BOX, size).writeTo(node);
         return node;
     }
 

@@ -267,7 +267,7 @@ public final class GizmoInteraction {
                     size[axis] = snapSize(size[axis] * factor);
                 }
             }
-            new Greybox(start.shape(), new Vec3(size[0], size[1], size[2]), start.color()).writeTo(d.node());
+            start.withSize(new Vec3(size[0], size[1], size[2])).writeTo(d.node());
         } else {
             d.node().getTransform().setScale(Math.max(d.startLocal().getScale() * factor, MIN_SCALE));
         }

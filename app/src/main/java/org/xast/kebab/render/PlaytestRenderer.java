@@ -85,8 +85,11 @@ public class PlaytestRenderer implements RenderPass {
             .mul(Mat4.scaling(settings.radius() * 2.5f));
 
         List<Drawable> drawables = new ArrayList<>();
-        drawables.add(new Drawable(body, world, BODY, DrawMode.SOLID));
-        drawables.add(new Drawable(Meshes.ARROW_LINES, arrow, FACING, DrawMode.OVERLAY));
+        // In first person, or when a wall pushes the camera into the actor, its body would fill the view
+        if (!insideActor(context.camera().getPosition(), running.actorPosition(), settings)) {
+            drawables.add(new Drawable(body, world, BODY, DrawMode.SOLID));
+            drawables.add(new Drawable(Meshes.ARROW_LINES, arrow, FACING, DrawMode.OVERLAY));
+        }
         if (trail != null) {
             drawables.addAll(trail.drawables(true, rays.thickness().width()));
         }
@@ -95,6 +98,16 @@ public class PlaytestRenderer implements RenderPass {
         }
 
         drawableObjects.draw(gl, context, drawables, false);
+    }
+
+    /** Whether the eye is in or right next to the actor's capsule, whose origin is at its feet. */
+    static boolean insideActor(Vec3 eye, Vec3 feet, ActorSettings settings) {
+        float margin = settings.radius() * 0.5f;
+        float dx = eye.getX() - feet.getX();
+        float dz = eye.getZ() - feet.getZ();
+        float reach = settings.radius() + margin;
+        float y = eye.getY() - feet.getY();
+        return dx * dx + dz * dz < reach * reach && y > -margin && y < settings.height() + margin;
     }
 
     private static List<Drawable> highlight(PhysicsVolume volume) {

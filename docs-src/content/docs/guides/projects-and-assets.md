@@ -37,6 +37,7 @@ Saving is atomic, so a failed write cannot corrupt a level. Imported external mo
 The Asset Explorer sits beside Logs. Select a folder in the tree, double-click a folder to enter it, and double-click an asset or press Enter to open it.
 
 - A glTF or GLB file opens as a read-only **model preview**, unless it is registered as a scene.
+- Drag a glTF or GLB file into the viewport to place it where the cursor points, on whatever surface or ground is under it. A model becomes an object with a **Model Reference**, and a registered scene an object with a **Prefab Reference**. A scene cannot be placed inside itself, or inside a scene it already contains. You can also drop glTF files from your file manager; a model from outside the project is copied into `models/`, as with **Import glTF model**.
 - A registered scene opens in the editor in place of the current one. If the current scene has unsaved changes, you choose **Save and open**, **Discard and open** or **Cancel**.
 - The explorer refreshes when the window regains focus. **File > Refresh assets** (`Ctrl+F5`) refreshes it on demand.
 

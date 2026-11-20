@@ -387,13 +387,52 @@ class EditorTest {
 
         for (Vec3 bad : List.of(new Vec3(0, 1, 1), new Vec3(1, -1, 1), new Vec3(1, 1, Float.NaN))) {
             assertThrows(IllegalArgumentException.class, () -> editor.updateGreybox(box,
-                new org.xast.kebab.scene.model.Greybox(start.shape(), bad, start.color())));
+                start.withSize(bad)));
         }
         assertEquals(start.size(), org.xast.kebab.scene.model.Greybox.of(box).unwrap().size());
 
         SceneNode empty = editor.spawnEmpty(Vec3.zero());
         assertThrows(IllegalArgumentException.class, () -> editor.updateGreybox(empty, start));
         assertTrue(org.xast.kebab.scene.model.Greybox.of(empty).isNone());
+    }
+
+    @Test
+    void aProjectModelIsPlacedAsAModelRefWithoutCopying() throws Exception {
+        Path model = projectDir.resolve("assets/props/crate.glb");
+        Files.createDirectories(model.getParent());
+        Files.writeString(model, "{\"asset\":{\"version\":\"2.0\"}}");
+
+        SceneNode node = editor.placeAsset(model, new Vec3(1, 0, 2));
+
+        assertEquals("crate", node.getName());
+        assertEquals(new Vec3(1, 0, 2), node.getTransform().getTranslation());
+        ArchetypeInstance ref = (ArchetypeInstance) node.getArchetypes().getFirst();
+        assertEquals(BuiltinArchetypes.MODEL_REF, ref.archetypeId());
+        assertEquals("assets/props/crate.glb", ref.get("path"));
+        assertFalse(Files.exists(projectDir.resolve("models/crate")));
+        assertSame(node, editor.selection().primary().unwrap());
+        editor.undo();
+        assertTrue(editor.sceneNodes().isEmpty());
+    }
+
+    @Test
+    void aRegisteredSceneIsPlacedAsAPrefabRefButNeverInsideItself() throws Exception {
+        Path level = projectDir.resolve("level.gltf");
+        editor.createScene("scenes", "town");
+        Path town = projectDir.resolve("scenes/town.gltf");
+
+        SceneNode node = editor.placeAsset(level, Vec3.zero());
+
+        ArchetypeInstance ref = (ArchetypeInstance) node.getArchetypes().getFirst();
+        assertEquals(BuiltinArchetypes.PREFAB_REF, ref.archetypeId());
+        assertEquals("../level.gltf", ref.get("path"));
+        assertThrows(IllegalArgumentException.class, () -> editor.placeAsset(town, Vec3.zero()));
+        editor.saveScene();
+
+        // The town now contains the level, so the level cannot contain the town
+        editor.openScene(level);
+        assertThrows(IllegalArgumentException.class, () -> editor.placeAsset(town, Vec3.zero()));
+        assertTrue(editor.sceneNodes().isEmpty());
     }
 
     private static void assertSamePlace(org.xast.kebab.math.Mat4 expected, org.xast.kebab.math.Mat4 actual) {

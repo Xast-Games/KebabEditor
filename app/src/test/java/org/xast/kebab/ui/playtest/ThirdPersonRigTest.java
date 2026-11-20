@@ -1,6 +1,7 @@
 package org.xast.kebab.ui.playtest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -48,6 +49,42 @@ class ThirdPersonRigTest {
         assertEquals(ThirdPersonRig.MAX_DISTANCE, rig.distance(), EPS);
         rig.zoom(-1000);
         assertEquals(ThirdPersonRig.MIN_DISTANCE, rig.distance(), EPS);
+        assertFalse(rig.isFirstPerson(), "one scroll stops at the closest distance");
+    }
+
+    @Test
+    void zoomingInPastTheClosestDistanceGoesToFirstPersonAndBack() {
+        ThirdPersonRig rig = new ThirdPersonRig(0f);
+        rig.zoom(-1000);
+
+        rig.zoom(-1);
+        assertTrue(rig.isFirstPerson());
+        rig.zoom(-1);
+        assertTrue(rig.isFirstPerson(), "zooming further in stays in first person");
+
+        rig.zoom(1);
+        assertFalse(rig.isFirstPerson());
+        assertEquals(ThirdPersonRig.MIN_DISTANCE, rig.distance(), EPS);
+    }
+
+    @Test
+    void firstPersonLooksOutFromTheEyesAndFurtherUpAndDown() {
+        ThirdPersonRig rig = new ThirdPersonRig(0.3f);
+        rig.zoom(-1000);
+        rig.zoom(-1);
+        Camera camera = new Camera();
+        Vec3 target = new Vec3(1, 2, 3);
+        Vec3 eye = new Vec3(1, 2.2f, 3);
+
+        rig.place(camera, target, eye, EMPTY);
+        assertEquals(eye, camera.getPosition());
+
+        rig.orbit(0, -100_000);
+        assertEquals(ThirdPersonRig.MAX_FIRST_PERSON_PITCH, rig.pitch(), EPS);
+
+        // Back in third person, the pitch returns to its own range
+        rig.zoom(1);
+        assertEquals(ThirdPersonRig.MAX_PITCH, rig.pitch(), EPS);
     }
 
     @Test

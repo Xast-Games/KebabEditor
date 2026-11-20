@@ -29,7 +29,7 @@ A standard glTF 2.0 file. Archetype instances live under `extras.kebab` on each 
 }
 ```
 
-A greybox is stored as `extras.kebab.greybox` with a `shape`, a `size` and a `color`.
+A greybox is stored as `extras.kebab.greybox` with a `shape` (`box` or `sphere`), a `size` (`[x, y, z]`), a `pattern` (1 to 13) and a `color` (`dark`, `light`, `green`, `orange`, `purple` or `red`). A missing `pattern` or `color` means pattern 1 in orange. Greyboxes saved with an `[r, g, b, a]` colour, before the prototype textures, open with the closest of the six colours and pattern 1, and are saved in the new form.
 
 ## archetypes.json
 

@@ -9,9 +9,11 @@ import org.xast.kebab.archetype.builtin.BuiltinArchetypes;
 import org.xast.kebab.behavior.DrawMode;
 import org.xast.kebab.behavior.Drawable;
 import org.xast.kebab.math.Mat4;
+import org.xast.kebab.model.AlphaMode;
 import org.xast.kebab.model.Material;
 import org.xast.kebab.model.MeshData;
 import org.xast.kebab.model.Meshes;
+import org.xast.kebab.model.TextureSlot;
 import org.xast.kebab.scene.model.Greybox;
 import org.xast.kebab.scene.model.GreyboxShape;
 import org.xast.kebab.scene.model.SceneNode;
@@ -21,7 +23,7 @@ import com.jogamp.opengl.GL3;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Draws greyboxes as solid shapes with darker edges. A greybox with the no_volume
+ * Draws greyboxes as solid shapes covered with their prototype texture, with darker edges. A greybox with the no_volume
  * archetype has no solid; its edges show only while selected or while
  * {@code renderNoVolume} says so.
  */
@@ -64,14 +66,15 @@ public class GreyboxRenderer implements RenderPass {
         if (noVolume && !wireframes && !selected) {
             return;
         }
+        Color swatch = greybox.color().swatch();
         if (!noVolume) {
-            solids.add(new Drawable(solidMesh(greybox.shape()), world, Material.solid(greybox.color()), DrawMode.SOLID));
+            solids.add(new Drawable(solidMesh(greybox.shape()), world, material(greybox), DrawMode.SOLID));
         }
         edges.add(new Drawable(
             edgeMesh(greybox.shape()),
             world,
             // The greybox's own color is the most visible line color when there is no solid behind it.
-            Material.solid(selected ? Palette.SELECTION : noVolume ? greybox.color() : edgeColor(greybox.color())),
+            Material.solid(selected ? Palette.SELECTION : noVolume ? swatch : edgeColor(swatch)),
             selected ? DrawMode.OVERLAY : DrawMode.SOLID
         ));
     }
@@ -84,6 +87,11 @@ public class GreyboxRenderer implements RenderPass {
     @Override
     public void init(GL3 gl) {
         // Uses the shared DrawableRenderer, which the viewport initializes.
+    }
+
+    // White, so the texture shows its own colours; the shader maps it in world units
+    static Material material(Greybox greybox) {
+        return new Material(Color.WHITE, new TextureSlot.Resource(greybox.textureResource()), AlphaMode.OPAQUE, false);
     }
 
     static MeshData solidMesh(GreyboxShape shape) {

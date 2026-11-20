@@ -18,7 +18,7 @@ During a playtest the scene is read-only: editing, undo and the Inspector are di
 
 ## Controls
 
-`W` `A` `S` `D` or the arrow keys run, `Space` jumps and dragging looks around.
+`W` `A` `S` `D` or the arrow keys run, `Space` jumps and dragging looks around. The mouse wheel moves the camera closer or further. Scroll in once more at the closest distance to switch to first person, looking out from the actor's eyes; scroll out to go back to third person.
 
 ## What is solid
 

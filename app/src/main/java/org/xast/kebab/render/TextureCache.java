@@ -37,7 +37,8 @@ final class TextureCache {
             case TextureSlot.None _ -> Maybe.none();
             case TextureSlot.Ref ref -> get(gl, ref.texture().path().toString(), () -> ImageIO.read(ref.texture().path().toFile()));
             case TextureSlot.Embedded embedded -> get(gl, embedded.key(), () -> ImageIO.read(new ByteArrayInputStream(embedded.data())));
-            case TextureSlot.Missing _ -> get(gl, MISSING_KEY, TextureCache::missingImage);
+            case TextureSlot.Resource resource -> get(gl, "resource:" + resource.path(), () -> bundledImage(resource.path()));
+            case TextureSlot.Missing _ -> get(gl, MISSING_KEY, () -> bundledImage(TextureSlot.MISSING_IMAGE));
         };
     }
 
@@ -69,10 +70,10 @@ final class TextureCache {
         }
     }
 
-    private static BufferedImage missingImage() throws IOException {
-        try (InputStream stream = TextureCache.class.getResourceAsStream("/" + TextureSlot.MISSING_IMAGE)) {
+    private static BufferedImage bundledImage(String path) throws IOException {
+        try (InputStream stream = TextureCache.class.getResourceAsStream("/" + path)) {
             if (stream == null) {
-                throw new IOException("bundled image " + TextureSlot.MISSING_IMAGE + " not found");
+                throw new IOException("bundled image " + path + " not found");
             }
             return ImageIO.read(stream);
         }

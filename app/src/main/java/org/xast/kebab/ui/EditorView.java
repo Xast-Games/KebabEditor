@@ -158,6 +158,7 @@ public class EditorView extends GLJPanel implements GLEventListener, GizmoIntera
         // Registered before any navigation mode, so these listeners see events first.
         if (interactive) {
             installInput();
+            setTransferHandler(new ViewportDropTarget(this, editor));
         }
 
         addGLEventListener(this);
@@ -272,6 +273,24 @@ public class EditorView extends GLJPanel implements GLEventListener, GizmoIntera
         if (onGround) {
             point.setY(0f);
         }
+        editor.snapStep().ifSome(step -> point.set(
+            snap(point.getX(), step),
+            snap(point.getY(), step),
+            snap(point.getZ(), step)
+        ));
+        return point;
+    }
+
+    /**
+     * Where something dropped at a pixel goes: on the surface or ground under it, else a
+     * short way along the ray. Snapped to the grid while snapping is on.
+     */
+    public Vec3 dropPoint(int x, int y) {
+        Ray ray = rayAt(x, y);
+        Vec3 point = editor.scene()
+            .andThen(scene -> picker.pick(scene, behaviorContext(), ray, true))
+            .map(hit -> hit.point().copy())
+            .unwrapOrElse(() -> ray.point(SPAWN_DISTANCE));
         editor.snapStep().ifSome(step -> point.set(
             snap(point.getX(), step),
             snap(point.getY(), step),

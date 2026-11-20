@@ -18,12 +18,12 @@ On save, the instances are written into the standard glTF `extras` field, so a l
 **Viewport**
 - OpenGL 3 viewport with a free-flight camera, a reference grid, lit meshes and textures
 - Click to select; transform gizmo for move, rotate and scale, with grid snapping
-- Greybox boxes and spheres, plus a placement ray that spawns objects on surfaces
+- Greybox boxes and spheres covered with Kenney's prototype textures, plus a placement ray that spawns objects on surfaces
 - Billboard icons for every archetype on an object, arranged in a pyramid when there are several. Empty objects get an icon too, so they stay selectable (toggle in *View → Show icons*)
 
 **Inspector**
 - Resizable right sidebar for the selected object, with name, local position, rotation in degrees and uniform scale
-- Greybox section with shape, per-axis size (what the scale gizmo stretches) and colour
+- Greybox section with shape, per-axis size (what the scale gizmo stretches), colour and prototype-texture pattern
 - Collapsible archetype sections with typed parameter controls, add/remove actions, and live gizmo synchronization
 - Enter or focus loss commits text and numeric edits; invalid input preserves the model
 
@@ -93,6 +93,7 @@ Create a project with **File → Create new project…**, add a scene with **Fil
 | Edit the selected object | Double-click, or `Ctrl+E` |
 | Add greybox box / sphere | `Ctrl+B` / `Ctrl+Shift+B` |
 | Import a glTF model | `Ctrl+I` |
+| Place a model or prefab from the Asset Explorer | Drag it into the viewport |
 | Placement ray | `Ctrl+Shift+P` (wheel changes distance, `Alt` ignores surfaces, `Esc` leaves) |
 | Hide / show the Inspector | `N` |
 | Hide / show the bottom panel | `T` |
@@ -197,3 +198,5 @@ Licensed under MIT license.
 The archetype icons are by pixelbazaar, licensed under CC BY-SA 4.0.
 
 The UI icons are by https://lucide.dev/
+
+The greybox textures are Kenney's Prototype Textures (https://kenney.nl/assets/prototype-textures), licensed under CC0 1.0.

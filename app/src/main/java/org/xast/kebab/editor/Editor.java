@@ -722,26 +722,57 @@ public class Editor {
         });
     }
 
+    /** Adds a model_ref node for a glTF model; a model from outside the project is copied into its models/ first. */
     public SceneNode importModel(Path modelFile, Vec3 base) throws IOException {
-        Path sceneFile = projectManager.currentScene().expect("No scene is open").toAbsolutePath();
-        Path sceneDir = sceneFile.getParent();
+        Path sceneDir = currentSceneDir();
         // Models go to the asset root's models/, shared by scenes in any folder; the reference is scene-relative
         Path assetRoot = projectManager.assets().map(ProjectAssets::root).unwrapOr(sceneDir);
         Path inside = modelImporter.importInto(assetRoot, modelFile);
-        String reference = sceneDir.relativize(inside).toString().replace('\\', '/');
+        return addReference(BuiltinArchetypes.MODEL_REF, inside, base, "import model");
+    }
 
-        ArchetypeInstance modelRef = newInstance(BuiltinArchetypes.MODEL_REF);
-        setParam(modelRef, "path", reference);
+    /**
+     * Adds a node for a glTF file of the project, e.g. one dragged in from the asset explorer:
+     * a registered scene becomes a prefab_ref, any other file a model_ref as in {@link #importModel}.
+     *
+     * @throws IllegalArgumentException when the scene would end up containing itself
+     */
+    public SceneNode placeAsset(Path file, Vec3 base) throws IOException {
+        Path target = file.toAbsolutePath().normalize();
+        if (projectManager.assets().isSomeAnd(assets -> !assets.isScene(target))) {
+            return importModel(target, base);
+        }
 
-        String fileName = inside.getFileName().toString();
+        Path sceneFile = projectManager.currentScene().expect("No scene is open").toAbsolutePath().normalize();
+        if (target.equals(sceneFile)) {
+            throw new IllegalArgumentException("A scene cannot contain itself: " + target.getFileName());
+        }
+        if (projectManager.prefabResolver().isSomeAnd(resolver -> resolver.wouldCycle(sceneFile, target))) {
+            throw new IllegalArgumentException(target.getFileName() + " already contains "
+                + sceneFile.getFileName() + ", so it cannot be placed in it");
+        }
+        return addReference(BuiltinArchetypes.PREFAB_REF, target, base, "add prefab");
+    }
+
+    // A node named after the file, whose reference is relative to the open scene
+    private SceneNode addReference(String archetypeId, Path file, Vec3 base, String label) {
+        String reference = currentSceneDir().relativize(file).toString().replace('\\', '/');
+        ArchetypeInstance instance = newInstance(archetypeId);
+        setParam(instance, "path", reference);
+
+        String fileName = file.getFileName().toString();
         int dot = fileName.lastIndexOf('.');
         SceneNode node = new SceneNode(dot > 0 ? fileName.substring(0, dot) : fileName);
         node.getTransform().setTranslation(base.copy());
-        node.addArchetype(modelRef);
+        node.addArchetype(instance);
 
-        history.record("import model", () -> addToScene(node));
-        LogService.get().info("Imported model " + reference + " at " + base);
+        history.record(label, () -> addToScene(node));
+        LogService.get().info("Placed " + archetypeId + " " + reference + " at " + base);
         return node;
+    }
+
+    private Path currentSceneDir() {
+        return projectManager.currentScene().expect("No scene is open").toAbsolutePath().getParent();
     }
 
     public boolean isSnapping() {

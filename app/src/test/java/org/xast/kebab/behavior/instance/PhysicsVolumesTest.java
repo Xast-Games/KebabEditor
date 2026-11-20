@@ -138,7 +138,7 @@ class PhysicsVolumesTest {
         prefab.add(wall);
         // The prefab reference does not draw greyboxes, so it must not collide with them either.
         SceneNode block = new SceneNode("block");
-        new Greybox(GreyboxShape.BOX, Vec3.one(), Color.GRAY).writeTo(block);
+        new Greybox(GreyboxShape.BOX, Vec3.one()).writeTo(block);
         prefab.add(block);
 
         SceneNode reference = new SceneNode("tower");

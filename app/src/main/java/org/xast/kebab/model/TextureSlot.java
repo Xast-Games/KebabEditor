@@ -10,6 +10,7 @@ public sealed interface TextureSlot
         None,
         Ref,
         Embedded,
+        Resource,
         Missing
 {
     String MISSING_IMAGE = "textures/missing.png";
@@ -46,6 +47,14 @@ public sealed interface TextureSlot
         @Override
         public int hashCode() {
             return key.hashCode();
+        }
+    }
+
+    /** An image bundled with the editor, e.g. a greybox's prototype texture; the path is on the classpath. */
+    public record Resource(String path) implements TextureSlot {
+
+        public Resource {
+            Objects.requireNonNull(path, "path");
         }
     }
 

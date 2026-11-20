@@ -25,10 +25,25 @@ float worldGridLine() {
     return 1.0 - min(min(distanceToLine.x, distanceToLine.y), 1.0);
 }
 
+// Texture coordinates in grid space, one repeat per world unit, projected along the face's
+// dominant axis. Image rows run top-first, so v grows downwards; each face's u runs to its
+// right as seen from outside, so labels on the texture read the right way round.
+vec2 worldUv() {
+    vec3 a = abs(vLocalNormal);
+    vec3 n = sign(vLocalNormal);
+    if (a.x > a.y && a.x > a.z) {
+        return vec2(-n.x * vGridPos.z, -vGridPos.y);
+    }
+    if (a.y > a.z) {
+        return vec2(vGridPos.x, n.y * vGridPos.z);
+    }
+    return vec2(n.z * vGridPos.x, -vGridPos.y);
+}
+
 void main() {
     vec4 base = uColor;
     if (uTextured) {
-        base *= texture(uTexture, vUv);
+        base *= texture(uTexture, uWorldGrid ? worldUv() : vUv);
     }
 
     if (!uLit) {
@@ -41,7 +56,8 @@ void main() {
         n = -n;
     }
 
-    if (uWorldGrid) {
+    // A texture of its own draws the grid already
+    if (uWorldGrid && !uTextured) {
         base.rgb *= 1.0 - 0.2 * worldGridLine();
     }
 

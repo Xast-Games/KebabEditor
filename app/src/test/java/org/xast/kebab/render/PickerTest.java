@@ -46,7 +46,7 @@ class PickerTest {
     private static SceneNode greybox(Scene scene, GreyboxShape shape, Vec3 position, Vec3 size) throws Exception {
         SceneNode node = new SceneNode(shape.displayName());
         node.getTransform().setTranslation(position);
-        new Greybox(shape, size, Color.GRAY).writeTo(node);
+        new Greybox(shape, size).writeTo(node);
         scene.add(node);
         return node;
     }

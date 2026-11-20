@@ -27,6 +27,8 @@ public class PlaytestNavigation implements NavigationMode {
 
     /** The camera looks at this fraction of the actor's height. */
     private static final float LOOK_AT_HEIGHT = 0.85f;
+    /** Where the first-person camera sits, as a share of the actor's height. */
+    private static final float EYE_HEIGHT = 0.92f;
 
     private final PlaytestSession session;
     private final Runnable stop;
@@ -178,7 +180,9 @@ public class PlaytestNavigation implements NavigationMode {
     }
 
     private void placeCamera() {
-        Vec3 target = session.actorPosition().addLocal(0, session.settings().height() * LOOK_AT_HEIGHT, 0);
-        rig.place(view.getCamera(), target, session.getWorld());
+        float height = session.settings().height();
+        Vec3 target = session.actorPosition().addLocal(0, height * LOOK_AT_HEIGHT, 0);
+        Vec3 eye = session.actorPosition().addLocal(0, height * EYE_HEIGHT, 0);
+        rig.place(view.getCamera(), target, eye, session.getWorld());
     }
 }

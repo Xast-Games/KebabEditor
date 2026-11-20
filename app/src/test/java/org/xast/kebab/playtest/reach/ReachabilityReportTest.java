@@ -35,7 +35,7 @@ class ReachabilityReportTest {
     static SceneNode box(String name, Vec3 center, Vec3 size) {
         SceneNode node = new SceneNode(name);
         node.setTransform(new Transform(center, Quat.identity(), 1f));
-        new Greybox(GreyboxShape.BOX, size, Color.GRAY).writeTo(node);
+        new Greybox(GreyboxShape.BOX, size).writeTo(node);
         return node;
     }
 

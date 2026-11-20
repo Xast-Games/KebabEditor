@@ -68,7 +68,7 @@ class PlaytestControllerTest {
         editor.createProject(projectDir);
         editor.createScene("", "level");
         SceneNode floor = editor.placeGreybox(GreyboxShape.BOX, new Vec3(0, -0.5f, 0));
-        new Greybox(GreyboxShape.BOX, new Vec3(20, 1, 20), Greybox.DEFAULT_COLOR).writeTo(floor);
+        new Greybox(GreyboxShape.BOX, new Vec3(20, 1, 20)).writeTo(floor);
         editor.spawnArchetype(BuiltinArchetypes.PLAYER_START, Vec3.zero());
         editor.selection().clear();
     }
@@ -121,7 +121,7 @@ class PlaytestControllerTest {
         editor.createProject(projectDir);
         editor.createScene("", "level");
         SceneNode floor = editor.placeGreybox(GreyboxShape.BOX, new Vec3(0, -0.5f, 0));
-        new Greybox(GreyboxShape.BOX, new Vec3(20, 1, 20), Greybox.DEFAULT_COLOR).writeTo(floor);
+        new Greybox(GreyboxShape.BOX, new Vec3(20, 1, 20)).writeTo(floor);
 
         controller.start();
 

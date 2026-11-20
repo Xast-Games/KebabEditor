@@ -106,6 +106,9 @@ public final class AssetExplorerTab extends JPanel {
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tree.setCellRenderer(new TreeRenderer());
         list.setCellRenderer(new ListRenderer());
+        // Models and scenes can be dragged into the viewport
+        list.setDragEnabled(true);
+        list.setTransferHandler(new AssetDragSource(list));
         installListeners();
         layoutComponents(font);
     }
