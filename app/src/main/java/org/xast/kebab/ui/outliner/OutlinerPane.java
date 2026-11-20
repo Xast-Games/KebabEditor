@@ -3,6 +3,9 @@ package org.xast.kebab.ui.outliner;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -15,7 +18,9 @@ import java.util.function.Consumer;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
-import javax.swing.JLabel;
+import javax.swing.DropMode;
+import javax.swing.JComponent;
+import javax.swing.JOptionPane;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
@@ -23,6 +28,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.TransferHandler;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
@@ -33,11 +39,13 @@ import org.xast.kebab.editor.Editor;
 import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.ui.SceneNavigator;
 import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Maybe;
 
 /**
  * The scene's objects as a tree. Selecting here selects in the viewport and the
  * other way round. Double-click or Enter flies the camera to an object, F frames
- * the selection, and the context menu also opens prefabs.
+ * the selection, and the context menu also opens prefabs. Dragging objects onto
+ * another one makes them its children; dropping between rows reorders them.
  */
 public final class OutlinerPane extends JPanel implements AutoCloseable {
 
@@ -66,6 +74,7 @@ public final class OutlinerPane extends JPanel implements AutoCloseable {
     private final Runnable listener = this::scheduleRefresh;
     private List<Row> shown = List.of();
     private boolean syncing;
+    private SceneNode expandAfterRebuild;
     private boolean attached;
     private boolean closed;
 
@@ -82,18 +91,18 @@ public final class OutlinerPane extends JPanel implements AutoCloseable {
         this.navigator = navigator;
         setMinimumSize(new Dimension(240, 80));
 
-        JLabel title = new JLabel("Outliner");
-        title.setFont(KebabStyle.getCurrent().uiFont());
-        title.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
-        add(title, BorderLayout.NORTH);
-
         tree.setRootVisible(false);
         tree.setShowsRootHandles(true);
         tree.setFont(KebabStyle.getCurrent().uiFont());
         tree.setCellRenderer(new Renderer());
         tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
+        tree.setDragEnabled(true);
+        tree.setDropMode(DropMode.ON_OR_INSERT);
+        tree.setTransferHandler(new ReparentHandler());
         installListeners();
-        add(new JScrollPane(tree), BorderLayout.CENTER);
+        JScrollPane scroll = new JScrollPane(tree);
+        scroll.setBorder(BorderFactory.createEmptyBorder());
+        add(scroll, BorderLayout.CENTER);
 
         attach();
         refresh();
@@ -162,8 +171,24 @@ public final class OutlinerPane extends JPanel implements AutoCloseable {
             prefab.setEnabled(SceneNavigator.isPrefab(node));
             prefab.addActionListener(e -> navigator.openPrefab(node));
             menu.add(prefab);
+            menu.addSeparator();
+            JMenuItem topLevel = new JMenuItem("Move to top level");
+            topLevel.setEnabled(node.getParent().isSome());
+            topLevel.addActionListener(e -> reparent(selectedNodes(), Maybe.none(), Integer.MAX_VALUE));
+            menu.add(topLevel);
             menu.show(tree, event.getX(), event.getY());
         });
+    }
+
+    // The parent is expanded afterwards, so the moved objects stay in sight
+    void reparent(List<SceneNode> nodes, Maybe<SceneNode> parent, int index) {
+        try {
+            editor.reparent(nodes, parent, index);
+            parent.ifSome(target -> expandAfterRebuild = target);
+            refresh();
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Move objects", JOptionPane.WARNING_MESSAGE);
+        }
     }
 
     private List<SceneNode> selectedNodes() {
@@ -264,6 +289,10 @@ public final class OutlinerPane extends JPanel implements AutoCloseable {
         roots.forEach(node -> root.add(treeNode(node)));
         model.reload();
         tree.expandPath(new TreePath(root.getPath()));
+        if (expandAfterRebuild != null) {
+            expanded.add(expandAfterRebuild);
+            expandAfterRebuild = null;
+        }
         for (TreePath path : pathsOf(expanded)) {
             tree.expandPath(path);
         }
@@ -317,6 +346,100 @@ public final class OutlinerPane extends JPanel implements AutoCloseable {
     /** The scene objects in display order, for tests. */
     List<SceneNode> displayedNodes() {
         return shown.stream().map(Row::node).toList();
+    }
+
+    /** Where a drop puts the dragged objects: under which parent, and at which index among its children. */
+    private record Target(Maybe<SceneNode> parent, int index) {}
+
+    private Maybe<Target> dropTarget(TransferHandler.TransferSupport support) {
+        if (!(support.getDropLocation() instanceof JTree.DropLocation location)) {
+            return Maybe.none();
+        }
+        TreePath path = location.getPath();
+        if (path == null || path.getLastPathComponent() == root) {
+            // Between top-level rows, or below the last row
+            int index = path == null ? Integer.MAX_VALUE : location.getChildIndex();
+            return Maybe.some(new Target(Maybe.none(), index < 0 ? Integer.MAX_VALUE : index));
+        }
+        SceneNode parent = nodeOf(path);
+        int index = location.getChildIndex() < 0 ? Integer.MAX_VALUE : location.getChildIndex();
+        return Maybe.some(new Target(Maybe.some(parent), index));
+    }
+
+    // A node cannot go into itself or into one of its own children
+    private static boolean contains(List<SceneNode> dragged, SceneNode target) {
+        for (Maybe<SceneNode> at = Maybe.some(target); at.isSome(); at = at.unwrap().getParent()) {
+            SceneNode node = at.unwrap();
+            if (dragged.stream().anyMatch(d -> d == node)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private final class ReparentHandler extends TransferHandler {
+
+        private static final DataFlavor NODES = new DataFlavor(List.class, "Scene objects");
+
+        private List<SceneNode> dragged = List.of();
+
+        @Override
+        public int getSourceActions(JComponent component) {
+            return MOVE;
+        }
+
+        @Override
+        protected Transferable createTransferable(JComponent component) {
+            dragged = selectedNodes();
+            if (dragged.isEmpty() || editor.isPlaytesting()) {
+                return null;
+            }
+            return new Transferable() {
+                @Override
+                public DataFlavor[] getTransferDataFlavors() {
+                    return new DataFlavor[] { NODES };
+                }
+
+                @Override
+                public boolean isDataFlavorSupported(DataFlavor flavor) {
+                    return NODES.equals(flavor);
+                }
+
+                @Override
+                public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
+                    if (!isDataFlavorSupported(flavor)) {
+                        throw new UnsupportedFlavorException(flavor);
+                    }
+                    return dragged;
+                }
+            };
+        }
+
+        @Override
+        public boolean canImport(TransferSupport support) {
+            if (!support.isDrop() || !support.isDataFlavorSupported(NODES) || dragged.isEmpty()) {
+                return false;
+            }
+            return dropTarget(support)
+                .isSomeAnd(target -> target.parent().mapOr(true, parent -> !contains(dragged, parent)));
+        }
+
+        @Override
+        public boolean importData(TransferSupport support) {
+            if (!canImport(support)) {
+                return false;
+            }
+            Target target = dropTarget(support).unwrap();
+            List<SceneNode> nodes = dragged;
+            // After the drag ends, so a warning dialog does not interrupt Swing's drop handling
+            SwingUtilities.invokeLater(() -> reparent(nodes, target.parent(), target.index()));
+            return true;
+        }
+
+        @Override
+        protected void exportDone(JComponent source, Transferable data, int action) {
+            dragged = List.of();
+        }
     }
 
     private static final class Renderer extends DefaultTreeCellRenderer {

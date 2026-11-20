@@ -351,7 +351,8 @@
 </tbody></table>
 <p>The fly speed starts at 10 m/s and shows briefly in the corner of the viewport when you change it. <code>F</code> jumps the camera to the selected objects and their children, keeping the direction it looks in.</p>
 <h2 id="outliner">Outliner</h2>
-<p>The Outliner above the Inspector lists every object in the scene as a tree. Selecting there selects in the viewport and the other way round. Double-click an object, or press <code>Enter</code> or <code>F</code>, to fly the camera to it. Right-click an object to frame it or open its prefab.</p>
+<p>The <strong>Outliner</strong> tab next to the <strong>Inspector</strong> lists every object in the scene as a tree. Selecting there selects in the viewport and the other way round. Double-click an object, or press <code>Enter</code> or <code>F</code>, to fly the camera to it. Right-click an object to frame it, open its prefab or move it to the top level.</p>
+<p>Drag objects onto another object to make them its children, or drop them between rows to reorder them or move them up a level. Objects stay where they are in the world: only their transform relative to the new parent changes. Each move is one undo step, and an object cannot go into one of its own children.</p>
 <h2 id="opening-prefabs">Opening prefabs</h2>
 <p>Select an object with a <strong>Prefab Reference</strong> and choose <strong>Edit &gt; Open prefab</strong> (<code>Ctrl+Shift+O</code>) to open the scene it points at in the editor. This is how you go from a world map into one of its locations. The scene must be inside the project's asset root. If the current scene has unsaved changes, you are asked to save or discard them first.</p>
 <h2 id="selecting-and-transforming">Selecting and transforming</h2>

@@ -68,6 +68,46 @@ public class Scene {
         add(node, get(parent));
     }
 
+    /**
+     * Moves a node, with its children, under another parent or to the top level.
+     *
+     * @param parent the new parent; none for the top level
+     * @param index  where it goes among the new siblings, counted before the node is taken out
+     *               of its current place; out of range values put it first or last
+     */
+    public void move(SceneNode node, Maybe<SceneNode> parent, int index) throws SceneException {
+        requireInScene(node);
+        if (parent.isSome()) {
+            requireInScene(parent.unwrap());
+            if (subtree(node).anyMatch(n -> n == parent.unwrap())) {
+                throw new SceneException("Cannot move '" + node.getName() + "' into itself or one of its children");
+            }
+        }
+
+        List<SceneNode> oldSiblings = siblingsOf(node.getParent());
+        int oldIndex = oldSiblings.indexOf(node);
+        boolean sameParent = node.getParent().mapOr(parent.isNone(), old -> parent.isSomeAnd(p -> p == old));
+        int at = sameParent && oldIndex < index ? index - 1 : index;
+
+        if (node.getParent().isSome()) {
+            node.getParent().unwrap().detachChild(node);
+        } else {
+            rootNodes.remove(node);
+        }
+
+        at = Math.clamp(at, 0, siblingsOf(parent).size());
+        if (parent.isSome()) {
+            parent.unwrap().attachChild(node, at);
+        } else {
+            rootNodes.add(at, node);
+        }
+        changed();
+    }
+
+    private List<SceneNode> siblingsOf(Maybe<SceneNode> parent) {
+        return parent.mapOr(rootNodes, SceneNode::getChildren);
+    }
+
     public void remove(NodeId id) throws SceneException {
         remove(get(id));
     }

@@ -97,4 +97,19 @@ class OutlinerPaneTest {
 
         assertEquals(List.of(List.of(a)), framed);
     }
+
+    @Test
+    void movedObjectsShowUnderTheirExpandedParent() throws Exception {
+        SceneNode parent = editor.spawnEmpty(Vec3.zero());
+        SceneNode child = editor.spawnEmpty(Vec3.one());
+        flush();
+
+        SwingUtilities.invokeAndWait(() ->
+            pane.reparent(List.of(child), org.xast.kebab.utils.Maybe.some(parent), Integer.MAX_VALUE));
+        flush();
+
+        assertSame(parent, child.getParent().unwrap());
+        SwingUtilities.invokeAndWait(() -> assertEquals(2, pane.tree().getRowCount()));
+        assertEquals(List.of(parent, child), pane.displayedNodes());
+    }
 }

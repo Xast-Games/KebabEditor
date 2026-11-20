@@ -70,11 +70,8 @@ public final class InspectorPane extends JPanel implements AutoCloseable {
         setPreferredSize(new Dimension(350, 600));
         setMinimumSize(new Dimension(240, 100));
 
-        JLabel title = InspectorSection.label("Inspector");
-        title.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
-        add(title, BorderLayout.NORTH);
-
-        content.setBorder(BorderFactory.createEmptyBorder(4, 10, 10, 10));
+        // The side panel's tab names it, so it has no title of its own
+        content.setBorder(BorderFactory.createEmptyBorder(8, 10, 10, 10));
         JScrollPane scroll = new JScrollPane(
             content,
             JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,

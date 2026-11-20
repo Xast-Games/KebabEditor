@@ -19,6 +19,7 @@ import org.xast.kebab.archetype.instance.ArchetypeInstance;
 import org.xast.kebab.archetype.instance.NodeArchetype;
 import org.xast.kebab.behavior.instance.SnapDistanceBehavior;
 import org.xast.kebab.logging.LogService;
+import org.xast.kebab.math.Transform;
 import org.xast.kebab.math.Vec3;
 import org.xast.kebab.project.ModelImporter;
 import org.xast.kebab.project.ProjectAssets;
@@ -365,6 +366,67 @@ public class Editor {
         history.record("rename", () -> node.setName(trimmed));
         sceneChanged();
         LogService.get().info("Renamed '" + previous + "' to '" + trimmed + "'");
+    }
+
+    /**
+     * Moves nodes under a new parent, or to the top level, as one undoable step.
+     * Each keeps its place in the world, so its local transform is recomputed.
+     * A node whose ancestor is moved too goes along with that ancestor.
+     *
+     * @param parent the new parent; none for the top level
+     * @param index  where the nodes go among the new siblings, as in {@link Scene#move}
+     * @throws IllegalArgumentException when the parent is one of the nodes or inside one of them
+     */
+    public void reparent(List<SceneNode> nodes, Maybe<SceneNode> parent, int index) {
+        if (playtesting) {
+            return;
+        }
+        Scene scene = projectManager.scene().expect("No project is open");
+        Set<SceneNode> chosen = Set.copyOf(nodes);
+        // Scene order, so nodes moved together keep their order
+        List<SceneNode> moved = scene.traverse()
+            .filter(node -> chosen.contains(node) && !hasChosenAncestor(node, chosen))
+            .toList();
+        if (moved.isEmpty()) {
+            return;
+        }
+        parent.ifSome(target -> {
+            for (Maybe<SceneNode> at = Maybe.some(target); at.isSome(); at = at.unwrap().getParent()) {
+                if (chosen.contains(at.unwrap())) {
+                    throw new IllegalArgumentException(
+                        "Cannot move '" + at.unwrap().getName() + "' into itself or one of its children");
+                }
+            }
+        });
+
+        Transform parentWorld = parent.map(Editor::worldTransform).unwrapOrElse(Transform::identity);
+        if (!(Math.abs(parentWorld.getScale()) > 1e-6f)) {
+            throw new IllegalArgumentException("Cannot move objects under '"
+                + parent.unwrap().getName() + "': its scale is zero");
+        }
+
+        history.record(moved.size() == 1 ? "reparent " + moved.getFirst().getName() : "reparent", () -> {
+            int at = index;
+            for (SceneNode node : moved) {
+                Transform world = worldTransform(node);
+                try {
+                    scene.move(node, parent, at);
+                } catch (SceneException e) {
+                    throw new IllegalStateException("Cannot move '" + node.getName() + "'", e);
+                }
+                node.setTransform(parentWorld.inverse().mul(world));
+                at = parent.mapOr(scene.getRootNodes(), SceneNode::getChildren).indexOf(node) + 1;
+            }
+        });
+        sceneChanged();
+        LogService.get().info("Moved " + moved.size() + " object(s) "
+            + parent.map(p -> "under '" + p.getName() + "'").unwrapOr("to the top level"));
+    }
+
+    // Node transforms have uniform scale, so composing them stays exact, unlike decomposing a matrix
+    private static Transform worldTransform(SceneNode node) {
+        Transform local = node.getTransform().copy();
+        return node.getParent().mapOr(local, parent -> worldTransform(parent).mul(local));
     }
 
     public Deletion planDeletion(List<SceneNode> selected) {

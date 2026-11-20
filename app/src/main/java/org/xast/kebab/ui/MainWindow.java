@@ -55,7 +55,6 @@ public class MainWindow {
     private static final double WORKSPACE_WEIGHT = 0.75;
     private static final int INSPECTOR_WIDTH = 350;
     private static final int INSPECTOR_MIN_WIDTH = 240;
-    private static final double OUTLINER_WEIGHT = 0.35;
 
     private final JFrame frame;
     private final Editor editor;    
@@ -214,13 +213,12 @@ public class MainWindow {
         frame.setLayout(new BorderLayout());
     }
 
-    // The workspace on the left, the outliner above the inspector on the right
+    // The workspace on the left, the inspector and outliner as tabs on the right
     private JSplitPane createLayout() {
-        JSplitPane side = new JSplitPane(JSplitPane.VERTICAL_SPLIT, outliner, inspector);
-        side.setResizeWeight(OUTLINER_WEIGHT);
-        side.setContinuousLayout(false);
+        JTabbedPane side = new JTabbedPane();
+        side.addTab("Inspector", inspector);
+        side.addTab("Outliner", outliner);
         side.setMinimumSize(new Dimension(INSPECTOR_MIN_WIDTH, 0));
-        SwingUtilities.invokeLater(() -> side.setDividerLocation(OUTLINER_WEIGHT));
 
         JSplitPane layout = new JSplitPane(
             JSplitPane.HORIZONTAL_SPLIT,

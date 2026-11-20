@@ -25,7 +25,9 @@ The fly speed starts at 10 m/s and shows briefly in the corner of the viewport w
 
 ## Outliner
 
-The Outliner above the Inspector lists every object in the scene as a tree. Selecting there selects in the viewport and the other way round. Double-click an object, or press `Enter` or `F`, to fly the camera to it. Right-click an object to frame it or open its prefab.
+The **Outliner** tab next to the **Inspector** lists every object in the scene as a tree. Selecting there selects in the viewport and the other way round. Double-click an object, or press `Enter` or `F`, to fly the camera to it. Right-click an object to frame it, open its prefab or move it to the top level.
+
+Drag objects onto another object to make them its children, or drop them between rows to reorder them or move them up a level. Objects stay where they are in the world: only their transform relative to the new parent changes. Each move is one undo step, and an object cannot go into one of its own children.
 
 ## Opening prefabs
 

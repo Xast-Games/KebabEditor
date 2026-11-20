@@ -318,4 +318,87 @@ class EditorTest {
         assertTrue(Files.readString(game.resolve("archetypes.json")).contains("door"));
         assertTrue(editor.archetypes().stream().anyMatch(definition -> definition.getId().equals("door")));
     }
+
+    private static void assertSamePlace(org.xast.kebab.math.Mat4 expected, org.xast.kebab.math.Mat4 actual) {
+        float[] e = expected.toArray();
+        float[] a = actual.toArray();
+        for (int k = 0; k < 16; k++) {
+            assertEquals(e[k], a[k], 1e-4f, "matrix element " + k);
+        }
+    }
+
+    @Test
+    void reparentingKeepsTheObjectWhereItIsInTheWorld() {
+        SceneNode parent = editor.spawnEmpty(new Vec3(10, 0, 0));
+        parent.getTransform().setRotation(org.xast.kebab.math.Quat.fromAxisAngle(Vec3.unitY(), 1.2f));
+        parent.getTransform().setScale(2f);
+        SceneNode child = editor.spawnEmpty(new Vec3(3, 4, 5));
+        var before = child.worldMatrix();
+
+        editor.reparent(List.of(child), org.xast.kebab.utils.Maybe.some(parent), Integer.MAX_VALUE);
+
+        assertSame(parent, child.getParent().unwrap());
+        assertSamePlace(before, child.worldMatrix());
+
+        editor.reparent(List.of(child), org.xast.kebab.utils.Maybe.none(), Integer.MAX_VALUE);
+        assertTrue(child.getParent().isNone());
+        assertSamePlace(before, child.worldMatrix());
+    }
+
+    @Test
+    void reparentingIsOneUndoableStep() {
+        SceneNode parent = editor.spawnEmpty(Vec3.zero());
+        SceneNode child = editor.spawnEmpty(Vec3.one());
+
+        editor.reparent(List.of(child), org.xast.kebab.utils.Maybe.some(parent), 0);
+        editor.history().undo();
+
+        SceneNode restored = editor.sceneNodes().stream().filter(n -> n.getId().equals(child.getId())).findFirst().orElseThrow();
+        assertTrue(restored.getParent().isNone());
+        editor.history().redo();
+        SceneNode redone = editor.sceneNodes().stream().filter(n -> n.getId().equals(child.getId())).findFirst().orElseThrow();
+        assertEquals(parent.getId(), redone.getParent().unwrap().getId());
+    }
+
+    @Test
+    void anObjectCannotGoIntoItsOwnChildren() {
+        SceneNode parent = editor.spawnEmpty(Vec3.zero());
+        SceneNode child = editor.spawnEmpty(Vec3.one());
+        editor.reparent(List.of(child), org.xast.kebab.utils.Maybe.some(parent), 0);
+
+        assertThrows(IllegalArgumentException.class,
+            () -> editor.reparent(List.of(parent), org.xast.kebab.utils.Maybe.some(child), 0));
+        assertThrows(IllegalArgumentException.class,
+            () -> editor.reparent(List.of(parent), org.xast.kebab.utils.Maybe.some(parent), 0));
+        assertTrue(parent.getParent().isNone());
+    }
+
+    @Test
+    void droppingBetweenSiblingsReordersThem() {
+        SceneNode a = editor.spawnEmpty(Vec3.zero());
+        SceneNode b = editor.spawnEmpty(Vec3.zero());
+        SceneNode c = editor.spawnEmpty(Vec3.zero());
+        SceneNode d = editor.spawnEmpty(Vec3.zero());
+        var none = org.xast.kebab.utils.Maybe.<SceneNode>none();
+
+        // Dropped before d, counted before a and b leave their places
+        editor.reparent(List.of(b, a), none, 3);
+        assertEquals(List.of(c, a, b, d), editor.scene().unwrap().getRootNodes());
+
+        editor.reparent(List.of(d), none, 0);
+        assertEquals(List.of(d, c, a, b), editor.scene().unwrap().getRootNodes());
+    }
+
+    @Test
+    void childrenMoveWithTheirParent() {
+        SceneNode group = editor.spawnEmpty(Vec3.zero());
+        SceneNode child = editor.spawnEmpty(Vec3.one());
+        SceneNode target = editor.spawnEmpty(new Vec3(5, 0, 0));
+        editor.reparent(List.of(child), org.xast.kebab.utils.Maybe.some(group), 0);
+
+        editor.reparent(List.of(group, child), org.xast.kebab.utils.Maybe.some(target), 0);
+
+        assertSame(target, group.getParent().unwrap());
+        assertSame(group, child.getParent().unwrap());
+    }
 }

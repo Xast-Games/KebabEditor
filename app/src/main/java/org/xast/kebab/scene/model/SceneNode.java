@@ -86,7 +86,11 @@ public class SceneNode {
     }
 
     void attachChild(SceneNode child) {
-        children.add(child);
+        attachChild(child, children.size());
+    }
+
+    void attachChild(SceneNode child, int index) {
+        children.add(index, child);
         child.parent = Maybe.some(this);
     }
 
