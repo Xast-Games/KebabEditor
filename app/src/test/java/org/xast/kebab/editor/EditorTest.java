@@ -401,4 +401,110 @@ class EditorTest {
         assertSame(target, group.getParent().unwrap());
         assertSame(group, child.getParent().unwrap());
     }
+
+    private ArchetypeInstance link(SceneNode from, SceneNode to) throws Exception {
+        var definition = editor.archetypes().stream().filter(d -> d.getId().equals("link")).findFirst()
+            .orElse(null);
+        if (definition == null) {
+            definition = new org.xast.kebab.archetype.definition.ArchetypeDefinition("link")
+                .withParam("target", org.xast.kebab.archetype.ParamType.NODE_REF);
+            editor.addArchetype(definition);
+        }
+        ArchetypeInstance instance = new ArchetypeInstance(definition);
+        editor.attachArchetype(from, instance);
+        editor.setArchetypeParam(instance, "target", org.xast.kebab.utils.Maybe.some(to.getId().value().toString()));
+        return instance;
+    }
+
+    @Test
+    void duplicatingPutsACopyRightAfterTheOriginalAndSelectsIt() {
+        SceneNode first = editor.spawnGreybox(GreyboxShape.BOX, new Vec3(1, 0, 2));
+        SceneNode last = editor.spawnEmpty(Vec3.zero());
+        editor.selection().select(first);
+
+        List<SceneNode> copies = editor.duplicateSelection();
+
+        SceneNode copy = copies.getFirst();
+        assertEquals(List.of(first, copy, last), editor.scene().unwrap().getRootNodes());
+        assertEquals(List.of(copy), editor.selection().nodes());
+        assertFalse(copy.getId().equals(first.getId()));
+        assertEquals(first.getName(), copy.getName());
+        assertTrue(first.getTransform().getTranslation().approxEquals(copy.getTransform().getTranslation(), 1e-6f));
+        assertEquals(org.xast.kebab.scene.model.Greybox.of(first).unwrap(), org.xast.kebab.scene.model.Greybox.of(copy).unwrap());
+
+        // The copy is its own object
+        copy.getTransform().getTranslation().set(9, 9, 9);
+        assertTrue(first.getTransform().getTranslation().approxEquals(new Vec3(1, 0.5f, 2), 1e-6f));
+    }
+
+    @Test
+    void duplicatingAGroupCopiesItsChildrenAndPointsInnerReferencesAtTheCopies() throws Exception {
+        SceneNode group = editor.spawnEmpty(Vec3.zero());
+        SceneNode door = editor.spawnEmpty(Vec3.one());
+        SceneNode outside = editor.spawnEmpty(new Vec3(5, 0, 0));
+        editor.reparent(List.of(door), org.xast.kebab.utils.Maybe.some(group), 0);
+        ArchetypeInstance inner = link(group, door);
+        link(door, outside);
+        editor.selection().select(group);
+
+        SceneNode copy = editor.duplicateSelection().getFirst();
+
+        SceneNode copiedDoor = copy.getChildren().getFirst();
+        assertFalse(copiedDoor.getId().equals(door.getId()));
+        ArchetypeInstance copiedInner = (ArchetypeInstance) copy.getArchetypes().getFirst();
+        assertEquals(org.xast.kebab.utils.Maybe.some(copiedDoor.getId().value().toString()), copiedInner.get("target"));
+        assertEquals(org.xast.kebab.utils.Maybe.some(door.getId().value().toString()), inner.get("target"));
+        ArchetypeInstance copiedOuter = (ArchetypeInstance) copiedDoor.getArchetypes().getFirst();
+        assertEquals(org.xast.kebab.utils.Maybe.some(outside.getId().value().toString()), copiedOuter.get("target"));
+    }
+
+    @Test
+    void pastingMovesTheCopiesSidewaysToTheTargetKeepingTheirHeight() {
+        SceneNode a = editor.spawnEmpty(new Vec3(0, 2, 0));
+        SceneNode b = editor.spawnEmpty(new Vec3(4, 3, 0));
+        editor.selection().set(List.of(a, b));
+        assertEquals(2, editor.copySelection());
+
+        List<SceneNode> pasted = editor.paste(new Vec3(100, 0, 50));
+
+        assertEquals(2, pasted.size());
+        assertEquals(pasted, editor.selection().nodes());
+        assertTrue(new Vec3(98, 2, 50).approxEquals(pasted.get(0).getTransform().getTranslation(), 1e-4f));
+        assertTrue(new Vec3(102, 3, 50).approxEquals(pasted.get(1).getTransform().getTranslation(), 1e-4f));
+
+        // Each paste makes new objects
+        List<SceneNode> again = editor.paste(Vec3.zero());
+        assertFalse(again.getFirst().getId().equals(pasted.getFirst().getId()));
+        assertEquals(6, editor.sceneNodes().size());
+    }
+
+    @Test
+    void pasteIsOneUndoableStepAndCopiesAreTakenWhenCopying() {
+        SceneNode a = editor.spawnEmpty(Vec3.zero());
+        a.setName("Crate");
+        editor.selection().select(a);
+        editor.copySelection();
+        a.setName("Renamed later");
+
+        SceneNode pasted = editor.paste(Vec3.zero()).getFirst();
+        assertEquals("Crate", pasted.getName());
+
+        editor.history().undo();
+        assertEquals(1, editor.sceneNodes().size());
+    }
+
+    @Test
+    void theClipboardSurvivesSwitchingScenesButNotProjects() throws Exception {
+        Files.copy(projectDir.resolve("level.gltf"), projectDir.resolve("assets/town.gltf"));
+        editor.selection().select(editor.spawnEmpty(Vec3.zero()));
+        editor.copySelection();
+        editor.saveProject();
+
+        editor.openScene(projectDir.resolve("assets/town.gltf"));
+        assertTrue(editor.canPaste());
+        assertEquals(1, editor.paste(Vec3.zero()).size());
+
+        editor.createProject(elsewhere.resolve("other"), "level");
+        assertFalse(editor.canPaste());
+    }
 }

@@ -44,6 +44,9 @@ public class Editor {
     private final Selection selection = new Selection();
     private final History history;
     private boolean snapping = true;
+    // Kept across scenes of one project, so objects can be copied from one location into another
+    private Maybe<NodeTemplate> clipboard = Maybe.none();
+    private Maybe<Path> clipboardProject = Maybe.none();
     private final List<Runnable> sceneListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
     private Scene observedScene;
     private final Runnable structureListener = this::sceneChanged;
@@ -133,6 +136,15 @@ public class Editor {
         markSaved();
         // The history goes with the scene, and a changed archetype registry can make old steps unrestorable.
         projectManager.addListener(history::clear);
+        // Another project has other archetypes, so what was copied in this one does not carry over
+        projectManager.addListener(() -> {
+            Maybe<Path> project = projectManager.projectFile();
+            if (!project.equals(clipboardProject)) {
+                clipboard = Maybe.none();
+                clipboardProject = project;
+            }
+        });
+        clipboardProject = projectManager.projectFile();
         // Undo and redo restore nodes in place, so the inspector must hear about them too.
         history.addListener(this::sceneChanged);
     }
@@ -425,8 +437,125 @@ public class Editor {
 
     // Node transforms have uniform scale, so composing them stays exact, unlike decomposing a matrix
     private static Transform worldTransform(SceneNode node) {
-        Transform local = node.getTransform().copy();
-        return node.getParent().mapOr(local, parent -> worldTransform(parent).mul(local));
+        return NodeTemplate.worldTransform(node);
+    }
+
+    /** Puts copies of the selected objects, with their children, on the clipboard. @return how many objects */
+    public int copySelection() {
+        List<SceneNode> roots = selectedRoots();
+        if (roots.isEmpty()) {
+            return 0;
+        }
+        clipboard = Maybe.some(NodeTemplate.of(roots));
+        LogService.get().info("Copied " + clipboard.unwrap().size() + " object(s)");
+        return clipboard.unwrap().size();
+    }
+
+    public boolean canPaste() {
+        return clipboard.isSome() && scene().isSome();
+    }
+
+    /**
+     * Adds the copied objects again, moved sideways so they are centered on {@code target}
+     * at the height they had. They go back under their original parent while it is still
+     * in the scene, and become the selection.
+     */
+    public List<SceneNode> paste(Vec3 target) {
+        if (playtesting || !canPaste()) {
+            return List.of();
+        }
+        NodeTemplate template = clipboard.unwrap();
+        Scene scene = scene().unwrap();
+
+        return history.record("paste", () -> {
+            List<NodeTemplate.Made> made = template.instantiate(projectManager.catalog());
+            List<NodeTemplate.Made> tops = made.stream().filter(item -> item.entry().parent() < 0).toList();
+            Vec3 center = Vec3.zero();
+            tops.forEach(item -> center.addLocal(item.entry().world().getTranslation()));
+            center.divLocal(tops.size());
+            Vec3 shift = new Vec3(target.getX() - center.getX(), 0, target.getZ() - center.getZ());
+
+            for (NodeTemplate.Made item : made) {
+                if (item.entry().parent() >= 0) {
+                    addOrFail(scene, item.node(), Maybe.some(made.get(item.entry().parent()).node()));
+                    continue;
+                }
+                Maybe<SceneNode> parent = livingParent(scene, item.entry());
+                Transform world = item.entry().world().copy();
+                world.getTranslation().addLocal(shift);
+                item.node().setTransform(parent.map(p -> worldTransform(p).inverse().mul(world)).unwrapOr(world));
+                addOrFail(scene, item.node(), parent);
+            }
+            List<SceneNode> pasted = tops.stream().map(NodeTemplate.Made::node).toList();
+            selection.set(pasted);
+            LogService.get().info("Pasted " + made.size() + " object(s) at " + target);
+            return pasted;
+        });
+    }
+
+    /** Copies the selected objects in place, each right after its original, and selects the copies. */
+    public List<SceneNode> duplicateSelection() {
+        List<SceneNode> roots = selectedRoots();
+        if (playtesting || roots.isEmpty()) {
+            return List.of();
+        }
+        Scene scene = scene().unwrap();
+        NodeTemplate template = NodeTemplate.of(roots);
+
+        return history.record("duplicate", () -> {
+            List<NodeTemplate.Made> made = template.instantiate(projectManager.catalog());
+            List<SceneNode> copies = new ArrayList<>();
+            int root = 0;
+            for (NodeTemplate.Made item : made) {
+                if (item.entry().parent() >= 0) {
+                    addOrFail(scene, item.node(), Maybe.some(made.get(item.entry().parent()).node()));
+                    continue;
+                }
+                SceneNode original = roots.get(root++);
+                Maybe<SceneNode> parent = original.getParent();
+                addOrFail(scene, item.node(), parent);
+                int after = parent.mapOr(scene.getRootNodes(), SceneNode::getChildren).indexOf(original) + 1;
+                try {
+                    scene.move(item.node(), parent, after);
+                } catch (SceneException e) {
+                    throw new IllegalStateException("Cannot place the copy of '" + original.getName() + "'", e);
+                }
+                copies.add(item.node());
+            }
+            selection.set(copies);
+            LogService.get().info("Duplicated " + made.size() + " object(s)");
+            return copies;
+        });
+    }
+
+    // Selected objects without a selected ancestor, in scene order
+    private List<SceneNode> selectedRoots() {
+        Set<SceneNode> chosen = Set.copyOf(selection.nodes());
+        return scene()
+            .map(scene -> scene.traverse()
+                .filter(node -> chosen.contains(node) && !hasChosenAncestor(node, chosen))
+                .toList())
+            .unwrapOr(List.of());
+    }
+
+    // A parent that was deleted, or that cannot hold children because its scale is zero, leaves the top level
+    private static Maybe<SceneNode> livingParent(Scene scene, NodeTemplate.Entry entry) {
+        return entry.oldParent()
+            .andThen(scene::find)
+            .filter(parent -> Math.abs(worldTransform(parent).getScale()) > 1e-6f);
+    }
+
+    private static void addOrFail(Scene scene, SceneNode node, Maybe<SceneNode> parent) {
+        try {
+            if (parent.isSome()) {
+                scene.add(node, parent.unwrap());
+            } else {
+                scene.add(node);
+            }
+        } catch (SceneException e) {
+            // Fresh copies have new ids and no parent yet, so this cannot happen.
+            throw new IllegalStateException("Cannot add a copy of '" + node.getName() + "'", e);
+        }
     }
 
     public Deletion planDeletion(List<SceneNode> selected) {

@@ -19,6 +19,8 @@ top = false
 | Refresh assets | `Ctrl+F5` |
 | Exit | `Ctrl+Q` |
 | Undo / redo | `Ctrl+Z` / `Ctrl+Y` |
+| Copy / paste objects | `Ctrl+C` / `Ctrl+V` |
+| Duplicate objects | `Ctrl+D` |
 | Add greybox box / sphere | `Ctrl+B` / `Ctrl+Shift+B` |
 | Import a glTF model | `Ctrl+I` |
 | Edit selected object | `Ctrl+E` |

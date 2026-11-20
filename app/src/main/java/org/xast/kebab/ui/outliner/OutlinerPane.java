@@ -132,6 +132,10 @@ public final class OutlinerPane extends JPanel implements AutoCloseable {
                 popup(event);
             }
         });
+        // The tree's own clipboard keys would swallow the Edit menu's copy and paste of objects
+        for (String key : List.of("control C", "control V", "control X", "control D")) {
+            bind(key, "none");
+        }
         bind("ENTER", "frameSelected");
         bind("F", "frameSelected");
         tree.getActionMap().put("frameSelected", action(() -> framer.accept(selectedNodes())));
@@ -172,6 +176,12 @@ public final class OutlinerPane extends JPanel implements AutoCloseable {
             prefab.addActionListener(e -> navigator.openPrefab(node));
             menu.add(prefab);
             menu.addSeparator();
+            JMenuItem duplicate = new JMenuItem("Duplicate  (Ctrl+D)");
+            duplicate.addActionListener(e -> editor.duplicateSelection());
+            menu.add(duplicate);
+            JMenuItem copy = new JMenuItem("Copy  (Ctrl+C)");
+            copy.addActionListener(e -> editor.copySelection());
+            menu.add(copy);
             JMenuItem topLevel = new JMenuItem("Move to top level");
             topLevel.setEnabled(node.getParent().isSome());
             topLevel.addActionListener(e -> reparent(selectedNodes(), Maybe.none(), Integer.MAX_VALUE));

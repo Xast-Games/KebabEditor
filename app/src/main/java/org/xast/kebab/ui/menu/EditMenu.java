@@ -1,5 +1,6 @@
 package org.xast.kebab.ui.menu;
 
+import java.awt.KeyboardFocusManager;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.IOException;
@@ -9,6 +10,7 @@ import java.util.function.Supplier;
 import javax.swing.ButtonGroup;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.text.JTextComponent;
 
 import org.xast.kebab.archetype.builtin.BuiltinArchetypes;
 import org.xast.kebab.editor.Deletion;
@@ -56,6 +58,10 @@ public class EditMenu extends Menu {
         setItems(new MenuItem[] {
             undo,
             redo,
+            new SeparatorItem(),
+            objectItem(frame, editor, "Copy", "control C", editor::copySelection),
+            objectItem(frame, editor, "Paste", "control V", () -> editor.paste(spawnPoint.get())),
+            objectItem(frame, editor, "Duplicate", "control D", editor::duplicateSelection),
             new SeparatorItem(),
             spawnItem(
                 frame,
@@ -141,6 +147,15 @@ public class EditMenu extends Menu {
         Runnable action
     ) {
         return new SingleItem(label, keyStroke, ProjectRequired.guard(frame, editor, action));
+    }
+
+    // While a text field has focus the shortcut belongs to it, so Ctrl+C there still copies text
+    private static SingleItem objectItem(JFrame frame, Editor editor, String label, String keyStroke, Runnable action) {
+        return spawnItem(frame, editor, label, Maybe.some(keyStroke), () -> {
+            if (!(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() instanceof JTextComponent)) {
+                action.run();
+            }
+        });
     }
 
     private static SingleItem importModelItem(JFrame frame, Editor editor, Supplier<Vec3> spawnPoint) {

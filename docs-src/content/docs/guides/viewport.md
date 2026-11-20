@@ -46,6 +46,18 @@ Click an object or its icon to select it. The gizmo has three modes: `1` move, `
 | Import a glTF model | `Ctrl+I` |
 | Empty, player start, lights | **Edit** menu |
 
+## Copy, paste and duplicate
+
+| Action | Shortcut |
+|---|---|
+| Copy the selected objects | `Ctrl+C` |
+| Paste where the camera looks | `Ctrl+V` |
+| Duplicate in place | `Ctrl+D` |
+
+Children, archetypes and greybox settings are copied along. **Duplicate** puts each copy right after its original, at the same place and under the same parent. **Paste** moves the copies sideways to the point the camera looks at, keeping their height, so you can fly somewhere and drop the same prop again. Pasting repeatedly makes new copies each time. The copies become the selection, ready to move with the gizmo.
+
+What you copy stays on the clipboard when you switch to another scene of the project, so props can be carried from one location into another. References between copied objects point at the new copies; references to anything else are kept. While a text field has focus, these shortcuts copy and paste text instead.
+
 ## Placement ray
 
 `Ctrl+Shift+P` starts a placement ray that spawns objects on surfaces. The mouse wheel changes the distance, `Alt` ignores surfaces and `Esc` leaves.
