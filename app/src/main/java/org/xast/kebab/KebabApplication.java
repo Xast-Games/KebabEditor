@@ -7,6 +7,7 @@ import org.xast.kebab.logging.LogService;
 import org.xast.kebab.project.EditorSessions;
 import org.xast.kebab.project.FileRecentProjects;
 import org.xast.kebab.ui.MainWindow;
+import org.xast.kebab.utils.AppIdentity;
 import org.xast.kebab.utils.KebabStyle;
 
 public class KebabApplication {
@@ -17,6 +18,9 @@ public class KebabApplication {
     public static final int FIRST_YEAR = 2025;
     
     public static void main(String[] args) {
+        // Before any window exists, so the dock matches the windows to kebab-editor.desktop.
+        AppIdentity.setWindowClass();
+
         SwingUtilities.invokeLater(() -> {
             KebabStyle.setCurrent(KebabStyle.defaultStyle());
 

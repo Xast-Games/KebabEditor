@@ -68,6 +68,15 @@ Playtest mode with simple AABB physics, and undo / redo.
 ./gradlew test
 ```
 
+### Install on Linux
+
+```sh
+scripts/install-linux.sh              # build and install, or reinstall over an existing install
+scripts/install-linux.sh --uninstall  # remove it
+```
+
+This installs for the current user only, with no root needed. The app goes to `~/.local/share/kebab-editor`, a `kebab-editor` command to `~/.local/bin`, and a menu entry with the logo to `~/.local/share/applications`. The installed app runs with Java 25+ from `JAVA_HOME`, or else the `java` on `PATH`.
+
 If you start the application from an IDE instead of Gradle, copy the JVM arguments from `applicationDefaultJvmArgs` in [`app/build.gradle.kts`](app/build.gradle.kts). JOGL needs them to reach native libraries and AWT internals.
 
 ## Using the editor

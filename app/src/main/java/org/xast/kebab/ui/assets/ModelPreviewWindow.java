@@ -9,12 +9,14 @@ import javax.swing.JLabel;
 
 import org.xast.kebab.scene.resolve.ModelResult.ResolvedModel;
 import org.xast.kebab.ui.navigation.FreeFlightNavigation;
+import org.xast.kebab.utils.AppIdentity;
 import org.xast.kebab.utils.KebabStyle;
 
 public final class ModelPreviewWindow extends JFrame {
 
     public ModelPreviewWindow(ResolvedModel model) {
         super(model.path().getFileName() + " — Model Preview");
+        AppIdentity.applyIcon(this);
         ModelPreviewView view = new ModelPreviewView(model);
         view.setNavigationMode(new FreeFlightNavigation());
         add(view, BorderLayout.CENTER);

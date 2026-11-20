@@ -22,6 +22,7 @@ import org.xast.kebab.ui.menu.generic.SingleItem;
 import org.xast.kebab.ui.navigation.FreeFlightNavigation;
 import org.xast.kebab.ui.object.ObjectDialog;
 import org.xast.kebab.utils.ErrorDialogs;
+import org.xast.kebab.utils.AppIdentity;
 import org.xast.kebab.utils.KebabStyle;
 import org.xast.kebab.utils.Maybe;
 
@@ -33,6 +34,7 @@ public final class SceneEditorWindow extends JFrame {
 
     public SceneEditorWindow(Editor editor) {
         super(editor.currentProjectFile().unwrap().getFileName() + " — Scene Editor");
+        AppIdentity.applyIcon(this);
         this.editor = editor;
         view = new EditorView(editor);
         view.setNavigationMode(new FreeFlightNavigation());

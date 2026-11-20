@@ -41,6 +41,7 @@ import org.xast.kebab.ui.navigation.FreeFlightNavigation;
 import org.xast.kebab.ui.object.ObjectDialog;
 import org.xast.kebab.ui.playtest.PlaytestController;
 import org.xast.kebab.ui.playtest.PlayerStartDialog;
+import org.xast.kebab.utils.AppIdentity;
 import org.xast.kebab.utils.ErrorDialogs;
 import org.xast.kebab.utils.KebabStyle;
 import org.xast.kebab.utils.LucideIcon;
@@ -243,7 +244,7 @@ public class MainWindow {
         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         frame.setSize(style.windowSize().width, style.windowSize().height);
         frame.setLocationRelativeTo(null);
-        frame.setIconImage(style.favicon().getImage());
+        AppIdentity.applyIcon(frame);
         frame.setLayout(new BorderLayout());
     }
 
