@@ -1,5 +1,7 @@
 package org.xast.kebab.render;
 
+import java.util.List;
+
 import org.xast.kebab.math.Mat4;
 import org.xast.kebab.math.Quat;
 import org.xast.kebab.math.Vec3;
@@ -9,7 +11,7 @@ import org.xast.kebab.scene.model.SceneNode;
  * Where the gizmo sits for a node this frame. Drawing and hit-testing both use
  * it, so what is drawn is exactly what can be grabbed.
  *
- * @param center   the node's world position
+ * @param center   the node's world position, or the selection's center
  * @param rotation world axes for translate; the node's world rotation for rotate and scale
  * @param size     world length of a handle, keeping it a constant size on screen
  */
@@ -19,10 +21,28 @@ public record GizmoFrame(Vec3 center, Quat rotation, float size) {
     static final float SCREEN_FRACTION = 0.36f;
 
     public static GizmoFrame of(SceneNode node, GizmoMode mode, Camera camera) {
-        Mat4 world = node.worldMatrix();
-        Vec3 center = world.getTranslation();
+        return of(List.of(node), mode, GizmoPivot.INDIVIDUAL, camera);
+    }
+
+    /**
+     * The gizmo for a selection whose last node is the primary one. Its axes
+     * follow the primary node; it sits on that node, or on the center of all
+     * selected origins when the pivot is the selection center.
+     */
+    public static GizmoFrame of(List<SceneNode> selection, GizmoMode mode, GizmoPivot pivot, Camera camera) {
+        Mat4 world = selection.getLast().worldMatrix();
+        Vec3 center = pivot == GizmoPivot.SELECTION_CENTER ? centerOf(selection) : world.getTranslation();
         Quat rotation = mode == GizmoMode.TRANSLATE ? Quat.identity() : Quat.fromMatrix(world);
         return new GizmoFrame(center, rotation, handleScale(camera, center));
+    }
+
+    /** The average of the nodes' world positions. */
+    static Vec3 centerOf(List<SceneNode> nodes) {
+        Vec3 sum = Vec3.zero();
+        for (SceneNode node : nodes) {
+            sum.addLocal(node.worldMatrix().getTranslation());
+        }
+        return sum.divLocal(nodes.size());
     }
 
     /**

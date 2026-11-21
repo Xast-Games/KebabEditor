@@ -13,8 +13,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Transform gizmo for the primary selected node, 
- * drawn after everything else.
+ * Transform gizmo for the selection, on the primary node or the selection's
+ * center depending on the pivot, drawn after everything else.
  */
 public class GizmoRenderer implements RenderPass {
 
@@ -37,6 +37,10 @@ public class GizmoRenderer implements RenderPass {
     @Getter
     @Setter
     private GizmoMode mode = GizmoMode.TRANSLATE;
+
+    @Getter
+    @Setter
+    private GizmoPivot pivot = GizmoPivot.INDIVIDUAL;
 
     /** The handle under the cursor or being dragged; drawn highlighted. */
     @Setter
@@ -72,7 +76,7 @@ public class GizmoRenderer implements RenderPass {
             return;
         }
 
-        GizmoFrame frame = GizmoFrame.of(context.selection().getLast(), mode, context.camera());
+        GizmoFrame frame = GizmoFrame.of(context.selection(), mode, pivot, context.camera());
         Mat4 base = frame.matrix();
 
         gl.glClear(GL3.GL_DEPTH_BUFFER_BIT);

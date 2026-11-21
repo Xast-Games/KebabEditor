@@ -11,6 +11,7 @@ import org.xast.kebab.archetype.definition.ArchetypeDefinition;
 import org.xast.kebab.math.Vec3;
 import org.xast.kebab.playtest.ActorSettings;
 import org.xast.kebab.utils.Maybe;
+import org.xast.kebab.utils.Params;
 
 public final class BuiltinArchetypes {
 
@@ -43,16 +44,19 @@ public final class BuiltinArchetypes {
         new ArchetypeDefinition(COLLIDER_BOX)
             .withDisplayName("Box Collider")
             .withIcon(new ArchetypeIcon.Bundled("archetypes/cube.svg"))
-            .withParam("size", ParamType.VEC3, Vec3.one()),
+            .withParam("size", ParamType.VEC3, Vec3.one())
+            .withParam(Params.OFFSET, ParamType.VEC3, Vec3.zero()),
 
         new ArchetypeDefinition(COLLIDER_SPHERE)
             .withDisplayName("Sphere Collider")
             .withIcon(new ArchetypeIcon.Bundled("archetypes/sphere.svg"))
-            .withParam("radius", ParamType.FLOAT, 0.5f),
+            .withParam("radius", ParamType.FLOAT, 0.5f)
+            .withParam(Params.OFFSET, ParamType.VEC3, Vec3.zero()),
 
         new ArchetypeDefinition(TRIGGER)
             .withDisplayName("Trigger")
-            .withParam("size", ParamType.VEC3, Vec3.one()),
+            .withParam("size", ParamType.VEC3, Vec3.one())
+            .withParam(Params.OFFSET, ParamType.VEC3, Vec3.zero()),
 
         new ArchetypeDefinition(NO_VOLUME)
             .withDisplayName("No Volume")

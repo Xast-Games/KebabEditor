@@ -11,9 +11,21 @@ public sealed interface GizmoShape
         GizmoAabb,
         GizmoLines
 {
-    record GizmoBox(Vec3 size) implements GizmoShape {}
+    /** A box of {@code size} around {@code center}, both in the node's local space. */
+    record GizmoBox(Vec3 size, Vec3 center) implements GizmoShape {
 
-    record GizmoSphere(float radius) implements GizmoShape {}
+        public GizmoBox(Vec3 size) {
+            this(size, Vec3.zero());
+        }
+    }
+
+    /** A sphere of {@code radius} around {@code center}, both in the node's local space. */
+    record GizmoSphere(float radius, Vec3 center) implements GizmoShape {
+
+        public GizmoSphere(float radius) {
+            this(radius, Vec3.zero());
+        }
+    }
 
     record GizmoAabb(Aabb box) implements GizmoShape {
 

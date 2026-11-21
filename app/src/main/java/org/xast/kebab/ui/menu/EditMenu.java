@@ -16,6 +16,7 @@ import org.xast.kebab.editor.Deletion;
 import org.xast.kebab.editor.Editor;
 import org.xast.kebab.math.Vec3;
 import org.xast.kebab.render.GizmoMode;
+import org.xast.kebab.render.GizmoPivot;
 import org.xast.kebab.scene.model.GreyboxShape;
 import org.xast.kebab.ui.EditorView;
 import org.xast.kebab.ui.SceneNavigator;
@@ -50,6 +51,7 @@ public class EditMenu extends Menu {
         syncHistoryItems(editor, view, undo, redo);
 
         ButtonGroup tools = new ButtonGroup();
+        ButtonGroup pivots = new ButtonGroup();
 
         setItems(new MenuItem[] {
             undo,
@@ -106,6 +108,9 @@ public class EditMenu extends Menu {
             toolItem(view, "Move tool  (1)", "1", GizmoMode.TRANSLATE, tools),
             toolItem(view, "Rotate tool  (2)", "2", GizmoMode.ROTATE, tools),
             toolItem(view, "Scale tool  (3)", "3", GizmoMode.SCALE, tools),
+            new SeparatorItem(),
+            pivotItem(view, "Rotate/scale each object individually", GizmoPivot.INDIVIDUAL, pivots),
+            pivotItem(view, "Rotate/scale around selection center", GizmoPivot.SELECTION_CENTER, pivots),
         });
     }
 
@@ -260,6 +265,20 @@ public class EditMenu extends Menu {
 
         view.ifSomeOrElse(v -> {
             Runnable sync = () -> item.setSelected(v.getGizmoMode() == mode);
+            sync.run();
+            v.addGizmoModeListener(sync);
+        }, () -> item.component().setEnabled(false));
+
+        return item;
+    }
+
+    // With several objects selected, moving always moves them together; this picks
+    // whether rotating and scaling treat them one by one or as one big object.
+    private static RadioItem pivotItem(Maybe<EditorView> view, String label, GizmoPivot pivot, ButtonGroup group) {
+        RadioItem item = new RadioItem(label, group, () -> view.ifSome(v -> v.setGizmoPivot(pivot)));
+
+        view.ifSomeOrElse(v -> {
+            Runnable sync = () -> item.setSelected(v.getGizmoPivot() == pivot);
             sync.run();
             v.addGizmoModeListener(sync);
         }, () -> item.component().setEnabled(false));

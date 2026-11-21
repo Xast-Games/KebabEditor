@@ -11,6 +11,7 @@ import java.awt.event.FocusEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -26,7 +27,6 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 
 import org.xast.kebab.editor.Editor;
 import org.xast.kebab.logging.LogService;
@@ -35,6 +35,7 @@ import org.xast.kebab.scene.model.Greybox;
 import org.xast.kebab.scene.model.GreyboxColor;
 import org.xast.kebab.scene.model.GreyboxShape;
 import org.xast.kebab.scene.model.SceneNode;
+import org.xast.kebab.ui.NumberSpinner;
 import org.xast.kebab.utils.KebabStyle;
 import org.xast.kebab.utils.Maybe;
 
@@ -47,6 +48,7 @@ final class GreyboxSection extends InspectorSection {
 
     private static final String[] AXES = {"X", "Y", "Z"};
     private static final String[] SIZE_FIELDS = {"greybox.size.x", "greybox.size.y", "greybox.size.z"};
+    private static final double MIN_SIZE = 0.01;
     private static final int THUMBNAIL = 48;
     private static final int SWATCH = 14;
     /** Grey pattern previews, shared by every greybox section and loaded on first use. */
@@ -54,7 +56,8 @@ final class GreyboxSection extends InspectorSection {
 
     private final Editor editor;
     private final SceneNode node;
-    private final JTextField[] size = new JTextField[3];
+    private final NumberSpinner[] size = new NumberSpinner[3];
+    // The text last shown in each size field, so untouched text is never applied again
     private final String[] displayed = new String[3];
     private final Map<JComboBox<?>, Runnable> combos = new HashMap<>();
     private boolean refreshing;
@@ -130,21 +133,27 @@ final class GreyboxSection extends InspectorSection {
         JPanel axes = new JPanel(new GridLayout(1, 3, 4, 0));
         for (int axis = 0; axis < 3; axis++) {
             int index = axis;
-            JTextField field = new JTextField();
-            field.setName(SIZE_FIELDS[axis]);
-            field.setFont(KebabStyle.getCurrent().techFont());
-            field.addActionListener(e -> commitSize(index));
-            field.addFocusListener(new FocusAdapter() {
+            // The arrows step by the snap distance, like the scale gizmo
+            NumberSpinner spinner = new NumberSpinner(1, MIN_SIZE, Float.MAX_VALUE, editor.snapDistance());
+            spinner.setName(SIZE_FIELDS[axis] + ".spinner");
+            spinner.field().setName(SIZE_FIELDS[axis]);
+            spinner.addChangeListener(e -> {
+                if (!refreshing) {
+                    applySize(index, spinner.floatValue());
+                }
+            });
+            spinner.field().addActionListener(e -> commitSize(index));
+            spinner.field().addFocusListener(new FocusAdapter() {
                 @Override
                 public void focusLost(FocusEvent e) {
                     commitSize(index);
                 }
             });
-            size[axis] = field;
+            size[axis] = spinner;
 
             JPanel pair = new JPanel(new BorderLayout(3, 0));
             pair.add(label(AXES[axis]), BorderLayout.WEST);
-            pair.add(field, BorderLayout.CENTER);
+            pair.add(spinner, BorderLayout.CENTER);
             axes.add(pair);
         }
         return axes;
@@ -155,48 +164,50 @@ final class GreyboxSection extends InspectorSection {
             refreshing = true;
             try {
                 combos.values().forEach(Runnable::run);
+
+                float[] values = greybox.size().toArray();
+                for (int axis = 0; axis < 3; axis++) {
+                    size[axis].setStep(editor.snapDistance());
+                    if (size[axis].isTyping()) {
+                        continue;
+                    }
+                    size[axis].setNumber(values[axis]);
+                    displayed[axis] = size[axis].field().getText();
+                    clearError(size[axis].field());
+                }
             } finally {
                 refreshing = false;
-            }
-
-            float[] values = greybox.size().toArray();
-            for (int axis = 0; axis < 3; axis++) {
-                if (size[axis].hasFocus()) {
-                    continue;
-                }
-                displayed[axis] = Float.toString(values[axis]);
-                size[axis].setText(displayed[axis]);
-                clearError(size[axis]);
             }
         });
     }
 
+    // Enter or focus loss: take typed text, which then arrives at applySize as a value change
     private void commitSize(int axis) {
-        if (!canEdit(editor, node) || current().isNone()) {
-            return;
-        }
-
-        JTextField field = size[axis];
-        if (field.getText().equals(displayed[axis])) {
+        NumberSpinner field = size[axis];
+        if (field.field().getText().equals(displayed[axis])) {
             return;
         }
 
         try {
-            float value = Float.parseFloat(field.getText().trim());
-            if (!Float.isFinite(value) || value <= 0) {
-                throw new IllegalArgumentException();
-            }
-
-            Greybox greybox = current().unwrap();
-            float[] values = greybox.size().toArray();
-            values[axis] = value;
-            update(greybox.withSize(new Vec3(values[0], values[1], values[2])));
-            displayed[axis] = field.getText();
-            clearError(field);
-            refresh();
-        } catch (IllegalArgumentException e) {
-            markError(field, "Enter a positive number; the previous value is preserved");
+            field.commitText();
+            displayed[axis] = field.field().getText();
+            clearError(field.field());
+        } catch (ParseException e) {
+            markError(field.field(), "Enter a number of at least " + MIN_SIZE + "; the previous value is preserved");
         }
+    }
+
+    private void applySize(int axis, float value) {
+        if (!canEdit(editor, node) || current().isNone() || !Float.isFinite(value) || value <= 0) {
+            return;
+        }
+
+        Greybox greybox = current().unwrap();
+        float[] values = greybox.size().toArray();
+        values[axis] = value;
+        update(greybox.withSize(new Vec3(values[0], values[1], values[2])));
+        clearError(size[axis].field());
+        refresh();
     }
 
     private void update(Greybox greybox) {

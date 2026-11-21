@@ -21,9 +21,16 @@ final class SelectionShapes {
 
     static Placed place(GizmoShape shape, Mat4 nodeWorld) {
         return switch (shape) {
-            case GizmoShape.GizmoBox box -> unit(Meshes.CUBE_LINES, nodeWorld.mul(Mat4.scaling(box.size())), false);
-            case GizmoShape.GizmoSphere sphere ->
-                unit(Meshes.SPHERE_LINES, nodeWorld.mul(Mat4.scaling(2 * sphere.radius())), true);
+            case GizmoShape.GizmoBox box -> unit(
+                Meshes.CUBE_LINES,
+                nodeWorld.mul(Mat4.translation(box.center())).mulLocal(Mat4.scaling(box.size())),
+                false
+            );
+            case GizmoShape.GizmoSphere sphere -> unit(
+                Meshes.SPHERE_LINES,
+                nodeWorld.mul(Mat4.translation(sphere.center())).mulLocal(Mat4.scaling(2 * sphere.radius())),
+                true
+            );
             case GizmoShape.GizmoAabb aabb -> unit(Meshes.CUBE_LINES, nodeWorld.mul(boxMatrix(aabb.box())), false);
             case GizmoShape.GizmoLines lines ->
                 new Placed(lines.lines(), nodeWorld, nodeWorld.mul(boxMatrix(lines.lines().bounds())), false);

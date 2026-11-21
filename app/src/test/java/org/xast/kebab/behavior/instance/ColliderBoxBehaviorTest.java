@@ -99,4 +99,40 @@ class ColliderBoxBehaviorTest {
         assertTrue(behavior.validate(nodeAt(Vec3.zero(), 1f), box, CONTEXT).isEmpty());
     }
 
+    @Test
+    void offsetMovesTheBoxInTheNodesLocalSpace() throws Exception {
+        ArchetypeInstance box = instanceOf(BuiltinArchetypes.COLLIDER_BOX);
+        box.set("size", new Vec3(1, 1, 1));
+        box.set("offset", new Vec3(0, 1, 0));
+        // Scale 2 doubles the offset too, so the center sits 2 above the node.
+        SceneNode node = nodeAt(new Vec3(1, 2, 3), 2f);
+
+        Vec3 center = behavior.drawableObjects(node, box, CONTEXT).get(0).world().transformPoint(Vec3.zero());
+        assertTrue(center.approxEquals(new Vec3(1, 4, 3), EPS), center.toString());
+
+        Vec3 physicsCenter = behavior.physicsVolumes(node, box, CONTEXT).get(0).world().transformPoint(Vec3.zero());
+        assertTrue(physicsCenter.approxEquals(new Vec3(1, 4, 3), EPS), physicsCenter.toString());
+
+        Aabb bounds = behavior.bounds(node, box, CONTEXT).unwrap();
+        assertEquals(3f, bounds.getMinY(), EPS);
+        assertEquals(5f, bounds.getMaxY(), EPS);
+
+        assertEquals(
+            new GizmoShape.GizmoBox(new Vec3(1, 1, 1), new Vec3(0, 1, 0)),
+            behavior.gizmoSelectionShape(node, box, CONTEXT).unwrap()
+        );
+    }
+
+    @Test
+    void offsetDefaultsToZeroAndMustBeFinite() throws Exception {
+        ArchetypeInstance box = instanceOf(BuiltinArchetypes.COLLIDER_BOX);
+        SceneNode node = nodeAt(Vec3.zero(), 1f);
+        assertEquals(Vec3.zero(), box.get("offset"));
+
+        box.set("offset", new Vec3(0, Float.POSITIVE_INFINITY, 0));
+
+        assertEquals(1, behavior.validate(node, box, CONTEXT).size());
+        Vec3 center = behavior.drawableObjects(node, box, CONTEXT).get(0).world().transformPoint(Vec3.zero());
+        assertTrue(center.approxEquals(Vec3.zero(), EPS), "an unusable offset is ignored, was " + center);
+    }
 }

@@ -23,6 +23,7 @@ import javax.swing.SwingUtilities;
 import org.xast.kebab.archetype.ParamType;
 import org.xast.kebab.math.Vec3;
 import org.xast.kebab.scene.model.SceneNode;
+import org.xast.kebab.ui.NumberSpinner;
 import org.xast.kebab.ui.validation.FieldValidator;
 import org.xast.kebab.ui.validation.ValidationGroup;
 import org.xast.kebab.utils.KebabStyle;
@@ -31,6 +32,7 @@ import org.xast.kebab.utils.Maybe;
 public final class ParamValueEditor extends JPanel {
 
     private static final int WIDTH = 170;
+    private static final double FLOAT_STEP = 0.1;
 
     private final KebabStyle style;
     private final ValidationGroup validation;
@@ -149,11 +151,8 @@ public final class ParamValueEditor extends JPanel {
     }
 
     private JComponent floatEditor(float value) {
-        JSpinner spinner = new JSpinner(
-            new SpinnerNumberModel((double) value, -(double) Float.MAX_VALUE, (double) Float.MAX_VALUE, 0.1)
-        );
-        ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField().setFont(style.techFont());
-        reader = () -> { commitSpinner(spinner); return ((Number) spinner.getValue()).floatValue(); };
+        NumberSpinner spinner = new NumberSpinner(value, FLOAT_STEP);
+        reader = () -> { commitSpinner(spinner); return spinner.floatValue(); };
 
         return spinner;
     }
@@ -193,30 +192,24 @@ public final class ParamValueEditor extends JPanel {
         return row;
     }
 
+    // Each axis is a spinner, so it can be typed or stepped with its arrows
     private JComponent vec3Editor(Vec3 value) {
         JPanel row = new JPanel(new java.awt.GridLayout(1, 3, 4, 0));
-        JTextField[] fields = new JTextField[3];
+        NumberSpinner[] spinners = new NumberSpinner[3];
         float[] values = {value.getX(), value.getY(), value.getZ()};
         for (int i=0; i<3; i++) {
             JPanel axis = new JPanel(new BorderLayout(2, 0));
             JLabel label = new JLabel(new String[]{"X", "Y", "Z"}[i]);
             label.setFont(style.uiFont());
-            fields[i] = new JTextField(Float.toString(values[i]));
-            fields[i].setFont(style.techFont());
-            vectorValidators.add(validation.add(fields[i], text -> {
-                try {
-                    return Float.isFinite(Float.parseFloat(text.trim())) ? Maybe.none() : Maybe.some("Enter a finite number");
-                } catch (NumberFormatException e) { return Maybe.some("Enter a finite number"); }
-            }));
+            spinners[i] = new NumberSpinner(values[i], FLOAT_STEP);
+            // A bad axis is rejected when the value is read, like the float editor
             axis.add(label, BorderLayout.WEST);
-            axis.add(fields[i], BorderLayout.CENTER);
+            axis.add(spinners[i], BorderLayout.CENTER);
             row.add(axis);
         }
         reader = () -> {
-            try {
-                return new Vec3(Float.parseFloat(fields[0].getText().trim()),
-                    Float.parseFloat(fields[1].getText().trim()), Float.parseFloat(fields[2].getText().trim()));
-            } catch (NumberFormatException e) { throw new IllegalArgumentException("Invalid vector", e); }
+            for (NumberSpinner spinner : spinners) commitSpinner(spinner);
+            return new Vec3(spinners[0].floatValue(), spinners[1].floatValue(), spinners[2].floatValue());
         };
         return row;
     }

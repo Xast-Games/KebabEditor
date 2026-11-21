@@ -2,6 +2,9 @@ package org.xast.kebab.render;
 
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import org.xast.kebab.logging.LogService;
@@ -14,7 +17,10 @@ import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.utils.Maybe;
 
 /**
- * Dragging the gizmo's handles to move, rotate and scale the selected node.
+ * Dragging the gizmo's handles to move, rotate and scale the selected nodes.
+ * Moving shifts them all by the same amount; rotating and scaling act on each
+ * node around its own origin, or on the whole selection around its center,
+ * as the renderer's {@link GizmoPivot} says.
  */
 public final class GizmoInteraction {
 
@@ -41,15 +47,33 @@ public final class GizmoInteraction {
 
     private Maybe<Drag> drag = Maybe.none();
 
+    /** A node being dragged, as it was when the drag started. */
+    private record Target(
+        SceneNode node,
+        Transform startLocal,
+        Vec3 startWorldPosition,
+        Quat startWorldRotation,
+        Maybe<Greybox> startGreybox
+    ) {
+        static Target of(SceneNode node) {
+            return new Target(
+                node,
+                node.getTransform().copy(),
+                node.worldMatrix().getTranslation(),
+                Quat.fromMatrix(node.worldMatrix()),
+                Greybox.of(node)
+            );
+        }
+    }
+
     /** Everything captured when a drag starts, so each move is relative to the start, not the last step. */
     private record Drag(
-        SceneNode node,
+        List<Target> targets,
+        Vec3 primaryStart,
         GizmoHandle handle,
         GizmoMode mode,
+        GizmoPivot pivot,
         GizmoFrame frame,
-        Transform startLocal,
-        Quat startWorldRotation,
-        Maybe<Greybox> startGreybox,
         Vec3 startHit,
         float startParam,
         int startX,
@@ -66,29 +90,33 @@ public final class GizmoInteraction {
         return drag.isSome();
     }
 
-    /** Highlights the handle under the cursor. */
-    public void hover(Viewport viewport, Maybe<SceneNode> node, int x, int y) {
+    /** Highlights the handle under the cursor. @param selection the selected nodes, the primary one last */
+    public void hover(Viewport viewport, List<SceneNode> selection, int x, int y) {
         if (isDragging()) {
             return;
         }
-        renderer.setHighlight(node.andThen(n -> handleAt(viewport, n, x, y)));
+        renderer.setHighlight(handleAt(viewport, selection, x, y));
     }
 
-    /** Starts a drag if a handle of {@code node}'s gizmo is under the cursor. */
-    public boolean press(Viewport viewport, Maybe<SceneNode> target, int x, int y) {
-        if (target.isNone()) {
+    /**
+     * Starts a drag if a handle of the selection's gizmo is under the cursor.
+     *
+     * @param selection the selected nodes, the primary one last
+     */
+    public boolean press(Viewport viewport, List<SceneNode> selection, int x, int y) {
+        if (selection.isEmpty()) {
             return false;
         }
 
-        SceneNode node = target.unwrap();
-        Maybe<GizmoHandle> grabbed = handleAt(viewport, node, x, y);
+        Maybe<GizmoHandle> grabbed = handleAt(viewport, selection, x, y);
         if (grabbed.isNone()) {
             return false;
         }
 
         GizmoHandle handle = grabbed.unwrap();
         GizmoMode mode = renderer.getMode();
-        GizmoFrame frame = GizmoFrame.of(node, mode, viewport.camera());
+        GizmoPivot pivot = renderer.getPivot();
+        GizmoFrame frame = GizmoFrame.of(selection, mode, pivot, viewport.camera());
         Ray ray = viewport.rayAt(x, y);
         Vec3 center = frame.center();
 
@@ -128,14 +156,32 @@ public final class GizmoInteraction {
         }
 
         drag = Maybe.some(new Drag(
-            node, handle, mode, frame,
-            node.getTransform().copy(),
-            Quat.fromMatrix(node.worldMatrix()),
-            Greybox.of(node),
+            topmost(selection).stream().map(Target::of).toList(),
+            selection.getLast().worldMatrix().getTranslation(),
+            handle, mode, pivot, frame,
             startHit, startParam, x, y
         ));
         renderer.setHighlight(Maybe.some(handle));
         return true;
+    }
+
+    /** The selected nodes that have no selected ancestor; the others follow their parent already. */
+    static List<SceneNode> topmost(List<SceneNode> selection) {
+        Set<SceneNode> selected = Set.copyOf(selection);
+        List<SceneNode> result = new ArrayList<>();
+        for (SceneNode node : selection) {
+            boolean ancestorSelected = false;
+            for (Maybe<SceneNode> p = node.getParent(); p.isSome(); p = p.unwrap().getParent()) {
+                if (selected.contains(p.unwrap())) {
+                    ancestorSelected = true;
+                    break;
+                }
+            }
+            if (!ancestorSelected && !result.contains(node)) {
+                result.add(node);
+            }
+        }
+        return result;
     }
 
     private Runnable changeListener = () -> {};
@@ -168,22 +214,37 @@ public final class GizmoInteraction {
         drag = Maybe.none();
         renderer.setHighlight(Maybe.none());
 
-        Transform t = d.node().getTransform();
-        String what = switch (d.mode()) {
-            case TRANSLATE -> "Moved '" + d.node().getName() + "' to " + t.getTranslation();
-            case ROTATE -> "Rotated '" + d.node().getName() + "'";
-            case SCALE -> "Scaled '" + d.node().getName() + "'"
-                + Greybox.of(d.node()).map(g -> " to size " + g.size()).unwrapOr(" to " + t.getScale());
-        };
+        String what;
+        if (d.targets().size() == 1) {
+            SceneNode node = d.targets().getFirst().node();
+            Transform t = node.getTransform();
+            what = switch (d.mode()) {
+                case TRANSLATE -> "Moved '" + node.getName() + "' to " + t.getTranslation();
+                case ROTATE -> "Rotated '" + node.getName() + "'";
+                case SCALE -> "Scaled '" + node.getName() + "'"
+                    + Greybox.of(node).map(g -> " to size " + g.size()).unwrapOr(" to " + t.getScale());
+            };
+        } else {
+            String verb = switch (d.mode()) {
+                case TRANSLATE -> "Moved ";
+                case ROTATE -> "Rotated ";
+                case SCALE -> "Scaled ";
+            };
+            String around = d.mode() == GizmoMode.TRANSLATE ? ""
+                : d.pivot() == GizmoPivot.SELECTION_CENTER ? " around their center" : " individually";
+            what = verb + d.targets().size() + " objects" + around;
+        }
         LogService.get().info(what);
         return true;
     }
 
-    /** Ends the drag and puts the node back as it was. */
+    /** Ends the drag and puts the nodes back as they were. */
     public void cancel() {
         drag.ifSome(d -> {
-            d.node().setTransform(d.startLocal().copy());
-            d.startGreybox().ifSome(g -> g.writeTo(d.node()));
+            for (Target t : d.targets()) {
+                t.node().setTransform(t.startLocal().copy());
+                t.startGreybox().ifSome(g -> g.writeTo(t.node()));
+            }
             changeListener.run();
         });
         drag = Maybe.none();
@@ -192,36 +253,41 @@ public final class GizmoInteraction {
 
     private void translate(Drag d, Ray ray, Camera camera) {
         GizmoFrame frame = d.frame();
-        Vec3 target;
+        Vec3 delta;
 
         if (d.handle().isPlane() || d.handle() == GizmoHandle.CENTER) {
             Maybe<Vec3> hit = rayPlane(ray, frame.center(), dragPlaneNormal(d.handle(), frame, camera));
             if (hit.isNone()) {
                 return;
             }
-            target = frame.center().add(hit.unwrap().sub(d.startHit()));
+            delta = hit.unwrap().sub(d.startHit());
         } else {
             Vec3 axis = frame.axis(d.handle().axis());
             float param = axisParam(ray, frame.center(), axis);
             if (Float.isNaN(param)) {
                 return;
             }
-            target = frame.center().add(axis.mul(param - d.startParam()));
+            delta = axis.mul(param - d.startParam());
         }
 
         // Translate handles are world-aligned, so snap the world coordinates being dragged.
+        // The primary node lands on the grid and the others keep their offsets from it.
         Maybe<Float> step = snapStep.get();
         if (step.isSome()) {
             float s = step.unwrap();
             GizmoHandle.Axes moved = d.handle().movedAxes();
+            Vec3 target = d.primaryStart().add(delta);
             target.set(
                 moved.x() ? snap(target.getX(), s) : target.getX(),
                 moved.y() ? snap(target.getY(), s) : target.getY(),
                 moved.z() ? snap(target.getZ(), s) : target.getZ()
             );
+            delta = target.sub(d.primaryStart());
         }
 
-        setWorldPosition(d.node(), target);
+        for (Target t : d.targets()) {
+            setWorldPosition(t.node(), t.startWorldPosition().add(delta));
+        }
     }
 
     private void rotate(Drag d, Ray ray) {
@@ -240,9 +306,21 @@ public final class GizmoInteraction {
             angle = Math.round(angle / ROTATE_SNAP) * ROTATE_SNAP;
         }
 
-        Quat world = Quat.fromAxisAngle(axis, angle).mulLocal(d.startWorldRotation()).normalizeLocal();
-        Quat parent = d.node().getParent().map(p -> Quat.fromMatrix(p.worldMatrix())).unwrapOr(Quat.identity());
-        d.node().getTransform().setRotation(parent.conjugate().mulLocal(world).normalizeLocal());
+        Quat turn = Quat.fromAxisAngle(axis, angle);
+        Vec3 unit = unitAxis(d.handle().axis());
+
+        for (Target t : d.targets()) {
+            if (d.pivot() == GizmoPivot.SELECTION_CENTER) {
+                // The whole selection turns like one object about the gizmo's axis through its center.
+                Vec3 offset = t.startWorldPosition().sub(frame.center());
+                setWorldPosition(t.node(), frame.center().add(turn.rotate(offset)));
+                setWorldRotation(t.node(), turn.mul(t.startWorldRotation()));
+            } else {
+                // Each node turns in place about its own matching axis, as if it were dragged alone.
+                Quat own = Quat.fromAxisAngle(t.startWorldRotation().rotate(unit), angle);
+                setWorldRotation(t.node(), own.mulLocal(t.startWorldRotation()));
+            }
+        }
     }
 
     private void scale(Drag d, Ray ray, int x, int y) {
@@ -258,25 +336,79 @@ public final class GizmoInteraction {
         }
         factor = Math.max(factor, MIN_SCALE);
 
-        if (d.startGreybox().isSome()) {
-            // Greyboxes keep a uniform node scale and change their per-axis size instead.
-            Greybox start = d.startGreybox().unwrap();
-            float[] size = start.size().toArray();
-            for (int axis = 0; axis < 3; axis++) {
-                if (d.handle() == GizmoHandle.CENTER || d.handle().axis() == axis) {
-                    size[axis] = snapSize(size[axis] * factor);
-                }
+        boolean uniform = d.handle() == GizmoHandle.CENTER;
+
+        for (Target t : d.targets()) {
+            if (d.pivot() == GizmoPivot.INDIVIDUAL) {
+                // Greyboxes stretch along their own matching axis; other nodes only have a uniform scale.
+                scaleNode(t, factor, uniform ? -1 : d.handle().axis(), true);
+                continue;
             }
-            start.withSize(new Vec3(size[0], size[1], size[2])).writeTo(d.node());
-        } else {
-            d.node().getTransform().setScale(Math.max(d.startLocal().getScale() * factor, MIN_SCALE));
+
+            // The selection grows like one object: positions spread out from the center too.
+            Vec3 center = d.frame().center();
+            Vec3 offset = t.startWorldPosition().sub(center);
+            if (uniform) {
+                setWorldPosition(t.node(), center.add(offset.mul(factor)));
+                scaleNode(t, factor, -1, true);
+            } else {
+                Vec3 axis = d.frame().axis(d.handle().axis());
+                setWorldPosition(t.node(), t.startWorldPosition().add(axis.mul(offset.dot(axis) * (factor - 1f))));
+                // Stretching one axis can't be shown by a uniform scale, so only greyboxes change size.
+                scaleNode(t, factor, closestAxis(t.startWorldRotation(), axis), false);
+            }
         }
     }
 
+    /**
+     * @param axis    the node's local axis a greybox stretches along, or -1 for all of them
+     * @param uniform whether a node without a greybox takes the factor as its uniform scale
+     */
+    private void scaleNode(Target t, float factor, int axis, boolean uniform) {
+        if (t.startGreybox().isSome()) {
+            // Greyboxes keep a uniform node scale and change their per-axis size instead.
+            Greybox start = t.startGreybox().unwrap();
+            float[] size = start.size().toArray();
+            for (int i = 0; i < 3; i++) {
+                if (axis < 0 || axis == i) {
+                    size[i] = snapSize(size[i] * factor);
+                }
+            }
+            start.withSize(new Vec3(size[0], size[1], size[2])).writeTo(t.node());
+        } else if (uniform) {
+            t.node().getTransform().setScale(Math.max(t.startLocal().getScale() * factor, MIN_SCALE));
+        }
+    }
+
+    /** The node's local axis that points most nearly along {@code direction}. */
+    private static int closestAxis(Quat rotation, Vec3 direction) {
+        int best = 0;
+        float bestDot = -1;
+        for (int i = 0; i < 3; i++) {
+            float dot = Math.abs(rotation.rotate(unitAxis(i)).dot(direction));
+            if (dot > bestDot) {
+                bestDot = dot;
+                best = i;
+            }
+        }
+        return best;
+    }
+
+    private static Vec3 unitAxis(int index) {
+        return switch (index) {
+            case 0 -> Vec3.unitX();
+            case 1 -> Vec3.unitY();
+            default -> Vec3.unitZ();
+        };
+    }
+
     /** The handle under the cursor: the center first, then plane handles, then the nearest axis. */
-    public Maybe<GizmoHandle> handleAt(Viewport viewport, SceneNode node, int x, int y) {
+    public Maybe<GizmoHandle> handleAt(Viewport viewport, List<SceneNode> selection, int x, int y) {
+        if (selection.isEmpty()) {
+            return Maybe.none();
+        }
         GizmoMode mode = renderer.getMode();
-        GizmoFrame frame = GizmoFrame.of(node, mode, viewport.camera());
+        GizmoFrame frame = GizmoFrame.of(selection, mode, renderer.getPivot(), viewport.camera());
         Point2D.Float mouse = new Point2D.Float(x, y);
         Maybe<Point2D.Float> center = viewport.project(frame.center());
         if (center.isNone()) {
@@ -407,6 +539,11 @@ public final class GizmoInteraction {
         } catch (ArithmeticException e) {
             // A zero-scale parent has no inverse; leave the node where it is.
         }
+    }
+
+    private static void setWorldRotation(SceneNode node, Quat world) {
+        Quat parent = node.getParent().map(p -> Quat.fromMatrix(p.worldMatrix())).unwrapOr(Quat.identity());
+        node.getTransform().setRotation(parent.conjugate().mulLocal(world).normalizeLocal());
     }
 
     private float snapSize(float size) {

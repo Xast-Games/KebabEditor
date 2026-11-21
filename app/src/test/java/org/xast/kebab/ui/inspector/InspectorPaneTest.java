@@ -107,6 +107,46 @@ class InspectorPaneTest {
         });
     }
 
+    // What clicking a spinner's up or down arrow does
+    void step(String name, boolean up) {
+        JSpinner spinner = all(pane).stream().filter(c -> (name + ".spinner").equals(c.getName()))
+            .map(JSpinner.class::cast).findFirst().orElseThrow();
+        Object next = up ? spinner.getNextValue() : spinner.getPreviousValue();
+        if (next != null) spinner.setValue(next); // none past the range ends, where the arrow does nothing
+    }
+
+    @Test void spinnerArrowsStepTransformAndGreyboxSize() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            step("position.x", true);
+            step("position.x", true);
+            step("position.y", false);
+            assertEquals(new Vec3(1, -0.5f, 0), node.getTransform().getTranslation());
+            assertEquals("1.0", field("position.x").getText());
+
+            step("rotation.y", true);
+            Vec3 turned = node.getTransform().getRotation().rotate(Vec3.unitZ());
+            assertEquals(Math.sin(Math.toRadians(15)), turned.getX(), 1e-5);
+
+            step("scale", true);
+            assertEquals(1.1f, node.getTransform().getScale(), 1e-5);
+
+            editor.undo();
+            assertEquals(1f, node.getTransform().getScale());
+        });
+        SceneNode[] box = {null};
+        SwingUtilities.invokeAndWait(() -> box[0] = editor.spawnGreybox(GreyboxShape.BOX, Vec3.zero()));
+        flush();
+        SwingUtilities.invokeAndWait(() -> {
+            step("greybox.size.y", true);
+            assertEquals(new Vec3(1, 1.5f, 1), Greybox.of(box[0]).unwrap().size());
+            step("greybox.size.y", false);
+            step("greybox.size.y", false);
+            // 0.5 - 0.5 would be zero, below the smallest size, so the arrow does nothing
+            step("greybox.size.y", false);
+            assertEquals(new Vec3(1, 0.5f, 1), Greybox.of(box[0]).unwrap().size());
+        });
+    }
+
     JComboBox<?> combo(String name) {
         return all(pane).stream().filter(c -> name.equals(c.getName())).map(JComboBox.class::cast).findFirst().orElseThrow();
     }

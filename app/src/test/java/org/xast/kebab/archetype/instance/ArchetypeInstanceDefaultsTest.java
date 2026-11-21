@@ -47,6 +47,13 @@ class ArchetypeInstanceDefaultsTest {
     }
 
     @Test
+    void collidersSavedBeforeOffsetExistedAreNotShifted() throws Exception {
+        assertEquals(Vec3.zero(), load(BuiltinArchetypes.COLLIDER_BOX, Map.of()).get("offset"));
+        assertEquals(Vec3.zero(), load(BuiltinArchetypes.COLLIDER_SPHERE, Map.of()).get("offset"));
+        assertEquals(Vec3.zero(), load(BuiltinArchetypes.TRIGGER, Map.of()).get("offset"));
+    }
+
+    @Test
     void aParamAddedLaterGivesOldScenesItsConfiguredDefault() throws Exception {
         registry.add(new ArchetypeDefinition("enemy")
             .withParam("name", ParamType.STRING)

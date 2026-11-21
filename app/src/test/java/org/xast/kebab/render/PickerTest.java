@@ -172,6 +172,22 @@ class PickerTest {
         assertTrue(picker.pick(scene, Maybe.some(context), down(6.1f, 0), false).isNone());
     }
 
+    @Test
+    void picksAColliderWhereItsOffsetPutsIt() throws Exception {
+        Scene scene = new Scene();
+        SceneNode node = new SceneNode("collider");
+        ArchetypeInstance collider = new ArchetypeInstance(BuiltinArchetypes.find(BuiltinArchetypes.COLLIDER_BOX).unwrap());
+        collider.set("size", new Vec3(2, 2, 2));
+        collider.set("offset", new Vec3(5, 0, 0));
+        node.addArchetype(collider);
+        scene.add(node);
+
+        BehaviorContext context = modelContext(List.of());
+
+        assertSame(node, picker.pick(scene, Maybe.some(context), down(5.9f, 0), false).unwrap().node().unwrap());
+        assertTrue(picker.pick(scene, Maybe.some(context), down(0, 0), false).isNone());
+    }
+
     // A project whose every model file yields the given parts.
     private BehaviorContext modelContext(List<ModelPart> parts) throws Exception {
         Path scene = dir.resolve("level.gltf");

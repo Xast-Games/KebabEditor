@@ -35,6 +35,7 @@ import org.xast.kebab.render.Camera;
 import org.xast.kebab.render.DrawableRenderer;
 import org.xast.kebab.render.GizmoInteraction;
 import org.xast.kebab.render.GizmoMode;
+import org.xast.kebab.render.GizmoPivot;
 import org.xast.kebab.render.GizmoRenderer;
 import org.xast.kebab.render.GreyboxRenderer;
 import org.xast.kebab.render.GridRenderer;
@@ -315,7 +316,7 @@ public class EditorView extends GLJPanel implements GLEventListener, GizmoIntera
                 }
                 // A press on a gizmo handle starts a drag, which the camera must not see.
                 if (!placement.isActive()
-                    && gizmoInteraction.press(EditorView.this, editor.selection().primary(), e.getX(), e.getY())) {
+                    && gizmoInteraction.press(EditorView.this, editor.selection().nodes(), e.getX(), e.getY())) {
                     editor.history().begin();
                     gizmoPressedAt = Maybe.some(e.getPoint());
                     e.consume();
@@ -366,7 +367,7 @@ public class EditorView extends GLJPanel implements GLEventListener, GizmoIntera
                 placement.cursorMoved(e.getX(), e.getY());
                 placement.setSurfacesIgnored(e.isAltDown());
                 if (!placement.isActive()) {
-                    gizmoInteraction.hover(EditorView.this, editor.selection().primary(), e.getX(), e.getY());
+                    gizmoInteraction.hover(EditorView.this, editor.selection().nodes(), e.getX(), e.getY());
                 }
             }
 
@@ -573,12 +574,26 @@ public class EditorView extends GLJPanel implements GLEventListener, GizmoIntera
         gizmoModeListeners.forEach(Runnable::run);
     }
 
+    public GizmoPivot getGizmoPivot() {
+        return gizmo.getPivot();
+    }
+
+    /** Whether several selected objects rotate and scale each around its own origin or together around their center. */
+    public void setGizmoPivot(GizmoPivot pivot) {
+        if (gizmo.getPivot() == pivot) {
+            return;
+        }
+        cancelDrag();
+        gizmo.setPivot(pivot);
+        gizmoModeListeners.forEach(Runnable::run);
+    }
+
     private void cancelDrag() {
         gizmoInteraction.cancel();
         editor.history().cancel();
     }
 
-    /** Called when the gizmo mode changes, e.g. to keep menu items in sync. */
+    /** Called when the gizmo mode or pivot changes, e.g. to keep menu items in sync. */
     public void addGizmoModeListener(Runnable listener) {
         gizmoModeListeners.add(listener);
     }

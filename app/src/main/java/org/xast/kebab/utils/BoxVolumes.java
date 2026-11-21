@@ -30,7 +30,7 @@ public final class BoxVolumes {
         return validSize(archetype)
             .map(size -> List.of(new Drawable(
                 Meshes.CUBE_LINES,
-                matrix(node, size),
+                matrix(node, archetype, size),
                 material,
                 DrawMode.OVERLAY
             )))
@@ -44,12 +44,12 @@ public final class BoxVolumes {
         PhysicsVolume.Role role
     ) {
         return validSize(archetype)
-            .map(size -> List.of(new PhysicsVolume(node.getName(), PhysicsVolume.Shape.BOX, matrix(node, size), role)))
+            .map(size -> List.of(new PhysicsVolume(node.getName(), PhysicsVolume.Shape.BOX, matrix(node, archetype, size), role)))
             .unwrapOr(List.of());
     }
 
     public static Maybe<GizmoShape> selectionShape(ArchetypeInstance archetype) {
-        return validSize(archetype).map(GizmoShape.GizmoBox::new);
+        return validSize(archetype).map(size -> new GizmoShape.GizmoBox(size, Params.offset(archetype)));
     }
 
     public static Maybe<Aabb> bounds(
@@ -57,7 +57,7 @@ public final class BoxVolumes {
         ArchetypeInstance archetype
     ) {
         return validSize(archetype)
-            .map(size -> Meshes.CUBE_LINES.bounds().transformed(matrix(node, size)));
+            .map(size -> Meshes.CUBE_LINES.bounds().transformed(matrix(node, archetype, size)));
     }
 
     public static List<BehaviorProblem> validate(String label, ArchetypeInstance archetype) {
@@ -73,7 +73,9 @@ public final class BoxVolumes {
             ));
         }
 
-        return List.of();
+        return Params.offsetProblem(label, archetype)
+            .<List<BehaviorProblem>>map(message -> List.of(new PlainBehaviorProblem(message)))
+            .unwrapOr(List.of());
     }
 
     private static Maybe<Vec3> validSize(ArchetypeInstance archetype) {
@@ -82,8 +84,11 @@ public final class BoxVolumes {
         );
     }
 
-    // The unit cube spans [-0.5, 0.5], so scaling by size gives a box of exactly that size
-    private static Mat4 matrix(SceneNode node, Vec3 size) {
-        return node.worldMatrix().mul(Mat4.scaling(size));
+    // The unit cube spans [-0.5, 0.5], so scaling by size gives a box of exactly that size,
+    // centered on the offset in the node's local space
+    private static Mat4 matrix(SceneNode node, ArchetypeInstance archetype, Vec3 size) {
+        return node.worldMatrix()
+            .mulLocal(Mat4.translation(Params.offset(archetype)))
+            .mulLocal(Mat4.scaling(size));
     }
 }

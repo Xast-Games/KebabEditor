@@ -4,18 +4,22 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.text.ParseException;
 
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 
 import org.xast.kebab.editor.Editor;
 import org.xast.kebab.math.Quat;
 import org.xast.kebab.math.Transform;
 import org.xast.kebab.math.Vec3;
 import org.xast.kebab.scene.model.SceneNode;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.ui.NumberSpinner;
 
-/** Edits local TRS, keeping the authoritative quaternion and uniform scale. */
+/**
+ * Edits local TRS, keeping the authoritative quaternion and uniform scale. Each value
+ * is a spinner: its arrows step it (position by the snap distance, rotation by 15
+ * degrees) and typed text is taken on Enter or when the field loses focus.
+ */
 final class TransformEditor extends InspectorSection {
 
     // Uniform by design; a greybox stretches per axis through its own size
@@ -28,11 +32,16 @@ final class TransformEditor extends InspectorSection {
     };
     private static final int ROTATION = 3;
     private static final int SCALE = 6;
+    private static final double ROTATION_STEP = 15;
+    private static final double SCALE_STEP = 0.1;
+    private static final double MIN_SCALE = 0.01;
 
     private final Editor editor;
     private final SceneNode node;
-    private final JTextField[] fields = new JTextField[FIELDS.length];
+    private final NumberSpinner[] fields = new NumberSpinner[FIELDS.length];
+    // The text last shown in each field, so untouched text is never applied again
     private final String[] displayed = new String[FIELDS.length];
+    private boolean refreshing;
     private Quat displayedRotation;
     private Vec3 angles;
 
@@ -68,21 +77,29 @@ final class TransformEditor extends InspectorSection {
         return panel;
     }
 
-    private JTextField field(int index) {
-        JTextField field = new JTextField();
-        field.setName(FIELDS[index]);
-        field.setFont(KebabStyle.getCurrent().techFont());
+    private NumberSpinner field(int index) {
+        NumberSpinner spinner = index == SCALE
+            ? new NumberSpinner(1, MIN_SCALE, Float.MAX_VALUE, SCALE_STEP)
+            : new NumberSpinner(0, index < ROTATION ? editor.snapDistance() : ROTATION_STEP);
+        spinner.setName(FIELDS[index] + ".spinner");
+        spinner.field().setName(FIELDS[index]);
 
-        field.addActionListener(e -> commit(index));
-        field.addFocusListener(new FocusAdapter() {
+        // Arrow clicks and accepted text both change the value
+        spinner.addChangeListener(e -> {
+            if (!refreshing) {
+                apply(index, spinner.floatValue());
+            }
+        });
+        spinner.field().addActionListener(e -> commitText(index));
+        spinner.field().addFocusListener(new FocusAdapter() {
             @Override
             public void focusLost(FocusEvent e) {
-                commit(index);
+                commitText(index);
             }
         });
 
-        fields[index] = field;
-        return field;
+        fields[index] = spinner;
+        return spinner;
     }
 
     void refresh() {
@@ -93,13 +110,21 @@ final class TransformEditor extends InspectorSection {
             angles = degrees(transform.getRotation());
         }
 
-        for (int i = 0; i < fields.length; i++) {
-            if (fields[i].hasFocus()) {
-                continue;
+        refreshing = true;
+        try {
+            for (int i = 0; i < fields.length; i++) {
+                if (i < ROTATION) {
+                    fields[i].setStep(editor.snapDistance());
+                }
+                if (fields[i].isTyping()) {
+                    continue;
+                }
+                fields[i].setNumber(valueAt(transform, i));
+                displayed[i] = fields[i].field().getText();
+                clearError(fields[i].field());
             }
-            float value = valueAt(transform, i);
-            displayed[i] = Float.toString(value == 0 ? 0 : value);
-            fields[i].setText(displayed[i]);
+        } finally {
+            refreshing = false;
         }
     }
 
@@ -113,39 +138,43 @@ final class TransformEditor extends InspectorSection {
         return transform.getScale();
     }
 
-    private void commit(int index) {
-        if (!canEdit(editor, node)) {
-            return;
-        }
-
-        JTextField field = fields[index];
+    // Enter or focus loss: take typed text, which then arrives at apply as a value change
+    private void commitText(int index) {
+        NumberSpinner field = fields[index];
         // Never round-trip an untouched quaternion
-        if (field.getText().equals(displayed[index])) {
+        if (field.field().getText().equals(displayed[index])) {
             return;
         }
 
         try {
-            float value = Float.parseFloat(field.getText().trim());
-            if (!Float.isFinite(value)) {
-                throw new IllegalArgumentException("Enter a finite number");
-            }
-
-            Transform next = node.getTransform().copy();
-            if (index < ROTATION) {
-                setAxis(next.getTranslation(), index, value);
-            } else if (index < SCALE) {
-                rotate(next, index - ROTATION, value);
-            } else {
-                next.setScale(value);
-            }
-
-            editor.updateTransform(node, next);
-            displayed[index] = field.getText();
-            clearError(field);
-            refresh();
-        } catch (IllegalArgumentException e) {
-            markError(field, "Enter a finite number; the previous value is preserved");
+            field.commitText();
+            displayed[index] = field.field().getText();
+            clearError(field.field());
+        } catch (ParseException e) {
+            String message = index == SCALE
+                ? "Enter a number of at least " + MIN_SCALE + "; the previous value is preserved"
+                : "Enter a finite number; the previous value is preserved";
+            markError(field.field(), message);
         }
+    }
+
+    private void apply(int index, float value) {
+        if (!canEdit(editor, node) || !Float.isFinite(value)) {
+            return;
+        }
+
+        Transform next = node.getTransform().copy();
+        if (index < ROTATION) {
+            setAxis(next.getTranslation(), index, value);
+        } else if (index < SCALE) {
+            rotate(next, index - ROTATION, value);
+        } else {
+            next.setScale(value);
+        }
+
+        editor.updateTransform(node, next);
+        clearError(fields[index].field());
+        refresh();
     }
 
     private void rotate(Transform next, int axis, float value) {

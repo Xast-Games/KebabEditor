@@ -91,4 +91,27 @@ class ColliderSphereBehaviorTest {
         assertEquals(1, behavior.drawableObjects(node, sphere, CONTEXT).size());
         assertTrue(behavior.validate(node, sphere, CONTEXT).isEmpty());
     }
+
+    @Test
+    void offsetMovesTheSphereInTheNodesLocalSpace() throws Exception {
+        ArchetypeInstance sphere = instanceOf(BuiltinArchetypes.COLLIDER_SPHERE);
+        sphere.set("radius", 0.5f);
+        sphere.set("offset", new Vec3(1, 0, 0));
+        SceneNode node = nodeAt(new Vec3(1, 2, 3), 2f);
+
+        Vec3 center = behavior.drawableObjects(node, sphere, CONTEXT).get(0).world().transformPoint(Vec3.zero());
+        assertTrue(center.approxEquals(new Vec3(3, 2, 3), EPS), center.toString());
+
+        Vec3 physicsCenter = behavior.physicsVolumes(node, sphere, CONTEXT).get(0).world().transformPoint(Vec3.zero());
+        assertTrue(physicsCenter.approxEquals(new Vec3(3, 2, 3), EPS), physicsCenter.toString());
+
+        Aabb bounds = behavior.bounds(node, sphere, CONTEXT).unwrap();
+        assertEquals(2f, bounds.getMinX(), EPS);
+        assertEquals(4f, bounds.getMaxX(), EPS);
+
+        assertEquals(
+            new GizmoShape.GizmoSphere(0.5f, new Vec3(1, 0, 0)),
+            behavior.gizmoSelectionShape(node, sphere, CONTEXT).unwrap()
+        );
+    }
 }

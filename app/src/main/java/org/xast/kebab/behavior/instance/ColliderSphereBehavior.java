@@ -36,7 +36,7 @@ public class ColliderSphereBehavior implements ArchetypeBehavior {
             .map(radius -> List.of(
                 new Drawable(
                     Meshes.SPHERE_LINES,
-                    matrix(node, radius),
+                    matrix(node, archetype, radius),
                     MATERIAL,
                     DrawMode.OVERLAY
                 )
@@ -50,15 +50,18 @@ public class ColliderSphereBehavior implements ArchetypeBehavior {
             .map(radius -> List.of(new PhysicsVolume(
                 node.getName(),
                 PhysicsVolume.Shape.SPHERE,
-                matrix(node, radius),
+                matrix(node, archetype, radius),
                 PhysicsVolume.Role.SOLID
             )))
             .unwrapOr(List.of());
     }
 
-    // The unit sphere has radius 0.5, so scaling by the diameter gives exactly this radius
-    private static Mat4 matrix(SceneNode node, float radius) {
-        return node.worldMatrix().mul(Mat4.scaling(2f * radius));
+    // The unit sphere has radius 0.5, so scaling by the diameter gives exactly this radius,
+    // centered on the offset in the node's local space
+    private static Mat4 matrix(SceneNode node, ArchetypeInstance archetype, float radius) {
+        return node.worldMatrix()
+            .mulLocal(Mat4.translation(Params.offset(archetype)))
+            .mulLocal(Mat4.scaling(2f * radius));
     }
 
     @Override
@@ -68,7 +71,7 @@ public class ColliderSphereBehavior implements ArchetypeBehavior {
         BehaviorContext context
     ) {
         return validRadius(archetype)
-            .map(GizmoShape.GizmoSphere::new);
+            .map(radius -> new GizmoShape.GizmoSphere(radius, Params.offset(archetype)));
     }
 
     @Override
@@ -77,7 +80,7 @@ public class ColliderSphereBehavior implements ArchetypeBehavior {
             Mat4 world = node.worldMatrix();
             float scale = world.transformDirection(Vec3.unitX()).length();
 
-            return Aabb.centered(world.getTranslation(), radius * scale);
+            return Aabb.centered(world.transformPoint(Params.offset(archetype)), radius * scale);
         });
     }
 
@@ -95,7 +98,9 @@ public class ColliderSphereBehavior implements ArchetypeBehavior {
             ));
         }
 
-        return List.of();
+        return Params.offsetProblem("collider_sphere", archetype)
+            .<List<BehaviorProblem>>map(message -> List.of(new PlainBehaviorProblem(message)))
+            .unwrapOr(List.of());
     }
 
     private static Maybe<Float> validRadius(ArchetypeInstance archetype) {
