@@ -55,6 +55,8 @@ public class MainWindow {
     private static final double WORKSPACE_WEIGHT = 0.75;
     private static final int INSPECTOR_WIDTH = 350;
     private static final int INSPECTOR_MIN_WIDTH = 240;
+    /** The smallest window the editor layout is designed for (NF-12). */
+    private static final Dimension MIN_WINDOW_SIZE = new Dimension(1280, 720);
 
     private final JFrame frame;
     private final Editor editor;    
@@ -211,6 +213,7 @@ public class MainWindow {
         // The close listener exits, after asking about unsaved changes.
         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         frame.setSize(style.windowSize().width, style.windowSize().height);
+        frame.setMinimumSize(MIN_WINDOW_SIZE);
         frame.setLocationRelativeTo(null);
         AppIdentity.applyIcon(frame);
         frame.setLayout(new BorderLayout());

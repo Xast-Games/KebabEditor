@@ -59,7 +59,6 @@ import org.xast.kebab.utils.Maybe;
 public final class AssetExplorerTab extends JPanel {
 
     private static final String NO_PROJECT = "No project open";
-    private static final String NO_PROJECT_HINT = "Open or create a project to browse its assets.";
     private static final int TREE_ICON_SIZE = 18;
     private static final int LIST_ICON_SIZE = 22;
 
@@ -70,7 +69,7 @@ public final class AssetExplorerTab extends JPanel {
     private final JTree tree = new JTree(new DefaultMutableTreeNode(NO_PROJECT));
     private final DefaultListModel<Entry> files = new DefaultListModel<>();
     private final JList<Entry> list = new JList<>(files);
-    private final JLabel status = new JLabel(NO_PROJECT_HINT);
+    private final JLabel status = new JLabel();
     private final Runnable projectListener = () -> SwingUtilities.invokeLater(this::onProjectChanged);
     private final List<SwingWorker<?, ?>> workers = new ArrayList<>();
     private final Map<String, Icon> icons = new HashMap<>();
@@ -155,6 +154,7 @@ public final class AssetExplorerTab extends JPanel {
         JPanel right = new JPanel(new BorderLayout());
         right.add(new JScrollPane(list), BorderLayout.CENTER);
         right.add(status, BorderLayout.SOUTH);
+        status.setVisible(false);
         right.setMinimumSize(new Dimension(140, 60));
         JScrollPane folders = new JScrollPane(tree);
         folders.setMinimumSize(new Dimension(100, 60));
@@ -239,7 +239,7 @@ public final class AssetExplorerTab extends JPanel {
         selectedDirectory = null;
         model = null;
         tree.setModel(new DefaultTreeModel(new DefaultMutableTreeNode(NO_PROJECT)));
-        setStatus(NO_PROJECT_HINT);
+        setStatus("");
     }
 
     private void navigate(Path target) {

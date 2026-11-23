@@ -21,6 +21,12 @@ public class KebabApplication {
         // Before any window exists, so the dock matches the windows to kebab-editor.desktop.
         AppIdentity.setWindowClass();
 
+        // Exceptions nobody caught, including on the Swing thread, end up in the Logs panel instead of vanishing.
+        Thread.setDefaultUncaughtExceptionHandler((thread, error) -> {
+            LogService.get().error("Unhandled error in thread '" + thread.getName() + "'", error);
+            error.printStackTrace();
+        });
+
         SwingUtilities.invokeLater(() -> {
             KebabStyle.setCurrent(KebabStyle.defaultStyle());
 
