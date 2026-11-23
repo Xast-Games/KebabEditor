@@ -12,6 +12,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Fonts, textures and icons are stored in Git LFS; without them the UI tests read LFS pointer files.
+      # Only the app's files are fetched, not the reports in docs/, to save LFS bandwidth.
+      - name: Fetch LFS assets of the app
+        run: git lfs pull --include="app/**"
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -19,8 +24,9 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      # The Swing UI tests (Outliner, Asset Explorer) need a display: run them on a virtual X server.
       - name: Build and run tests
-        run: ./gradlew build --console=plain
+        run: xvfb-run --auto-servernum ./gradlew build --console=plain
 
       - name: Upload test reports
         if: failure()
