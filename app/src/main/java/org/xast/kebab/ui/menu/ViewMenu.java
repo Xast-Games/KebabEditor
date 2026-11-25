@@ -1,10 +1,12 @@
 package org.xast.kebab.ui.menu;
 
 
+import java.util.Arrays;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import org.xast.kebab.editor.Editor;
 import org.xast.kebab.scene.model.GreyboxShape;
@@ -17,6 +19,8 @@ import org.xast.kebab.ui.menu.generic.RadioItem;
 import org.xast.kebab.ui.menu.generic.SeparatorItem;
 import org.xast.kebab.ui.menu.generic.SingleItem;
 import org.xast.kebab.ui.placement.PlacementTool;
+import org.xast.kebab.ui.theme.Theme;
+import org.xast.kebab.ui.theme.ThemeSwitcher;
 import org.xast.kebab.utils.Maybe;
 
 public class ViewMenu extends Menu {
@@ -24,13 +28,10 @@ public class ViewMenu extends Menu {
     /**
      * @param view the viewport; none when it is unavailable
      */
-    public ViewMenu(JFrame frame, Editor editor, Maybe<EditorView> view) {
-        this(frame, editor, view, Maybe.none(), Maybe.none());
-    }
-
     public ViewMenu(
         JFrame frame,
         Editor editor,
+        ThemeSwitcher themes,
         Maybe<EditorView> view,
         Maybe<CollapsiblePanel> sidePanel,
         Maybe<CollapsiblePanel> bottomPanel
@@ -49,7 +50,26 @@ public class ViewMenu extends Menu {
 
             panelItem("Show side panel", "N", sidePanel),
             panelItem("Show bottom panel", "T", bottomPanel),
+
+            new SeparatorItem(),
+
+            themeMenu(themes),
         });
+    }
+
+    private static Menu themeMenu(ThemeSwitcher themes) {
+        ButtonGroup group = new ButtonGroup();
+        MenuItem[] items = Arrays.stream(Theme.values())
+            .map(theme -> {
+                // Later: closing the menu while its own look is replaced would paint it with both
+                RadioItem item = new RadioItem(theme.title(), group,
+                    () -> SwingUtilities.invokeLater(() -> themes.select(theme)));
+                item.setSelected(theme == themes.current());
+                return item;
+            })
+            .toArray(MenuItem[]::new);
+
+        return new Menu("Theme", items);
     }
 
     private static CheckItem panelItem(String label, String keyStroke, Maybe<CollapsiblePanel> panel) {

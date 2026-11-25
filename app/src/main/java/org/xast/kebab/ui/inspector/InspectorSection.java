@@ -42,11 +42,22 @@ class InspectorSection extends JPanel {
     }
 
     private void toggle() {
-        boolean expanded = heading.isSelected();
-
-        body.setVisible(expanded);
-        heading.setIcon(UIManager.getIcon(expanded ? "Tree.expandedIcon" : "Tree.collapsedIcon"));
+        body.setVisible(heading.isSelected());
+        updateArrow();
         revalidate();
+    }
+
+    private void updateArrow() {
+        heading.setIcon(UIManager.getIcon(heading.isSelected() ? "Tree.expandedIcon" : "Tree.collapsedIcon"));
+    }
+
+    // Also runs when the theme changes, which has its own arrows.
+    @Override
+    public void updateUI() {
+        super.updateUI();
+        if (heading != null) { // not yet, in JPanel's constructor
+            updateArrow();
+        }
     }
 
     static boolean canEdit(Editor editor, SceneNode node) {

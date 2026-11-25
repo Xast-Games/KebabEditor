@@ -1,6 +1,5 @@
 package org.xast.kebab.ui.validation;
 
-import java.awt.Color;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 
@@ -9,17 +8,15 @@ import javax.swing.JLabel;
 import javax.swing.JPopupMenu;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
-import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+
+import com.formdev.flatlaf.FlatClientProperties;
 
 import org.xast.kebab.utils.KebabStyle;
 import org.xast.kebab.utils.Maybe;
 
 public final class FieldValidator {
-
-    private static final Color ERROR_COLOR = new Color(0xB00020);
-    private static final Border ERROR_BORDER = BorderFactory.createLineBorder(ERROR_COLOR);
 
     private final JTextField field;
     private final Rule rule;
@@ -32,7 +29,7 @@ public final class FieldValidator {
         this.rule = rule;
 
         message.setFont(KebabStyle.getCurrent().uiFont());
-        message.setForeground(ERROR_COLOR);
+        message.setForeground(UIManager.getColor("Component.error.focusedBorderColor"));
         message.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
         popup.setFocusable(false);
         popup.add(message);
@@ -74,7 +71,10 @@ public final class FieldValidator {
 
     public void updateVisuals() {
         Maybe<String> error = rule.check(field.getText());
-        field.setBorder(error.isSome() && touched ? ERROR_BORDER : UIManager.getBorder("TextField.border"));
+        field.putClientProperty(
+            FlatClientProperties.OUTLINE,
+            error.isSome() && touched ? FlatClientProperties.OUTLINE_ERROR : null
+        );
 
         if (error.isNone() || !touched || !field.isShowing() || !field.hasFocus()) {
             hidePopup();

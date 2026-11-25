@@ -7,14 +7,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.xast.kebab.logging.LogService;
+import org.xast.kebab.utils.ConfigFolder;
 
 public class FileRecentProjects implements RecentProjects {
 
-    public static final String CONFIG_FOLDER = "kebab";
     public static final String RECENT_FILE = "recent.txt";
     private static final int MAX = 10;
 
-    private final Path configPath = configPath();
+    private final Path configPath = ConfigFolder.file(RECENT_FILE);
     private final List<Path> paths = new ArrayList<>();
 
     public FileRecentProjects() {
@@ -73,24 +73,5 @@ public class FileRecentProjects implements RecentProjects {
         } catch (IOException e) {
             LogService.get().error("Cannot save " + configPath, e);
         }
-    }
-
-    private static Path configPath() {
-        String os = System.getProperty("os.name").toLowerCase();
-        String home = System.getProperty("user.home");
-
-        if (os.contains("win")) {
-            String appData = System.getenv("APPDATA");
-            return Path.of(appData != null ? appData : home, CONFIG_FOLDER, RECENT_FILE);
-        }
-        if (os.contains("mac")) {
-            return Path.of(home, "Library", "Application Support", CONFIG_FOLDER, RECENT_FILE);
-        }
-        String xdg = System.getenv("XDG_CONFIG_HOME");
-        if (xdg != null && !xdg.isBlank()) {
-            return Path.of(xdg, CONFIG_FOLDER, RECENT_FILE);
-        }
-        
-        return Path.of(home, ".config", CONFIG_FOLDER, RECENT_FILE);
     }
 }

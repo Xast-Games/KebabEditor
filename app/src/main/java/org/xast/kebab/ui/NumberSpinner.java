@@ -8,6 +8,7 @@ import java.util.Locale;
 import javax.swing.JFormattedTextField;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingConstants;
 import javax.swing.text.DefaultFormatter;
 import javax.swing.text.DefaultFormatterFactory;
 
@@ -44,6 +45,15 @@ public class NumberSpinner extends JSpinner {
         field.setFocusLostBehavior(JFormattedTextField.COMMIT_OR_REVERT);
         field.setFormatterFactory(new DefaultFormatterFactory(new StrictFormatter()));
         field.setValue(getValue());
+    }
+
+    // A change of theme right-aligns the editors of all spinners.
+    @Override
+    public void updateUI() {
+        super.updateUI();
+        if (getEditor() instanceof DefaultEditor editor) {
+            editor.getTextField().setHorizontalAlignment(SwingConstants.LEADING);
+        }
     }
 
     /** The text field inside, e.g. to name it or listen for Enter. */

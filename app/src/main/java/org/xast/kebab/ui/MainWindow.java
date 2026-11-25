@@ -1,7 +1,6 @@
 package org.xast.kebab.ui;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.WindowAdapter;
@@ -40,12 +39,12 @@ import org.xast.kebab.ui.object.ObjectDialog;
 import org.xast.kebab.ui.outliner.OutlinerPane;
 import org.xast.kebab.ui.playtest.PlaytestController;
 import org.xast.kebab.ui.playtest.PlayerStartDialog;
+import org.xast.kebab.ui.theme.ThemeSwitcher;
 import org.xast.kebab.utils.AppIdentity;
 import org.xast.kebab.utils.KebabStyle;
 import org.xast.kebab.utils.LucideIcon;
 import org.xast.kebab.utils.Maybe;
 
-import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMTGitHubDarkIJTheme;
 import com.jogamp.opengl.GLException;
 
 public class MainWindow {
@@ -59,7 +58,8 @@ public class MainWindow {
     private static final Dimension MIN_WINDOW_SIZE = new Dimension(1280, 720);
 
     private final JFrame frame;
-    private final Editor editor;    
+    private final Editor editor;
+    private final ThemeSwitcher themes;
     private final LogsTab logsTab;
     private final AssetExplorerTab assetExplorer;
     private final AssetWindows assetWindows;
@@ -76,13 +76,14 @@ public class MainWindow {
     static {
         JFrame.setDefaultLookAndFeelDecorated(true);
         JDialog.setDefaultLookAndFeelDecorated(true);
-        FlatMTGitHubDarkIJTheme.setup();
     }
 
-    public MainWindow(Editor editorInstance) {
+    /** @param themes with its theme installed already */
+    public MainWindow(Editor editorInstance, ThemeSwitcher themes) {
         setupStyle();
 
         editor = editorInstance;
+        this.themes = themes;
 
         frame = new JFrame(APP_TITLE);
         menuBar = new MenuBar(frame);
@@ -186,10 +187,6 @@ public class MainWindow {
         UIManager.put("TabbedPane.tabInsets", new Insets(6, 14, 6, 14));
         UIManager.put("TabbedPane.showTabSeparators", true);
 
-        // Focused items
-        UIManager.put("Component.focusWidth", 3);
-        UIManager.put("Component.focusColor", new Color(172, 108, 64, 172));
-
         // File chooser
         UIManager.put("FileChooser.font", style.uiFont());
         UIManager.put("FileChooser.listFont", style.uiFont());
@@ -268,6 +265,7 @@ public class MainWindow {
         menuBar.addMenu(new ViewMenu(
             frame,
             editor,
+            themes,
             Maybe.ofNullable(editorView),
             Maybe.some(inspectorPanel),
             Maybe.some(bottomPanel)

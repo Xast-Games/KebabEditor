@@ -3,6 +3,7 @@ package org.xast.kebab.utils;
 import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter;
@@ -48,8 +49,13 @@ public enum LucideIcon {
     }
 
     public FlatSVGIcon icon(int size, Color tint) {
+        return icon(size, () -> tint);
+    }
+
+    /** An icon that asks for its colour whenever it is painted, so it follows theme changes. */
+    public FlatSVGIcon icon(int size, Supplier<Color> tint) {
         FlatSVGIcon icon = base().derive(size, size);
-        icon.setColorFilter(new ColorFilter(c -> tint));
+        icon.setColorFilter(new ColorFilter(c -> tint.get()));
 
         return icon;
     }

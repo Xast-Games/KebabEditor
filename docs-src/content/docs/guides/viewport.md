@@ -71,6 +71,10 @@ Greyboxes with the **No Volume** archetype are hidden. Turn on **View > Render N
 
 Press `N` to hide or show the Outliner and Inspector, and `T` to hide or show the bottom panel with the Asset Explorer and Logs. The viewport takes the freed space, and showing a panel again puts its divider back where it was. The same check boxes are in **View > Show side panel** and **Show bottom panel**. You can also drag a divider to bring a hidden panel back.
 
+## Theme
+
+**View > Theme** switches between **GitHub Dark**, the default, and **Intellij (Mini DE)**. The choice takes effect at once and is remembered.
+
 ## Undo and redo
 
 `Ctrl+Z` and `Ctrl+Y` undo and redo scene edits while the viewport has focus. Undo is disabled during a playtest.

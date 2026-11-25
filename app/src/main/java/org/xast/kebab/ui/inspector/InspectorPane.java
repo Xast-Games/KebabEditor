@@ -232,7 +232,7 @@ public final class InspectorPane extends JPanel implements AutoCloseable {
         name = field;
 
         JPanel header = new JPanel(new BorderLayout(6, 0));
-        header.add(new JLabel(LucideIcon.COMPONENT.icon(18, UIManager.getColor("Label.foreground"))), BorderLayout.WEST);
+        header.add(new JLabel(LucideIcon.COMPONENT.icon(18, () -> UIManager.getColor("Label.foreground"))), BorderLayout.WEST);
         header.add(field, BorderLayout.CENTER);
         return header;
     }
