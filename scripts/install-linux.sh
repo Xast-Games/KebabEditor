@@ -3,6 +3,7 @@
 #
 #   scripts/install-linux.sh              build and (re)install
 #   scripts/install-linux.sh --uninstall  remove an install
+#   --icon=NAME                           the icon to install: default, gruvbox or tela
 #
 # Installs (no root needed):
 #   ~/.local/share/kebab-editor/                          the application (Gradle installDist)
@@ -24,7 +25,16 @@ BIN_LINK="$HOME/.local/bin/$APP_ID"
 DESKTOP_FILE="$DATA_HOME/applications/$APP_ID.desktop"
 ICON_FILE="$DATA_HOME/icons/hicolor/scalable/apps/$APP_ID.svg"
 BUILD_DIR="$REPO/app/build/install/$APP_ID"
-LOGO="$REPO/app/src/main/resources/img/logo.svg"
+LOGO_DIR="$REPO/app/src/main/resources/img"
+
+logo_for() {
+    case "$1" in
+        default) echo "$LOGO_DIR/logo.svg" ;;
+        gruvbox) echo "$LOGO_DIR/logo_gruvbox.svg" ;;
+        tela)    echo "$LOGO_DIR/logo_tela.svg" ;;
+        *)       return 1 ;;
+    esac
+}
 
 say()  { printf '==> %s\n' "$*"; }
 warn() { printf 'warning: %s\n' "$*" >&2; }
@@ -138,16 +148,31 @@ install() {
     write_desktop_file
     refresh_caches
 
-    say "Installed. Start $APP_NAME from the application menu, or run: $APP_ID"
+    say "Installed with the $ICON icon. Start $APP_NAME from the application menu, or run: $APP_ID"
     case ":$PATH:" in
         *":$HOME/.local/bin:"*) ;;
         *) warn "$HOME/.local/bin is not on your PATH, so '$APP_ID' only works from the menu" ;;
     esac
 }
 
-case "${1:-}" in
-    "") install ;;
-    --uninstall) uninstall ;;
-    -h|--help) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//' ;;
-    *) die "unknown option '$1' (use --help)" ;;
+ACTION="install"
+ICON="default"
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --uninstall) ACTION="uninstall" ;;
+        --icon=*)    ICON="${1#--icon=}" ;;
+        --icon)      [ $# -ge 2 ] || die "--icon needs a name: default, gruvbox or tela"; ICON="$2"; shift ;;
+        -h|--help)   ACTION="help" ;;
+        *)           die "unknown option '$1' (use --help)" ;;
+    esac
+    shift
+done
+
+LOGO="$(logo_for "$ICON")" || die "unknown icon '$ICON' (use default, gruvbox or tela)"
+
+case "$ACTION" in
+    install)   install ;;
+    uninstall) uninstall ;;
+    help)      sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//' ;;
 esac

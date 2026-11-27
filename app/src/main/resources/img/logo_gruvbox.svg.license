@@ -1,0 +1,7 @@
+SPDX-FileCopyrightText: 2026 KebabEditor
+SPDX-FileCopyrightText: Gruvbox Plus Icon Pack contributors <https://github.com/SylEleuth/gruvbox-plus-icon-pack>
+SPDX-License-Identifier: GPL-3.0-only
+
+The tile shape and the highlight gradient come from Gruvbox Plus Icon Pack,
+so logo_gruvbox.svg is under GPL-3.0, unlike the rest of the project.
+The full license text is in LICENSES/GPL-3.0-only.txt.
