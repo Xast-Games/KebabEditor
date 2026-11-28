@@ -59,6 +59,21 @@ public final class ProjectConfigStore {
         return Maybe.fromOptional(assets.scenes().stream().filter(Files::isRegularFile).findFirst());
     }
 
+    /** The asset root of the nearest kebab-project.json above the file whose assets contain it. */
+    public Maybe<Path> assetRootAbove(Path file) throws IOException {
+        Path path = file.toAbsolutePath().normalize();
+        for (Path dir = path.getParent(); dir != null; dir = dir.getParent()) {
+            Path configFile = dir.resolve(FILE_NAME);
+            if (Files.isRegularFile(configFile)) {
+                Path root = resolve(dir, read(configFile)).root();
+                if (path.startsWith(root)) {
+                    return Maybe.some(root);
+                }
+            }
+        }
+        return Maybe.none();
+    }
+
     /** The asset scope of a kebab-project.json, or of a bare scene for a project without one. */
     public ProjectAssets assetsOf(Path projectFile) throws IOException {
         return scopeFor(projectFile).assets();
