@@ -19,7 +19,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-import org.xast.kebab.KebabApplication;
+import org.xast.kebab.KebabInfo;
 import org.xast.kebab.utils.DialogKeys;
 import org.xast.kebab.utils.KebabStyle;
 
@@ -32,7 +32,7 @@ public class AboutDialog extends JDialog {
     private final Font uiFont = KebabStyle.getCurrent().uiFont();
 
     public AboutDialog(JFrame owner) {
-        super(owner, "About " + KebabApplication.APP_NAME, true);
+        super(owner, "About " + KebabInfo.APP_NAME, true);
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setResizable(false);
@@ -55,7 +55,7 @@ public class AboutDialog extends JDialog {
 
         // Application name and Gradle version
         JLabel heading = new JLabel(
-            KebabApplication.APP_NAME + " " + loadVersion()
+            KebabInfo.APP_NAME + " " + loadVersion()
         );
         heading.setFont(uiFont.deriveFont(Font.BOLD, 24f));
         heading.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -64,7 +64,7 @@ public class AboutDialog extends JDialog {
         copyright.setFont(uiFont);
         copyright.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel authors = new JLabel(KebabApplication.AUTHORS);
+        JLabel authors = new JLabel(KebabInfo.AUTHORS);
         authors.setFont(uiFont);
         authors.setAlignmentX(Component.CENTER_ALIGNMENT);
 
@@ -115,7 +115,7 @@ public class AboutDialog extends JDialog {
 
     private static String generateCopyright() {
         String header = "Copyright © ";
-        int firstYear = KebabApplication.FIRST_YEAR;
+        int firstYear = KebabInfo.FIRST_YEAR;
         int currentYear = Year.now().getValue();
 
         return firstYear >= currentYear

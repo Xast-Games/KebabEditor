@@ -40,6 +40,10 @@ public record KebabStyle(
         return current;
     }
 
+    public static boolean isSet() {
+        return current != null;
+    }
+
     public static KebabStyle defaultStyle() {
         UiAssetLoader assetLoader = UiAssetLoader.getInstance();
         FavIcon favicon = assetLoader.loadIcon(DEFAULT_ICON);

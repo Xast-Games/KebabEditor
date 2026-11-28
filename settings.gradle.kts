@@ -11,4 +11,5 @@ plugins {
 }
 
 rootProject.name = "KebabEditor"
+include("editor")
 include("app")

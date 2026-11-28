@@ -25,7 +25,7 @@ BIN_LINK="$HOME/.local/bin/$APP_ID"
 DESKTOP_FILE="$DATA_HOME/applications/$APP_ID.desktop"
 ICON_FILE="$DATA_HOME/icons/hicolor/scalable/apps/$APP_ID.svg"
 BUILD_DIR="$REPO/app/build/install/$APP_ID"
-LOGO_DIR="$REPO/app/src/main/resources/img"
+LOGO_DIR="$REPO/editor/src/main/resources/img"
 
 logo_for() {
     case "$1" in

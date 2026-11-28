@@ -13,9 +13,9 @@ jobs:
       - uses: actions/checkout@v4
 
       # Fonts, textures and icons are stored in Git LFS; without them the UI tests read LFS pointer files.
-      # Only the app's files are fetched, not the reports in docs/, to save LFS bandwidth.
+      # Only the editor's files are fetched, not the reports in docs/, to save LFS bandwidth.
       - name: Fetch LFS assets of the app
-        run: git lfs pull --include="app/**"
+        run: git lfs pull --include="editor/**"
 
       - uses: actions/setup-java@v4
         with:
@@ -33,4 +33,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
-          path: app/build/reports/tests/
+          path: editor/build/reports/tests/

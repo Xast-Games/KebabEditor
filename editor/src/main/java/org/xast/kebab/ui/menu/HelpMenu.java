@@ -2,7 +2,7 @@ package org.xast.kebab.ui.menu;
 
 import javax.swing.JFrame;
 
-import org.xast.kebab.KebabApplication;
+import org.xast.kebab.KebabInfo;
 import org.xast.kebab.ui.AboutDialog;
 import org.xast.kebab.ui.menu.generic.Menu;
 import org.xast.kebab.ui.menu.generic.MenuItem;
@@ -20,7 +20,7 @@ public class HelpMenu extends Menu {
             new SingleItem(
                 "Documentation",
                 Maybe.some("F1"),
-                () -> WebLinks.open(frame, KebabApplication.DOCUMENTATION_URL)
+                () -> WebLinks.open(frame, KebabInfo.DOCUMENTATION_URL)
             ),
             new SeparatorItem(),
             new SingleItem(

@@ -5,25 +5,18 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 
+import org.xast.kebab.embed.ModelPreview;
 import org.xast.kebab.scene.resolve.ModelResult.ResolvedModel;
-import org.xast.kebab.ui.navigation.FreeFlightNavigation;
 import org.xast.kebab.utils.AppIdentity;
-import org.xast.kebab.utils.KebabStyle;
 
 public final class ModelPreviewWindow extends JFrame {
 
     public ModelPreviewWindow(ResolvedModel model) {
         super(model.path().getFileName() + " — Model Preview");
         AppIdentity.applyIcon(this);
-        ModelPreviewView view = new ModelPreviewView(model);
-        view.setNavigationMode(new FreeFlightNavigation());
-        add(view, BorderLayout.CENTER);
-
-        JLabel help = new JLabel("Drag to look · WASD to fly · wheel to dolly · read-only preview");
-        help.setFont(KebabStyle.getCurrent().uiFont());
-        add(help, BorderLayout.SOUTH);
+        ModelPreview preview = new ModelPreview(model);
+        add(preview.component(), BorderLayout.CENTER);
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setSize(800, 600);
@@ -31,7 +24,7 @@ public final class ModelPreviewWindow extends JFrame {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosed(WindowEvent event) {
-                view.close();
+                preview.close();
             }
         });
     }
