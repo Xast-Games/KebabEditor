@@ -6,6 +6,13 @@ public final class GltfKeys {
     public static final String SCENES = "scenes";
     public static final String NODES = "nodes";
     public static final String CHILDREN = "children";
+    public static final String SKINS = "skins";
+    public static final String JOINTS = "joints";
+    public static final String SKELETON = "skeleton";
+    public static final String ANIMATIONS = "animations";
+    public static final String CHANNELS = "channels";
+    public static final String TARGET = "target";
+    public static final String NODE = "node";
     public static final String NAME = "name";
     public static final String MATRIX = "matrix";
     public static final String TRANSLATION = "translation";

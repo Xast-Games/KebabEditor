@@ -2,7 +2,10 @@ package org.xast.kebab.scene.io;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,8 +62,89 @@ public class GltfSceneWriter implements SceneWriter {
 
         scene.traverse().forEach(node -> writeNode(node, indices));
         writeRoots(document, scene.getRootNodes(), indices);
+        pruneUnreachable(document, nodes);
 
         return document;
+    }
+
+    // Nodes that no scene, skin or animation reaches, such as copies left by older saves, are dropped
+    // and every node index in the document is renumbered
+    private void pruneUnreachable(ObjectNode document, ArrayNode nodes) {
+        boolean[] reachable = new boolean[nodes.size()];
+        Deque<Integer> pending = new ArrayDeque<>();
+        nodeReferences(document, null).forEach(reference -> pending.push(reference.asInt(-1)));
+
+        while (!pending.isEmpty()) {
+            int index = pending.pop();
+            if (index < 0 || index >= reachable.length || reachable[index]) {
+                continue;
+            }
+            reachable[index] = true;
+            nodes.get(index).path(GltfKeys.CHILDREN).forEach(child -> pending.push(child.asInt(-1)));
+        }
+
+        int[] renumbered = new int[reachable.length];
+        int next = 0;
+        for (int i = 0; i < reachable.length; i++) {
+            renumbered[i] = reachable[i] ? next++ : -1;
+        }
+        if (next == reachable.length) {
+            return;
+        }
+
+        for (int i = reachable.length - 1; i >= 0; i--) {
+            if (!reachable[i]) {
+                nodes.remove(i);
+            }
+        }
+        nodeReferences(document, renumbered);
+    }
+
+    // The node indices kept in the document; with renumbered, each one is replaced by its new index
+    private List<JsonNode> nodeReferences(ObjectNode document, int[] renumbered) {
+        List<JsonNode> references = new ArrayList<>();
+
+        document.path(GltfKeys.SCENES).forEach(scene -> collect(scene, GltfKeys.NODES, renumbered, references));
+        document.path(GltfKeys.NODES).forEach(node -> collect(node, GltfKeys.CHILDREN, renumbered, references));
+        document.path(GltfKeys.SKINS).forEach(skin -> {
+            collect(skin, GltfKeys.JOINTS, renumbered, references);
+            collect(skin, GltfKeys.SKELETON, renumbered, references);
+        });
+        document.path(GltfKeys.ANIMATIONS).forEach(animation ->
+            animation.path(GltfKeys.CHANNELS).forEach(channel ->
+                collect(channel.path(GltfKeys.TARGET), GltfKeys.NODE, renumbered, references)
+            )
+        );
+
+        return references;
+    }
+
+    private void collect(JsonNode owner, String key, int[] renumbered, List<JsonNode> references) {
+        if (!(owner instanceof ObjectNode object)) {
+            return;
+        }
+
+        JsonNode value = object.get(key);
+        if (value instanceof ArrayNode array) {
+            for (int i = 0; i < array.size(); i++) {
+                references.add(array.get(i));
+                if (renumbered != null) {
+                    array.set(i, renumber(array.get(i), renumbered));
+                }
+            }
+        } else if (value != null && value.isInt()) {
+            references.add(value);
+            if (renumbered != null) {
+                object.set(key, renumber(value, renumbered));
+            }
+        }
+    }
+
+    private static JsonNode renumber(JsonNode index, int[] renumbered) {
+        int old = index.asInt(-1);
+        return old >= 0 && old < renumbered.length && renumbered[old] >= 0
+            ? JsonNodeFactory.instance.numberNode(renumbered[old])
+            : index;
     }
 
     private Map<JsonNode, Integer> assignIndices(Scene scene, ArrayNode nodes) {

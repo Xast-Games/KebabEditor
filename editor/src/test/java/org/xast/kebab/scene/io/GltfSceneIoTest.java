@@ -80,6 +80,53 @@ class GltfSceneIoTest {
     }
 
     @Test
+    void nodesNoSceneReachesAreDroppedAndIndicesRenumbered() throws Exception {
+        String doc = """
+            {
+              "asset": { "version": "2.0" },
+              "scene": 0,
+              "scenes": [ { "nodes": [1] } ],
+              "nodes": [
+                { "name": "old copy" },
+                { "name": "root", "children": [3] },
+                { "name": "another old copy" },
+                { "name": "child" }
+              ]
+            }
+            """;
+
+        JsonNode written = new GltfSceneWriter().write(new GltfSceneReader().read(json(doc), catalog()));
+
+        assertEquals(2, written.path("nodes").size());
+        assertEquals("root", written.path("nodes").get(0).path("name").asText());
+        assertEquals("child", written.path("nodes").get(1).path("name").asText());
+        assertEquals(json("[0]"), written.path("scenes").get(0).path("nodes"));
+        assertEquals(json("[1]"), written.path("nodes").get(0).path("children"));
+    }
+
+    @Test
+    void nodesUsedBySkinsAndAnimationsAreKept() throws Exception {
+        String doc = """
+            {
+              "asset": { "version": "2.0" },
+              "scene": 0,
+              "scenes": [ { "nodes": [2] } ],
+              "nodes": [ { "name": "orphan" }, { "name": "joint" }, { "name": "root" } ],
+              "skins": [ { "joints": [1], "skeleton": 1 } ],
+              "animations": [ { "channels": [ { "target": { "node": 1, "path": "rotation" } } ] } ]
+            }
+            """;
+
+        JsonNode written = new GltfSceneWriter().write(new GltfSceneReader().read(json(doc), catalog()));
+
+        assertEquals(2, written.path("nodes").size());
+        assertEquals(json("[0]"), written.path("skins").get(0).path("joints"));
+        assertEquals(0, written.path("skins").get(0).path("skeleton").asInt());
+        assertEquals(0, written.path("animations").get(0).path("channels").get(0).path("target").path("node").asInt());
+        assertEquals(json("[1]"), written.path("scenes").get(0).path("nodes"));
+    }
+
+    @Test
     void writeIsIdempotentAndKeepsEverythingElse() throws Exception {
         GltfSceneReader reader = new GltfSceneReader();
         GltfSceneWriter writer = new GltfSceneWriter();
@@ -111,7 +158,7 @@ class GltfSceneIoTest {
     }
 
     @Test
-    void addedNodesAreAppendedAndRemovedOnesStayAsOrphans() throws Exception {
+    void addedNodesAreAppendedAndRemovedOnesAreDropped() throws Exception {
         Scene scene = new GltfSceneReader().read(json(SAMPLE), catalog());
         SceneNode root = scene.getRootNodes().get(0);
         SceneNode added = new SceneNode("added");
@@ -120,11 +167,10 @@ class GltfSceneIoTest {
 
         JsonNode written = new GltfSceneWriter().write(scene);
 
-        assertEquals(4, written.get("nodes").size());
-        assertEquals("added", written.get("nodes").get(3).get("name").asText());
-        assertEquals("[1,3]", written.get("nodes").get(0).get("children").toString());
+        assertEquals(3, written.get("nodes").size());
+        assertEquals("added", written.get("nodes").get(2).get("name").asText());
+        assertEquals("[1,2]", written.get("nodes").get(0).get("children").toString());
         assertEquals("[0]", written.get("scenes").get(0).get("nodes").toString());
-        assertEquals("second", written.get("nodes").get(2).get("name").asText());
     }
 
     @Test
