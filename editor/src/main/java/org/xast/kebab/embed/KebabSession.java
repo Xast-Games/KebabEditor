@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSplitPane;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
@@ -34,8 +33,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jogamp.opengl.GLException;
 
 /**
- * One scene open for editing inside a host: the viewport with the Inspector, and an Outliner
- * the host places where it likes. Use it on the Swing thread.
+ * One scene open for editing inside a host: the viewport, and the Inspector and Outliner the host
+ * places where it likes. Use it on the Swing thread.
  */
 public final class KebabSession implements AutoCloseable {
 
@@ -49,7 +48,6 @@ public final class KebabSession implements AutoCloseable {
         void openScene(Path scene);
     }
 
-    private static final int INSPECTOR_WIDTH = 350;
     private static final int INSPECTOR_MIN_WIDTH = 240;
     // Gizmo drags change the scene every frame, so the comparison with the saved scene waits for a pause
     private static final int DIRTY_CHECK_MILLIS = 150;
@@ -59,7 +57,7 @@ public final class KebabSession implements AutoCloseable {
     private final Maybe<EditorView> view;
     private final InspectorPane inspector;
     private final OutlinerPane outliner;
-    private final JSplitPane component;
+    private final JComponent component;
     private final Timer dirtyCheck = new Timer(DIRTY_CHECK_MILLIS, e -> updateDirty());
     private final Runnable changed = dirtyCheck::restart;
     private boolean dirty;
@@ -71,11 +69,7 @@ public final class KebabSession implements AutoCloseable {
         view = createView();
         inspector = new InspectorPane(editor);
         inspector.setMinimumSize(new Dimension(INSPECTOR_MIN_WIDTH, 0));
-        inspector.setPreferredSize(new Dimension(INSPECTOR_WIDTH, 0));
-
-        component = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, viewport(), inspector);
-        component.setResizeWeight(1.0);
-        component.setContinuousLayout(false);
+        component = viewport();
 
         outliner = new OutlinerPane(
             editor,
@@ -131,9 +125,13 @@ public final class KebabSession implements AutoCloseable {
         return new KebabSession(loaded.editor, host);
     }
 
-    /** The viewport with the Inspector beside it. */
+    /** The 3D viewport. */
     public JComponent component() {
         return component;
+    }
+
+    public JComponent inspector() {
+        return inspector;
     }
 
     public JComponent outliner() {
