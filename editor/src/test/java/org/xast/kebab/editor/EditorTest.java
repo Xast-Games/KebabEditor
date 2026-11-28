@@ -203,6 +203,22 @@ class EditorTest {
     }
 
     @Test
+    void savingAfterAnUndoDoesNotDuplicateNodesInTheFile() throws Exception {
+        SceneNode kept = editor.spawnEmpty(Vec3.zero());
+        SceneNode deleted = editor.spawnEmpty(new Vec3(2, 0, 0));
+        editor.saveScene();
+        Path scene = editor.currentSceneFile().unwrap();
+        int saved = new ObjectMapper().readTree(scene.toFile()).path("nodes").size();
+
+        editor.delete(editor.planDeletion(List.of(deleted)));
+        editor.undo();
+        editor.saveScene();
+
+        assertEquals(saved, new ObjectMapper().readTree(scene.toFile()).path("nodes").size());
+        assertSame(kept, editor.scene().unwrap().find(kept.getId()).unwrap());
+    }
+
+    @Test
     void aDragIsOneStepAndAnUnchangedOneIsNotRecorded() {
         SceneNode node = editor.spawnEmpty(Vec3.zero());
 

@@ -3,6 +3,7 @@ package org.xast.kebab.ui;
 import java.awt.Component;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.function.Consumer;
 
 import javax.swing.JOptionPane;
 
@@ -21,10 +22,19 @@ public final class SceneNavigator {
 
     private final Component parent;
     private final Editor editor;
+    private final Consumer<Path> opener;
 
     public SceneNavigator(Component parent, Editor editor) {
         this.parent = parent;
         this.editor = editor;
+        this.opener = this::replaceScene;
+    }
+
+    /** For hosts that open other scenes themselves, for example in a tab of their own. */
+    public SceneNavigator(Component parent, Editor editor, Consumer<Path> opener) {
+        this.parent = parent;
+        this.editor = editor;
+        this.opener = opener;
     }
 
     public void open(Path scene) {
@@ -32,6 +42,10 @@ public final class SceneNavigator {
         if (editor.currentSceneFile().isSomeAnd(target::equals)) {
             return;
         }
+        opener.accept(target);
+    }
+
+    private void replaceScene(Path target) {
         if (!UnsavedChanges.confirm(parent, editor, "open another scene", "open")) {
             return;
         }

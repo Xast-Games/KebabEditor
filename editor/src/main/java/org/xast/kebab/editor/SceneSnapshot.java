@@ -12,6 +12,7 @@ import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.utils.Maybe;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * A copy of everything an edit can change in a scene. Restoring writes it back
@@ -75,7 +76,7 @@ final class SceneSnapshot {
             SceneNode node = state.node();
             node.setName(state.name());
             node.setTransform(state.transform().copy());
-            node.setRawJson(state.rawJson().deepCopy());
+            restoreRawJson(node, state.rawJson());
 
             List.copyOf(node.getArchetypes()).forEach(node::removeArchetype);
             for (ArchetypeState archetype : state.archetypes()) {
@@ -100,5 +101,15 @@ final class SceneSnapshot {
         selection.set(selected.stream()
             .filter(node -> scene.find(node.getId()).isSomeAnd(found -> found == node))
             .toList());
+    }
+
+    // The scene writer finds a node's entry in the document by its JSON object, so the object is kept
+    private static void restoreRawJson(SceneNode node, JsonNode saved) {
+        if (node.getRawJson() instanceof ObjectNode current && saved instanceof ObjectNode values) {
+            current.removeAll();
+            current.setAll(values.deepCopy());
+        } else {
+            node.setRawJson(saved.deepCopy());
+        }
     }
 }

@@ -6,6 +6,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.Window;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
@@ -19,7 +20,6 @@ import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
@@ -54,8 +54,8 @@ public class ObjectDialog extends JDialog {
     private final JTextField nameField = new JTextField(24);
     private boolean discardName;
 
-    public ObjectDialog(JFrame owner, Editor editor, SceneNode node) {
-        super(owner, "Object", true);
+    public ObjectDialog(Window owner, Editor editor, SceneNode node) {
+        super(owner, "Object", ModalityType.APPLICATION_MODAL);
         this.editor = editor;
         this.node = node;
 

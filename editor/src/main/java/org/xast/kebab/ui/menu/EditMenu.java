@@ -12,12 +12,12 @@ import javax.swing.JOptionPane;
 import javax.swing.text.JTextComponent;
 
 import org.xast.kebab.archetype.builtin.BuiltinArchetypes;
-import org.xast.kebab.editor.Deletion;
 import org.xast.kebab.editor.Editor;
 import org.xast.kebab.math.Vec3;
 import org.xast.kebab.render.GizmoMode;
 import org.xast.kebab.render.GizmoPivot;
 import org.xast.kebab.scene.model.GreyboxShape;
+import org.xast.kebab.ui.DeleteSelected;
 import org.xast.kebab.ui.EditorView;
 import org.xast.kebab.ui.SceneNavigator;
 import org.xast.kebab.ui.menu.generic.Menu;
@@ -102,7 +102,7 @@ public class EditMenu extends Menu {
                 editor,
                 "Delete selected object",
                 Maybe.some("DELETE"),
-                () -> deleteSelected(frame, editor)
+                () -> DeleteSelected.run(frame, editor)
             ),
             new SeparatorItem(),
             toolItem(view, "Move tool  (1)", "1", GizmoMode.TRANSLATE, tools),
@@ -190,44 +190,6 @@ public class EditMenu extends Menu {
         SingleItem item = new SingleItem("Frame selected  (F)", Maybe.none(), () -> view.ifSome(EditorView::frameSelection));
         item.setEnabled(view.isSome());
         return item;
-    }
-
-    private static void deleteSelected(JFrame frame, Editor editor) {
-        if (editor.selection().nodes().isEmpty()) {
-            return;
-        }
-
-        Deletion deletion = editor.planDeletion(editor.selection().nodes());
-
-        if (!deletion.needsConfirmation() || confirmDeletion(frame, deletion)) {
-            editor.delete(deletion);
-        }
-    }
-
-    private static boolean confirmDeletion(JFrame frame, Deletion deletion) {
-        StringBuilder message = new StringBuilder();
-
-        if (deletion.childCount() > 0) {
-            message.append("This also deletes ").append(deletion.childCount()).append(" child object(s).\n");
-        }
-        if (!deletion.references().isEmpty()) {
-            message.append(deletion.references().size())
-                .append(" reference(s) in other objects point to what is being deleted and will be cleared.");
-        }
-
-        String[] options = { "Delete", "Cancel" };
-        int choice = JOptionPane.showOptionDialog(
-            frame,
-            message.toString().strip(),
-            "Delete object",
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.WARNING_MESSAGE,
-            null,
-            options,
-            options[1]
-        );
-
-        return choice == 0;
     }
 
     private static SingleItem lightItem(
