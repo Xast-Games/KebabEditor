@@ -1,18 +1,18 @@
 package org.xast.kebab.ui.menu.generic;
 
+import org.xast.kebab.utils.Fonts;
+
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 
-import org.xast.kebab.utils.KebabStyle;
 
 public class Menu implements MenuItem {
     private JMenu component;
 
     public Menu(String label) {
-        KebabStyle style = KebabStyle.getCurrent();
 
         component = new JMenu(label);
-        component.setFont(style.uiFont());
+        component.setFont(Fonts.ui());
     }
 
     public Menu(String label, MenuItem[] items) {

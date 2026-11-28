@@ -1,5 +1,7 @@
 package org.xast.kebab.ui;
 
+import org.xast.kebab.utils.Fonts;
+
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.ParseException;
@@ -12,7 +14,6 @@ import javax.swing.SwingConstants;
 import javax.swing.text.DefaultFormatter;
 import javax.swing.text.DefaultFormatterFactory;
 
-import org.xast.kebab.utils.KebabStyle;
 
 /**
  * A number field with up/down arrows: type a value, or click the arrows to step it.
@@ -41,7 +42,7 @@ public class NumberSpinner extends JSpinner {
         JFormattedTextField field = editor.getTextField();
         field.setEditable(true);
         field.setColumns(COLUMNS);
-        field.setFont(KebabStyle.getCurrent().techFont());
+        field.setFont(Fonts.mono());
         field.setFocusLostBehavior(JFormattedTextField.COMMIT_OR_REVERT);
         field.setFormatterFactory(new DefaultFormatterFactory(new StrictFormatter()));
         field.setValue(getValue());

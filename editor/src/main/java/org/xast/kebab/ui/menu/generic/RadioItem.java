@@ -6,7 +6,7 @@ import javax.swing.JComponent;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
 
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 import org.xast.kebab.utils.Maybe;
 
 /** One choice of a group; at most one item of a {@link ButtonGroup} is selected. */
@@ -18,10 +18,9 @@ public class RadioItem implements MenuItem {
     }
 
     public RadioItem(String label, Maybe<String> keyStroke, ButtonGroup group, Runnable onSelect) {
-        KebabStyle style = KebabStyle.getCurrent();
 
         component = new JRadioButtonMenuItem(label);
-        component.setFont(style.uiFont());
+        component.setFont(Fonts.ui());
         component.addActionListener(e -> onSelect.run());
         group.add(component);
 

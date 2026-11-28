@@ -20,7 +20,7 @@ import org.xast.kebab.math.Vec3;
 import org.xast.kebab.project.EditorSessions;
 import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.ui.SceneNavigator;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 
 class OutlinerPaneTest {
 
@@ -35,7 +35,7 @@ class OutlinerPaneTest {
         editor.createProject(dir);
         editor.createScene("", "scene");
         SwingUtilities.invokeAndWait(() -> {
-            KebabStyle.setCurrent(KebabStyle.defaultStyle());
+            Fonts.installKebabFonts();
             pane = new OutlinerPane(editor, framed::add, new SceneNavigator(null, editor));
         });
     }
@@ -84,6 +84,20 @@ class OutlinerPaneTest {
             TreePath selected = pane.tree().getSelectionPath();
             assertSame(b, ((javax.swing.tree.DefaultMutableTreeNode) selected.getLastPathComponent()).getUserObject());
             pane.tree().setSelectionRow(0);
+        });
+        assertEquals(List.of(a), editor.selection().nodes());
+    }
+
+    @Test
+    void theSceneRootIsNamedAfterTheFileAndIsNotAnObject() throws Exception {
+        SceneNode a = editor.spawnEmpty(Vec3.zero());
+        SwingUtilities.invokeAndWait(pane::showSceneRoot);
+        flush();
+
+        SwingUtilities.invokeAndWait(() -> {
+            Object root = ((javax.swing.tree.DefaultMutableTreeNode) pane.tree().getPathForRow(0).getLastPathComponent()).getUserObject();
+            assertEquals(editor.currentSceneFile().unwrap().getFileName().toString(), root);
+            pane.tree().setSelectionRows(new int[] { 0, 1 });
         });
         assertEquals(List.of(a), editor.selection().nodes());
     }

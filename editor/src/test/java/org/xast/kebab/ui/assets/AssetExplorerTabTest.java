@@ -11,7 +11,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.xast.kebab.assets.AssetOpenHandler;
 import org.xast.kebab.editor.Editor;
 import org.xast.kebab.project.EditorSessions;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -23,7 +23,7 @@ class AssetExplorerTabTest {
         editor.createScene("", "first");
         AtomicReference<AssetExplorerTab> tab = new AtomicReference<>();
         SwingUtilities.invokeAndWait(() -> {
-            KebabStyle.setCurrent(KebabStyle.defaultStyle());
+            Fonts.installKebabFonts();
             tab.set(new AssetExplorerTab(editor, new AssetOpenHandler(p -> {}, p -> {})));
             tab.get().addNotify();
         });
@@ -52,11 +52,11 @@ class AssetExplorerTabTest {
         SwingUtilities.invokeAndWait(() -> {
             javax.swing.LookAndFeel previous = javax.swing.UIManager.getLookAndFeel();
             try {
-                KebabStyle.setCurrent(KebabStyle.defaultStyle());
+                Fonts.installKebabFonts();
                 for (javax.swing.LookAndFeel theme : List.of(new com.formdev.flatlaf.FlatLightLaf(), new com.formdev.flatlaf.FlatDarkLaf())) {
                     javax.swing.UIManager.setLookAndFeel(theme);
                     AssetExplorerTab tab = new AssetExplorerTab(EditorSessions.create(), new AssetOpenHandler(p -> {}, p -> {}));
-                    assertEquals(KebabStyle.getCurrent().uiFont(), ((javax.swing.JLabel) ((javax.swing.JPanel) ((javax.swing.JSplitPane) tab.getComponent(0)).getRightComponent()).getComponent(1)).getFont());
+                    assertEquals(Fonts.ui(), ((javax.swing.JLabel) ((javax.swing.JPanel) ((javax.swing.JSplitPane) tab.getComponent(0)).getRightComponent()).getComponent(1)).getFont());
                     assertNotNull(javax.swing.UIManager.getColor("List.selectionBackground"));
                     assertNotNull(javax.swing.UIManager.getColor("Tree.selectionForeground"));
                     assertTrue(org.xast.kebab.utils.LucideIcon.IMAGE.icon(22, java.awt.Color.GRAY).hasFound());

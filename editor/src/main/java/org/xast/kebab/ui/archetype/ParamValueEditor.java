@@ -26,7 +26,7 @@ import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.ui.NumberSpinner;
 import org.xast.kebab.ui.validation.FieldValidator;
 import org.xast.kebab.ui.validation.ValidationGroup;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 import org.xast.kebab.utils.Maybe;
 
 public final class ParamValueEditor extends JPanel {
@@ -34,7 +34,6 @@ public final class ParamValueEditor extends JPanel {
     private static final int WIDTH = 170;
     private static final double FLOAT_STEP = 0.1;
 
-    private final KebabStyle style;
     private final ValidationGroup validation;
     private final Maybe<Supplier<List<SceneNode>>> nodes;
 
@@ -78,17 +77,16 @@ public final class ParamValueEditor extends JPanel {
         return focus != null && SwingUtilities.isDescendingFrom(focus, this);
     }
 
-    public ParamValueEditor(KebabStyle style, ValidationGroup validation) {
-        this(style, validation, Maybe.none());
+    public ParamValueEditor(ValidationGroup validation) {
+        this(validation, Maybe.none());
     }
 
-    public ParamValueEditor(KebabStyle style, ValidationGroup validation, Supplier<List<SceneNode>> nodes) {
-        this(style, validation, Maybe.some(nodes));
+    public ParamValueEditor(ValidationGroup validation, Supplier<List<SceneNode>> nodes) {
+        this(validation, Maybe.some(nodes));
     }
 
-    private ParamValueEditor(KebabStyle style, ValidationGroup validation, Maybe<Supplier<List<SceneNode>>> nodes) {
+    private ParamValueEditor(ValidationGroup validation, Maybe<Supplier<List<SceneNode>>> nodes) {
         super(new BorderLayout());
-        this.style = style;
         this.validation = validation;
         this.nodes = nodes;
 
@@ -111,7 +109,7 @@ public final class ParamValueEditor extends JPanel {
             case COLOR -> colorEditor(value instanceof Color c ? c : Color.BLACK);
         };
 
-        editor.setFont(style.uiFont());
+        editor.setFont(Fonts.ui());
         bindCommits(editor);
         add(editor, BorderLayout.CENTER);
         revalidate();
@@ -144,7 +142,7 @@ public final class ParamValueEditor extends JPanel {
 
     private JComponent intEditor(int value) {
         JSpinner spinner = new JSpinner(new SpinnerNumberModel(value, Integer.MIN_VALUE, Integer.MAX_VALUE, 1));
-        ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField().setFont(style.techFont());
+        ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField().setFont(Fonts.mono());
         reader = () -> { commitSpinner(spinner); return ((Number) spinner.getValue()).intValue(); };
 
         return spinner;
@@ -177,7 +175,7 @@ public final class ParamValueEditor extends JPanel {
         if (pathBase.get().isNone()) return field;
         JPanel row = new JPanel(new BorderLayout(4, 0));
         JButton browse = new JButton("…");
-        browse.setFont(style.uiFont());
+        browse.setFont(Fonts.ui());
         browse.setToolTipText("Choose a file (stored relative to the scene)");
         browse.addActionListener(e -> pathBase.get().ifSome(base ->
             new org.xast.kebab.utils.FileChooser(
@@ -200,7 +198,7 @@ public final class ParamValueEditor extends JPanel {
         for (int i=0; i<3; i++) {
             JPanel axis = new JPanel(new BorderLayout(2, 0));
             JLabel label = new JLabel(new String[]{"X", "Y", "Z"}[i]);
-            label.setFont(style.uiFont());
+            label.setFont(Fonts.ui());
             spinners[i] = new NumberSpinner(values[i], FLOAT_STEP);
             // A bad axis is rejected when the value is read, like the float editor
             axis.add(label, BorderLayout.WEST);

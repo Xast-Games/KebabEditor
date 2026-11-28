@@ -1,9 +1,7 @@
 package org.xast.kebab.utils;
 
 import java.awt.Font;
-import java.awt.Graphics2D;
 import java.awt.font.TextAttribute;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -11,8 +9,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.formdev.flatlaf.extras.FlatSVGIcon;
 
 public class UiAssetLoader {
     
@@ -73,24 +69,5 @@ public class UiAssetLoader {
         } catch (Exception e) {
             throw new IllegalStateException("Failed to load font: " + path, e);
         }
-    }
-
-    public synchronized FavIcon loadIcon(String path) {
-        FlatSVGIcon svgIcon = new FlatSVGIcon(
-            path,
-            KebabStyle.ICON_WIDTH,
-            KebabStyle.ICON_HEIGHT
-        );
-        BufferedImage img = new BufferedImage(
-            svgIcon.getIconWidth(),
-            svgIcon.getIconHeight(),
-            BufferedImage.TYPE_INT_ARGB
-        );
-
-        Graphics2D g = img.createGraphics();
-        svgIcon.paintIcon(null, g, 0, 0);
-        g.dispose();
-
-        return new FavIcon(img);
     }
 }

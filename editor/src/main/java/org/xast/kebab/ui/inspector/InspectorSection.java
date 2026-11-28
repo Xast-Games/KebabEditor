@@ -14,7 +14,7 @@ import javax.swing.UIManager;
 
 import org.xast.kebab.editor.Editor;
 import org.xast.kebab.scene.model.SceneNode;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 
 /** Standard Swing disclosure section; no custom theme or painting. */
 class InspectorSection extends JPanel {
@@ -27,7 +27,7 @@ class InspectorSection extends JPanel {
 
         heading = new JToggleButton(title, UIManager.getIcon("Tree.expandedIcon"), true);
         heading.setHorizontalAlignment(SwingConstants.LEADING);
-        heading.setFont(KebabStyle.getCurrent().uiFont());
+        heading.setFont(Fonts.ui());
         heading.addActionListener(e -> toggle());
 
         JPanel header = new JPanel(new BorderLayout(4, 0));
@@ -68,13 +68,13 @@ class InspectorSection extends JPanel {
 
     static JLabel label(String text) {
         JLabel label = new JLabel(text);
-        label.setFont(KebabStyle.getCurrent().uiFont());
+        label.setFont(Fonts.ui());
         return label;
     }
 
     static JButton button(String text) {
         JButton button = new JButton(text);
-        button.setFont(KebabStyle.getCurrent().uiFont());
+        button.setFont(Fonts.ui());
         button.setAlignmentX(CENTER_ALIGNMENT);
         return button;
     }

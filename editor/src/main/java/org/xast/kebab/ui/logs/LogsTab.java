@@ -23,7 +23,7 @@ import javax.swing.table.TableRowSorter;
 import org.xast.kebab.logging.LogLevel;
 import org.xast.kebab.logging.LogService;
 import org.xast.kebab.ui.logs.LogTableModel.Column;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 
 /** Swing view for LogService. Construct on the Swing Event Dispatch Thread. */
 public final class LogsTab extends JPanel {
@@ -47,10 +47,9 @@ public final class LogsTab extends JPanel {
         }
         this.logService = Objects.requireNonNull(logService, "logService");
 
-        KebabStyle style = KebabStyle.getCurrent();
 
-        add(buildToolbar(style.uiFont()), BorderLayout.NORTH);
-        add(buildContent(style), BorderLayout.CENTER);
+        add(buildToolbar(Fonts.ui()), BorderLayout.NORTH);
+        add(buildContent(), BorderLayout.CENTER);
     }
 
     @Override
@@ -90,8 +89,8 @@ public final class LogsTab extends JPanel {
         return toolbar;
     }
 
-    private JScrollPane buildContent(KebabStyle style) {
-        configureTable(style.uiFont());
+    private JScrollPane buildContent() {
+        configureTable(Fonts.ui());
 
         return new JScrollPane(table);
     }

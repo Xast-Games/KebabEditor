@@ -41,7 +41,7 @@ import org.xast.kebab.ui.playtest.PlaytestController;
 import org.xast.kebab.ui.playtest.PlayerStartDialog;
 import org.xast.kebab.ui.theme.ThemeSwitcher;
 import org.xast.kebab.utils.AppIdentity;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 import org.xast.kebab.utils.LucideIcon;
 import org.xast.kebab.utils.Maybe;
 
@@ -54,6 +54,8 @@ public class MainWindow {
     private static final double WORKSPACE_WEIGHT = 0.75;
     private static final int INSPECTOR_WIDTH = 350;
     private static final int INSPECTOR_MIN_WIDTH = 240;
+    private static final Dimension WINDOW_SIZE = new Dimension(1600, 900);
+    private static final Dimension TITLE_ICON_SIZE = new Dimension(18, 18);
     /** The smallest window the editor layout is designed for (NF-12). */
     private static final Dimension MIN_WINDOW_SIZE = new Dimension(1280, 720);
 
@@ -171,28 +173,23 @@ public class MainWindow {
     }
 
     private void setupStyle() {
-        KebabStyle style = KebabStyle.getCurrent();
-
         // Title bar
-        UIManager.put("TitlePane.iconSize", new Dimension(
-            KebabStyle.ICON_WIDTH, 
-            KebabStyle.ICON_HEIGHT
-        ));
+        UIManager.put("TitlePane.iconSize", TITLE_ICON_SIZE);
         UIManager.put("TitlePane.titleMargins", new Insets(12,12,12,12));
-        UIManager.put("TitlePane.font", style.uiFont());
+        UIManager.put("TitlePane.font", Fonts.ui());
 
         // Tabbed panes
-        UIManager.put("TabbedPane.font", style.uiFont());
+        UIManager.put("TabbedPane.font", Fonts.ui());
         UIManager.put("TabbedPane.tabHeight", 36);
         UIManager.put("TabbedPane.tabInsets", new Insets(6, 14, 6, 14));
         UIManager.put("TabbedPane.showTabSeparators", true);
 
         // File chooser
-        UIManager.put("FileChooser.font", style.uiFont());
-        UIManager.put("FileChooser.listFont", style.uiFont());
-        UIManager.put("FileChooser.textFont", style.uiFont());
-        UIManager.put("FileChooser.buttonFont", style.uiFont());
-        UIManager.put("FileChooser.labelFont", style.uiFont());
+        UIManager.put("FileChooser.font", Fonts.ui());
+        UIManager.put("FileChooser.listFont", Fonts.ui());
+        UIManager.put("FileChooser.textFont", Fonts.ui());
+        UIManager.put("FileChooser.buttonFont", Fonts.ui());
+        UIManager.put("FileChooser.labelFont", Fonts.ui());
 
         // Menu
         UIManager.put("PopupMenu.borderInsets", new Insets(6, 0, 6, 0));
@@ -205,11 +202,9 @@ public class MainWindow {
     }
 
     private void setupFrame() {
-        KebabStyle style = KebabStyle.getCurrent();
-
         // The close listener exits, after asking about unsaved changes.
         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        frame.setSize(style.windowSize().width, style.windowSize().height);
+        frame.setSize(WINDOW_SIZE);
         frame.setMinimumSize(MIN_WINDOW_SIZE);
         frame.setLocationRelativeTo(null);
         AppIdentity.applyIcon(frame);

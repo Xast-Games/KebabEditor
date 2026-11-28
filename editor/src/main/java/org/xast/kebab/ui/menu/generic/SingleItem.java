@@ -5,17 +5,16 @@ import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
 
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 import org.xast.kebab.utils.Maybe;
 
 public class SingleItem implements MenuItem {
     private JMenuItem component;
 
     public SingleItem(String label, Maybe<String> keyStroke, Runnable onClick) {
-        KebabStyle style = KebabStyle.getCurrent();
 
         component = new JMenuItem(label);
-        component.setFont(style.uiFont());
+        component.setFont(Fonts.ui());
         component.addActionListener(e -> onClick.run());
 
         keyStroke.ifSome(key -> component.setAccelerator(KeyStroke.getKeyStroke(key)));

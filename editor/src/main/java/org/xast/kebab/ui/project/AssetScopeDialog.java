@@ -32,7 +32,7 @@ import org.xast.kebab.scene.error.SceneException;
 import org.xast.kebab.utils.DialogKeys;
 import org.xast.kebab.utils.ErrorDialogs;
 import org.xast.kebab.utils.FileChooser;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 import org.xast.kebab.utils.Maybe;
 import org.xast.kebab.utils.FileChooser.FileChooserMode;
 
@@ -41,7 +41,6 @@ public class AssetScopeDialog extends JDialog {
     private final Editor editor;
     private final Maybe<Path> scene;
     private final Path originalRoot;
-    private final KebabStyle style = KebabStyle.getCurrent();
     private final JTextField rootField = new JTextField();
     private final JTextField scenesFolderField = new JTextField();
     private final DefaultListModel<Path> folders = new DefaultListModel<>();
@@ -84,12 +83,12 @@ public class AssetScopeDialog extends JDialog {
 
     private JPanel rootRow() {
         JLabel label = new JLabel("Asset root");
-        label.setFont(style.uiFont());
-        rootField.setFont(style.uiFont());
+        label.setFont(Fonts.ui());
+        rootField.setFont(Fonts.ui());
         rootField.setEditable(false);
         rootField.setText(root.toString());
         JButton change = new JButton("Change...");
-        change.setFont(style.uiFont());
+        change.setFont(Fonts.ui());
         change.addActionListener(event -> chooseRoot());
 
         JPanel row = new JPanel(new BorderLayout(8, 0));
@@ -101,13 +100,13 @@ public class AssetScopeDialog extends JDialog {
 
     private JPanel scenesFolderRow() {
         JLabel label = new JLabel("Scenes folder");
-        label.setFont(style.uiFont());
+        label.setFont(Fonts.ui());
         label.setToolTipText("Where File > New scene puts scenes by default");
-        scenesFolderField.setFont(style.uiFont());
+        scenesFolderField.setFont(Fonts.ui());
         scenesFolderField.setEditable(false);
         showScenesFolder();
         JButton change = new JButton("Change...");
-        change.setFont(style.uiFont());
+        change.setFont(Fonts.ui());
         change.addActionListener(event -> new FileChooser(FileChooserMode.DIRS)
             .startIn(scenesFolder)
             .open(this, this::changeScenesFolder));
@@ -167,9 +166,9 @@ public class AssetScopeDialog extends JDialog {
 
     private JPanel listPanel(String title, DefaultListModel<Path> model, Runnable add) {
         JLabel label = new JLabel(title);
-        label.setFont(style.uiFont());
+        label.setFont(Fonts.ui());
         JList<Path> list = new JList<>(model);
-        list.setFont(style.uiFont());
+        list.setFont(Fonts.ui());
         views.add(list);
         list.setCellRenderer(new DefaultListCellRenderer() {
             @Override
@@ -186,10 +185,10 @@ public class AssetScopeDialog extends JDialog {
         });
 
         JButton addButton = new JButton("Add...");
-        addButton.setFont(style.uiFont());
+        addButton.setFont(Fonts.ui());
         addButton.addActionListener(event -> add.run());
         JButton removeButton = new JButton("Remove");
-        removeButton.setFont(style.uiFont());
+        removeButton.setFont(Fonts.ui());
         removeButton.addActionListener(event -> list.getSelectedValuesList().forEach(model::removeElement));
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
@@ -205,10 +204,10 @@ public class AssetScopeDialog extends JDialog {
 
     private JPanel footer() {
         JButton cancel = new JButton("Cancel");
-        cancel.setFont(style.uiFont());
+        cancel.setFont(Fonts.ui());
         cancel.addActionListener(event -> dispose());
         JButton save = new JButton("Save");
-        save.setFont(style.uiFont());
+        save.setFont(Fonts.ui());
         save.addActionListener(event -> save());
 
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));

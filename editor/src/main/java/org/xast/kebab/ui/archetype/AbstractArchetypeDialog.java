@@ -17,12 +17,11 @@ import javax.swing.*;
 import org.xast.kebab.ui.validation.Rules;
 import org.xast.kebab.ui.validation.ValidationGroup;
 import org.xast.kebab.utils.DialogKeys;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 
 public abstract class AbstractArchetypeDialog extends JDialog {
 
     protected final ValidationGroup validation = new ValidationGroup();
-    protected final KebabStyle style = KebabStyle.getCurrent();
     protected final JCheckBox singleBox = new JCheckBox("Only one per object");
 
     private final String confirmText;
@@ -43,7 +42,7 @@ public abstract class AbstractArchetypeDialog extends JDialog {
         });
         validation.addListener(this::updateConfirmEnabled);
 
-        singleBox.setFont(style.uiFont());
+        singleBox.setFont(Fonts.ui());
         singleBox.setToolTipText(
             "<html>When on, an object can hold only one instance of this archetype. </html>"
         );
@@ -89,7 +88,7 @@ public abstract class AbstractArchetypeDialog extends JDialog {
         JPanel form, GridBagConstraints constraints, Supplier<Collection<String>> existingIds
     ) {
         JTextField idField = new JTextField();
-        idField.setFont(style.uiFont());
+        idField.setFont(Fonts.ui());
         validation.add(idField, Rules.all(
             Rules.identifier("ID"),
             Rules.unique("ID", existingIds)
@@ -97,7 +96,7 @@ public abstract class AbstractArchetypeDialog extends JDialog {
         addLabeled(form, constraints, "ID", idField);
 
         JLabel idNote = label("The ID cannot be changed after the archetype is created.");
-        idNote.setFont(style.uiFont().deriveFont(Font.ITALIC, style.uiFont().getSize2D() - 1f));
+        idNote.setFont(Fonts.ui().deriveFont(Font.ITALIC, Fonts.ui().getSize2D() - 1f));
         form.add(idNote, constraints);
 
         return idField;
@@ -105,7 +104,7 @@ public abstract class AbstractArchetypeDialog extends JDialog {
 
     private JLabel label(String text) {
         JLabel label = new JLabel(text);
-        label.setFont(style.uiFont());
+        label.setFont(Fonts.ui());
         return label;
     }
 
@@ -113,7 +112,7 @@ public abstract class AbstractArchetypeDialog extends JDialog {
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
 
         confirmButton = new JButton(confirmText);
-        confirmButton.setFont(style.uiFont());
+        confirmButton.setFont(Fonts.ui());
         updateConfirmEnabled();
         confirmButton.addActionListener(e -> {
             onConfirm();
@@ -122,7 +121,7 @@ public abstract class AbstractArchetypeDialog extends JDialog {
         footer.add(confirmButton);
 
         JButton cancelButton = new JButton("Cancel");
-        cancelButton.setFont(style.uiFont());
+        cancelButton.setFont(Fonts.ui());
         cancelButton.addActionListener(e -> dispose());
         footer.add(cancelButton);
 

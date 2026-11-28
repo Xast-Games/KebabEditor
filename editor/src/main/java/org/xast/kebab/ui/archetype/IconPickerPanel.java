@@ -9,7 +9,7 @@ import javax.swing.SwingUtilities;
 
 import org.xast.kebab.archetype.ArchetypeIcon;
 import org.xast.kebab.utils.FileChooser;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 import org.xast.kebab.utils.Maybe;
 import org.xast.kebab.utils.FileChooser.FileChooserMode;
 
@@ -18,11 +18,11 @@ public class IconPickerPanel extends JPanel {
     private final JTextField pathField = new JTextField();
     private Maybe<ArchetypeIcon> selected;
 
-    public IconPickerPanel(KebabStyle style) {
-        this(style, Maybe.none());
+    public IconPickerPanel() {
+        this(Maybe.none());
     }
 
-    public IconPickerPanel(KebabStyle style, Maybe<ArchetypeIcon> initial) {
+    public IconPickerPanel(Maybe<ArchetypeIcon> initial) {
         super(new BorderLayout(8, 0));
 
         selected = initial;
@@ -31,11 +31,11 @@ public class IconPickerPanel extends JPanel {
         }
 
         pathField.setEditable(false);
-        pathField.setFont(style.uiFont());
+        pathField.setFont(Fonts.ui());
         add(pathField, BorderLayout.CENTER);
 
         JButton browse = new JButton("Browse...");
-        browse.setFont(style.uiFont());
+        browse.setFont(Fonts.ui());
         browse.addActionListener(e -> {
             FileChooser chooser = new FileChooser(FileChooserMode.FILES)
                 .addFilter("Images (png, jpg, gif, svg)", "png", "jpg", "jpeg", "gif", "svg");

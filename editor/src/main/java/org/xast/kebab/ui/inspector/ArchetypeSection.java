@@ -30,7 +30,7 @@ import org.xast.kebab.math.Vec3;
 import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.ui.archetype.ParamValueEditor;
 import org.xast.kebab.ui.validation.ValidationGroup;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 
@@ -95,7 +95,7 @@ final class ArchetypeSection extends InspectorSection {
     }
 
     private JPanel paramRow(ArchetypeInstance instance, String name, ParamSpec spec) {
-        ParamValueEditor control = new ParamValueEditor(KebabStyle.getCurrent(), validation, editor::sceneNodes);
+        ParamValueEditor control = new ParamValueEditor(validation, editor::sceneNodes);
         control.setName("param." + name);
         control.setPathBase(() -> editor.currentSceneFile().map(file -> file.toAbsolutePath().getParent()));
         control.addCommitListener(() -> commit(instance, name, control));
@@ -190,7 +190,7 @@ final class ArchetypeSection extends InspectorSection {
         raw.setEditable(false);
         raw.setLineWrap(true);
         raw.setWrapStyleWord(true);
-        raw.setFont(KebabStyle.getCurrent().techFont());
+        raw.setFont(Fonts.mono());
         return raw;
     }
 

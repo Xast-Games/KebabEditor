@@ -22,7 +22,7 @@ import org.xast.kebab.scene.model.GreyboxColor;
 import org.xast.kebab.scene.model.GreyboxShape;
 import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.ui.archetype.ParamValueEditor;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -37,7 +37,7 @@ class InspectorPaneTest {
         editor.createProject(dir);
         editor.createScene("", "scene");
         SwingUtilities.invokeAndWait(() -> {
-            KebabStyle.setCurrent(KebabStyle.defaultStyle());
+            Fonts.installKebabFonts();
             pane = new InspectorPane(editor);
             node = editor.spawnEmpty(Vec3.zero());
         });

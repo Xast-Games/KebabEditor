@@ -41,13 +41,12 @@ public final class WebLinks {
     }
 
     private static void showLink(Component parent, String url) {
-        KebabStyle style = KebabStyle.getCurrent();
 
         JLabel message = new JLabel("The browser could not be opened. Copy the link instead:");
-        message.setFont(style.uiFont());
+        message.setFont(Fonts.ui());
 
         JTextField link = new JTextField(url, 36);
-        link.setFont(style.uiFont());
+        link.setFont(Fonts.ui());
         link.setEditable(false);
         link.selectAll();
 

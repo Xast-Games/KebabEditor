@@ -18,10 +18,9 @@ import org.xast.kebab.scene.resolve.ModelResult.BrokenReference;
 import org.xast.kebab.scene.resolve.ModelResult.ResolvedModel;
 import org.xast.kebab.ui.assets.ModelPreviewView;
 import org.xast.kebab.ui.navigation.FreeFlightNavigation;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jogamp.opengl.GLProfile;
 
 /**
  * A read-only 3D view of one model file, for the Kebab window and for hosts that embed Kebab.
@@ -33,26 +32,14 @@ public final class ModelPreview implements AutoCloseable {
     private final JPanel component = new JPanel(new BorderLayout());
 
     public ModelPreview(ResolvedModel model) {
-        if (!KebabStyle.isSet()) {
-            KebabStyle.setCurrent(KebabStyle.defaultStyle());
-        }
-
         view = new ModelPreviewView(model);
         view.setNavigationMode(new FreeFlightNavigation());
 
         JLabel help = new JLabel("Drag to look · WASD to fly · wheel to dolly · read-only preview");
-        help.setFont(KebabStyle.getCurrent().uiFont());
+        help.setFont(Fonts.ui());
 
         component.add(view, BorderLayout.CENTER);
         component.add(help, BorderLayout.SOUTH);
-    }
-
-    /**
-     * Sets up OpenGL ahead of the first preview, which otherwise waits about a second for it.
-     * Call it once from a background thread when the host starts.
-     */
-    public static void prepare() {
-        GLProfile.initSingleton();
     }
 
     /** Reads a .glb or .gltf file and shows it; see {@link #load(Path)}. */

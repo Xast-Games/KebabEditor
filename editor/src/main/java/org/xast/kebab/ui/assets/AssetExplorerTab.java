@@ -52,7 +52,7 @@ import org.xast.kebab.assets.AssetService.Entry;
 import org.xast.kebab.editor.Editor;
 import org.xast.kebab.logging.LogService;
 import org.xast.kebab.project.ProjectAssets;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 import org.xast.kebab.utils.LucideIcon;
 import org.xast.kebab.utils.Maybe;
 
@@ -97,7 +97,7 @@ public final class AssetExplorerTab extends JPanel {
         }
         this.editor = editor;
         this.opener = opener;
-        Font font = KebabStyle.getCurrent().uiFont();
+        Font font = Fonts.ui();
         for (Component component : List.of(tree, list, status)) {
             component.setFont(font);
         }
@@ -429,7 +429,7 @@ public final class AssetExplorerTab extends JPanel {
             boolean focus
         ) {
             super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, focus);
-            setFont(KebabStyle.getCurrent().uiFont());
+            setFont(Fonts.ui());
             setIcon(icon(expanded ? LucideIcon.FOLDER_OPEN : LucideIcon.FOLDER, TREE_ICON_SIZE, getForeground()));
             return this;
         }
@@ -446,7 +446,7 @@ public final class AssetExplorerTab extends JPanel {
         ) {
             super.getListCellRendererComponent(list, value, index, selected, focus);
             Entry entry = (Entry) value;
-            setFont(KebabStyle.getCurrent().uiFont());
+            setFont(Fonts.ui());
             setIcon(icon(entry.type().icon, LIST_ICON_SIZE, getForeground()));
             setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
             setToolTipText(entry.path().toString());

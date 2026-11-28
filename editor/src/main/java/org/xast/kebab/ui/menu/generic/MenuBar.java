@@ -1,5 +1,7 @@
 package org.xast.kebab.ui.menu.generic;
 
+import org.xast.kebab.utils.Fonts;
+
 import java.awt.Dimension;
 
 import javax.swing.JFrame;
@@ -8,13 +10,11 @@ import javax.swing.JMenuBar;
 import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 
-import org.xast.kebab.utils.KebabStyle;
 
 public class MenuBar extends JMenuBar {
     public MenuBar(JFrame frame) {
-        KebabStyle style = KebabStyle.getCurrent();
 
-        setFont(style.uiFont());
+        setFont(Fonts.ui());
         frame.setJMenuBar(this);
     }
 

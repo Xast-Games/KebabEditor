@@ -20,7 +20,7 @@ import org.xast.kebab.playtest.PathRecording;
 import org.xast.kebab.project.NoRecentProjects;
 import org.xast.kebab.project.ProjectManager;
 import org.xast.kebab.ui.playtest.PlaytestController;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 import org.xast.kebab.utils.Maybe;
 
 
@@ -33,7 +33,7 @@ class PlaytestMenuTest {
 
     @BeforeEach
     void setUp() {
-        KebabStyle.setCurrent(KebabStyle.defaultStyle());
+        Fonts.installKebabFonts();
         // No project is ever opened here, so no loader or writer is needed.
         Editor editor = new Editor(new ProjectManager(new NoRecentProjects(), null, null));
         viewport = new FakePlaytestViewport();

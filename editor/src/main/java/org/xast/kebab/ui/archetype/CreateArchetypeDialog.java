@@ -10,6 +10,7 @@ import javax.swing.*;
 
 import org.xast.kebab.archetype.definition.ArchetypeDefinition;
 import org.xast.kebab.ui.validation.Rules;
+import org.xast.kebab.utils.Fonts;
 
 public class CreateArchetypeDialog extends AbstractArchetypeDialog {
 
@@ -17,8 +18,8 @@ public class CreateArchetypeDialog extends AbstractArchetypeDialog {
     private final Consumer<ArchetypeDefinition> onCreate;
 
     private final JTextField displayNameField = new JTextField();
-    private final IconPickerPanel iconPicker = new IconPickerPanel(style);
-    private final ParamListPanel paramList = new ParamListPanel(style, validation);
+    private final IconPickerPanel iconPicker = new IconPickerPanel();
+    private final ParamListPanel paramList = new ParamListPanel(validation);
     private JTextField idField;
 
     public CreateArchetypeDialog(
@@ -38,7 +39,7 @@ public class CreateArchetypeDialog extends AbstractArchetypeDialog {
     protected void buildForm(JPanel form, GridBagConstraints constraints) {
         idField = addIdField(form, constraints, existingIds);
 
-        displayNameField.setFont(style.uiFont());
+        displayNameField.setFont(Fonts.ui());
         validation.add(displayNameField, Rules.notEmpty("Display name"));
         addLabeled(form, constraints, "Display name", displayNameField);
 

@@ -29,7 +29,7 @@ import org.xast.kebab.scene.error.SceneException;
 import org.xast.kebab.utils.DialogKeys;
 import org.xast.kebab.utils.ErrorDialogs;
 import org.xast.kebab.utils.FileChooser;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 import org.xast.kebab.utils.Maybe;
 import org.xast.kebab.utils.FileChooser.FileChooserMode;
 
@@ -50,23 +50,22 @@ public class CreateProjectDialog extends JDialog {
     public CreateProjectDialog(JFrame owner, Editor editor) {
         super(owner, "New Project", true);
 
-        KebabStyle style = KebabStyle.getCurrent();
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
         setMinimumSize(new Dimension(760, 460));
 
-        add(buildHeader(style), BorderLayout.NORTH);
-        add(buildSidebar(style), BorderLayout.WEST);
-        add(buildMainPanel(style, owner), BorderLayout.CENTER);
-        add(buildFooter(style, editor), BorderLayout.SOUTH);
+        add(buildHeader(), BorderLayout.NORTH);
+        add(buildSidebar(), BorderLayout.WEST);
+        add(buildMainPanel(owner), BorderLayout.CENTER);
+        add(buildFooter(editor), BorderLayout.SOUTH);
 
         DialogKeys.closeOnEscape(this);
         pack();
         setLocationRelativeTo(owner);
     }
 
-    private JPanel buildHeader(KebabStyle style) {
+    private JPanel buildHeader() {
         JPanel header = new JPanel();
         header.setLayout(new GridBagLayout());
 
@@ -77,7 +76,7 @@ public class CreateProjectDialog extends JDialog {
         constraints.insets = new Insets(10, 12, 10, 12);
 
         JLabel title = new JLabel("Create new project");
-        title.setFont(style.uiFont().deriveFont(24f));
+        title.setFont(Fonts.ui().deriveFont(24f));
         constraints.gridy = 0;
         header.add(title, constraints);
 
@@ -87,7 +86,7 @@ public class CreateProjectDialog extends JDialog {
         return header;
     }
 
-    private JPanel buildSidebar(KebabStyle style) {
+    private JPanel buildSidebar() {
         JPanel sidebar = new JPanel();
         sidebar.setPreferredSize(new Dimension(220, 0));
         sidebar.setLayout(new GridBagLayout());
@@ -99,7 +98,7 @@ public class CreateProjectDialog extends JDialog {
         constraints.insets = new Insets(10, 12, 10, 12);
 
         JLabel title = new JLabel("Options");
-        title.setFont(style.uiFont().deriveFont(18f));
+        title.setFont(Fonts.ui().deriveFont(18f));
         constraints.gridy = 0;
         sidebar.add(title, constraints);
 
@@ -107,7 +106,7 @@ public class CreateProjectDialog extends JDialog {
         sidebar.add(new JSeparator(SwingConstants.HORIZONTAL), constraints);
 
         constraints.gridy = 2;
-        sidebar.add(labeledRow(style, "Template", Maybe.none(), templateField), constraints);
+        sidebar.add(labeledRow("Template", Maybe.none(), templateField), constraints);
 
         constraints.gridy = 3;
         constraints.weighty = 1.0;
@@ -116,7 +115,7 @@ public class CreateProjectDialog extends JDialog {
         return sidebar;
     }
 
-    private JPanel buildMainPanel(KebabStyle style, JFrame owner) {
+    private JPanel buildMainPanel(JFrame owner) {
         JPanel content = new JPanel(new GridBagLayout());
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridx = 0;
@@ -125,17 +124,17 @@ public class CreateProjectDialog extends JDialog {
         constraints.insets = new Insets(54, 16, 8, 16);
 
         constraints.gridy = 0;
-        content.add(labeledRow(style, "Location", Maybe.none(), buildLocationRow(owner)), constraints);
+        content.add(labeledRow("Location", Maybe.none(), buildLocationRow(owner)), constraints);
 
         constraints.insets = new Insets(8, 16, 8, 16);
         constraints.gridy = 1;
-        content.add(labeledRow(style, "Scenes folder", Maybe.some("/"), scenesField), constraints);
+        content.add(labeledRow("Scenes folder", Maybe.some("/"), scenesField), constraints);
 
         constraints.gridy = 2;
         JLabel hint = new JLabel("<html>Creates kebab-project.json and archetypes.json in the location. "
             + "File &gt; New scene puts new scenes in the scenes folder by default; leave it empty "
             + "to keep them next to kebab-project.json.</html>");
-        hint.setFont(style.uiFont().deriveFont(style.uiFont().getSize2D() - 1f));
+        hint.setFont(Fonts.ui().deriveFont(Fonts.ui().getSize2D() - 1f));
         hint.setForeground(UIManager.getColor("Label.disabledForeground"));
         content.add(hint, constraints);
 
@@ -174,11 +173,11 @@ public class CreateProjectDialog extends JDialog {
         return row;
     }
 
-    private JPanel buildFooter(KebabStyle style, Editor editor) {
+    private JPanel buildFooter(Editor editor) {
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 10));
 
         cancelButton.addActionListener(e -> dispose());
-        cancelButton.setFont(style.uiFont());
+        cancelButton.setFont(Fonts.ui());
 
         createButton.addActionListener(e -> {
             try {
@@ -191,7 +190,7 @@ public class CreateProjectDialog extends JDialog {
             }
         });
         createButton.setEnabled(false);
-        createButton.setFont(style.uiFont());
+        createButton.setFont(Fonts.ui());
 
         footer.add(cancelButton);
         footer.add(createButton);
@@ -199,20 +198,20 @@ public class CreateProjectDialog extends JDialog {
         return footer;
     }
 
-    private JPanel labeledRow(KebabStyle style, String label, Maybe<String> suffix, JComponent field) {
-        field.setFont(style.uiFont());
+    private JPanel labeledRow(String label, Maybe<String> suffix, JComponent field) {
+        field.setFont(Fonts.ui());
 
         JPanel row = new JPanel(new BorderLayout(0, 6));
 
         JLabel text = new JLabel(label);
-        text.setFont(style.uiFont());
+        text.setFont(Fonts.ui());
 
         row.add(text, BorderLayout.NORTH);
         row.add(field, BorderLayout.CENTER);
 
         suffix.ifSome(suffixText -> {
             JLabel suffixLabel = new JLabel(suffixText);
-            suffixLabel.setFont(style.uiFont());
+            suffixLabel.setFont(Fonts.ui());
             row.add(suffixLabel, BorderLayout.EAST);
         });
 

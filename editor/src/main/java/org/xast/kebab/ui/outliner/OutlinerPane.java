@@ -3,6 +3,7 @@ package org.xast.kebab.ui.outliner;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -38,7 +39,7 @@ import javax.swing.tree.TreeSelectionModel;
 import org.xast.kebab.editor.Editor;
 import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.ui.SceneNavigator;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 import org.xast.kebab.utils.Maybe;
 
 /**
@@ -93,7 +94,7 @@ public final class OutlinerPane extends JPanel implements AutoCloseable {
 
         tree.setRootVisible(false);
         tree.setShowsRootHandles(true);
-        tree.setFont(KebabStyle.getCurrent().uiFont());
+        tree.setFont(Fonts.ui());
         tree.setCellRenderer(new Renderer());
         tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
         tree.setDragEnabled(true);
@@ -154,6 +155,12 @@ public final class OutlinerPane extends JPanel implements AutoCloseable {
         };
     }
 
+    /** Shows the scene file as the root of the tree, for hosts where nothing else names the scene. */
+    public void showSceneRoot() {
+        tree.setRootVisible(true);
+        refresh();
+    }
+
     private java.util.Optional<SceneNode> nodeAt(MouseEvent event) {
         TreePath path = tree.getPathForLocation(event.getX(), event.getY());
         return java.util.Optional.ofNullable(path).map(OutlinerPane::nodeOf);
@@ -206,12 +213,15 @@ public final class OutlinerPane extends JPanel implements AutoCloseable {
         List<SceneNode> nodes = new ArrayList<>();
         if (paths != null) {
             for (TreePath path : paths) {
-                nodes.add(nodeOf(path));
+                SceneNode node = nodeOf(path);
+                if (node != null) {
+                    nodes.add(node);
+                }
             }
         }
         // The row clicked last becomes the primary selection, which the gizmo and inspector follow
         TreePath lead = tree.getLeadSelectionPath();
-        if (lead != null && tree.isPathSelected(lead)) {
+        if (lead != null && tree.isPathSelected(lead) && nodeOf(lead) != null) {
             SceneNode primary = nodeOf(lead);
             nodes.remove(primary);
             nodes.add(primary);
@@ -219,8 +229,9 @@ public final class OutlinerPane extends JPanel implements AutoCloseable {
         return nodes;
     }
 
+    // Null for the root, which is the scene rather than an object in it
     private static SceneNode nodeOf(TreePath path) {
-        return (SceneNode) ((DefaultMutableTreeNode) path.getLastPathComponent()).getUserObject();
+        return ((DefaultMutableTreeNode) path.getLastPathComponent()).getUserObject() instanceof SceneNode node ? node : null;
     }
 
     @Override
@@ -273,6 +284,12 @@ public final class OutlinerPane extends JPanel implements AutoCloseable {
     }
 
     void refresh() {
+        String sceneName = editor.currentSceneFile().map(file -> file.getFileName().toString()).unwrapOr("");
+        if (!sceneName.equals(root.getUserObject())) {
+            root.setUserObject(sceneName);
+            model.nodeChanged(root);
+        }
+
         List<SceneNode> roots = editor.scene().map(scene -> List.copyOf(scene.getRootNodes())).unwrapOr(List.of());
         List<Row> rows = new ArrayList<>();
         roots.forEach(node -> collect(node, 0, rows));
@@ -466,9 +483,10 @@ public final class OutlinerPane extends JPanel implements AutoCloseable {
             Object user = ((DefaultMutableTreeNode) value).getUserObject();
             String name = user instanceof SceneNode node && node.getName() != null && !node.getName().isBlank()
                 ? node.getName()
-                : UNNAMED;
+                : user instanceof String scene ? scene : UNNAMED;
             super.getTreeCellRendererComponent(tree, name, selected, expanded, leaf, row, focus);
-            setFont(KebabStyle.getCurrent().uiFont());
+            Font font = Fonts.ui();
+            setFont(user instanceof String ? font.deriveFont(Font.BOLD) : font);
             setIcon(null);
             return this;
         }

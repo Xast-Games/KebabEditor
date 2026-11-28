@@ -26,7 +26,6 @@ import org.xast.kebab.ui.inspector.InspectorPane;
 import org.xast.kebab.ui.navigation.FreeFlightNavigation;
 import org.xast.kebab.ui.object.ObjectDialog;
 import org.xast.kebab.ui.outliner.OutlinerPane;
-import org.xast.kebab.utils.KebabStyle;
 import org.xast.kebab.utils.Maybe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -76,6 +75,7 @@ public final class KebabSession implements AutoCloseable {
             nodes -> view.ifSome(viewport -> viewport.frame(nodes)),
             new SceneNavigator(component, editor, host::openScene)
         );
+        outliner.showSceneRoot();
 
         view.ifSome(viewport -> viewport.addNodeActivatedListener(node ->
             new ObjectDialog(SwingUtilities.getWindowAncestor(component), editor, node).setVisible(true)
@@ -116,12 +116,8 @@ public final class KebabSession implements AutoCloseable {
         return new Loaded(editor);
     }
 
-    /** Shows a loaded scene. Call it on the Swing thread, after {@link ModelPreview#prepare()} has returned. */
+    /** Shows a loaded scene. Call it on the Swing thread, after {@link Embedding#prepare()} has returned. */
     public static KebabSession open(Loaded loaded, Host host) {
-        if (!KebabStyle.isSet()) {
-            KebabStyle.setCurrent(KebabStyle.defaultStyle());
-        }
-
         return new KebabSession(loaded.editor, host);
     }
 

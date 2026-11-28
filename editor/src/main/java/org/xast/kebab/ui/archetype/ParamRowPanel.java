@@ -19,7 +19,7 @@ import org.xast.kebab.archetype.ParamType;
 import org.xast.kebab.ui.validation.FieldValidator;
 import org.xast.kebab.ui.validation.Rules;
 import org.xast.kebab.ui.validation.ValidationGroup;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 
 public class ParamRowPanel extends JPanel {
 
@@ -28,14 +28,13 @@ public class ParamRowPanel extends JPanel {
     private final ParamValueEditor defaultEditor;
 
     public ParamRowPanel(
-        KebabStyle style,
         ValidationGroup validation,
         Consumer<ParamRowPanel> onRemove,
         Function<ParamRowPanel, Collection<String>> otherNames,
         String paramName,
         ParamSpec spec
     ) {
-        this(style, validation, onRemove, otherNames);
+        this(validation, onRemove, otherNames);
 
         nameField.setText(paramName);
         typeBox.setSelectedIndex(spec.type().ordinal());
@@ -43,7 +42,6 @@ public class ParamRowPanel extends JPanel {
     }
 
     public ParamRowPanel(
-        KebabStyle style,
         ValidationGroup validation,
         Consumer<ParamRowPanel> onRemove,
         Function<ParamRowPanel, Collection<String>> otherNames
@@ -58,22 +56,22 @@ public class ParamRowPanel extends JPanel {
             Rules.identifier("Parameter name"),
             Rules.unique("Parameter name", () -> otherNames.apply(this))
         ));
-        nameField.setFont(style.uiFont());
+        nameField.setFont(Fonts.ui());
         c.weightx = 1.0;
         add(nameField, c);
 
-        typeBox.setFont(style.uiFont());
+        typeBox.setFont(Fonts.ui());
         typeBox.setRenderer(new ParamTypeRenderer());
         c.weightx = 0;
         add(typeBox, c);
 
-        defaultEditor = new ParamValueEditor(style, validation);
+        defaultEditor = new ParamValueEditor(validation);
         defaultEditor.showFor(type(), type().defaultValue());
         typeBox.addActionListener(e -> defaultEditor.showFor(type(), type().defaultValue()));
         add(defaultEditor, c);
 
         JButton removeButton = new JButton("Remove");
-        removeButton.setFont(style.uiFont());
+        removeButton.setFont(Fonts.ui());
         removeButton.addActionListener(e -> {
             // the row must leave the list first, or the others still see its name as taken
             onRemove.accept(this);

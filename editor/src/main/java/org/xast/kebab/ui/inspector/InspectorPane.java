@@ -32,7 +32,7 @@ import org.xast.kebab.archetype.instance.NodeArchetype;
 import org.xast.kebab.editor.Editor;
 import org.xast.kebab.scene.model.Greybox;
 import org.xast.kebab.scene.model.SceneNode;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 import org.xast.kebab.utils.LucideIcon;
 import org.xast.kebab.utils.Maybe;
 
@@ -83,6 +83,7 @@ public final class InspectorPane extends JPanel implements AutoCloseable {
             JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
         );
         scroll.getVerticalScrollBar().setUnitIncrement(16);
+        scroll.setBorder(BorderFactory.createEmptyBorder());
         add(scroll, BorderLayout.CENTER);
 
         attach();
@@ -220,7 +221,7 @@ public final class InspectorPane extends JPanel implements AutoCloseable {
     private JPanel header(SceneNode target) {
         JTextField field = new JTextField(Objects.toString(target.getName(), ""));
         field.setName("object.name");
-        field.setFont(KebabStyle.getCurrent().uiFont());
+        field.setFont(Fonts.ui());
 
         field.addActionListener(e -> commitName(target, field));
         field.addFocusListener(new FocusAdapter() {
@@ -282,7 +283,7 @@ public final class InspectorPane extends JPanel implements AutoCloseable {
     private JMenuItem archetypeItem(SceneNode target, ArchetypeDefinition definition) {
         JMenuItem item = new JMenuItem(definition.getDisplayName());
         item.setToolTipText(definition.getId());
-        item.setFont(KebabStyle.getCurrent().uiFont());
+        item.setFont(Fonts.ui());
 
         item.addActionListener(e -> {
             if (!InspectorSection.canEdit(editor, target)) {

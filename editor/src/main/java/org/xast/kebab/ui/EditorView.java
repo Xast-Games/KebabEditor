@@ -53,7 +53,7 @@ import org.xast.kebab.scene.model.Scene;
 import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.ui.navigation.NavigationMode;
 import org.xast.kebab.ui.placement.PlacementTool;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 import org.xast.kebab.utils.Maybe;
 
 import com.jogamp.opengl.GL3;
@@ -521,7 +521,7 @@ public class EditorView extends GLJPanel implements GLEventListener, GizmoIntera
         try {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            g2.setFont(KebabStyle.getCurrent().uiFont());
+            g2.setFont(Fonts.ui());
             FontMetrics metrics = g2.getFontMetrics();
             int width = metrics.stringWidth(text) + 2 * NOTICE_PADDING;
             int height = metrics.getHeight() + NOTICE_PADDING;

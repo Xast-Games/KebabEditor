@@ -7,6 +7,7 @@ import javax.swing.*;
 
 import org.xast.kebab.archetype.definition.ArchetypeDefinition;
 import org.xast.kebab.ui.validation.Rules;
+import org.xast.kebab.utils.Fonts;
 
 public class EditArchetypeDialog extends AbstractArchetypeDialog {
 
@@ -26,15 +27,15 @@ public class EditArchetypeDialog extends AbstractArchetypeDialog {
 
         definition = definitionToEdit;
         callback = onArchetypeEdited;
-        iconPicker = new IconPickerPanel(style, definition.getIcon());
-        paramList = new ParamListPanel(style, validation, definition.getParams());
+        iconPicker = new IconPickerPanel(definition.getIcon());
+        paramList = new ParamListPanel(validation, definition.getParams());
 
         init(new Dimension(680, 640));
     }
 
     @Override
     protected void buildForm(JPanel form, GridBagConstraints constraints) {
-        displayNameField.setFont(style.uiFont());
+        displayNameField.setFont(Fonts.ui());
         displayNameField.setText(definition.getDisplayName());
         validation.add(displayNameField, Rules.notEmpty("Display name"));
         addLabeled(form, constraints, "Display name", displayNameField);

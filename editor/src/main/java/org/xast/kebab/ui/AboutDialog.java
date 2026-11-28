@@ -21,7 +21,7 @@ import javax.swing.border.EmptyBorder;
 
 import org.xast.kebab.KebabInfo;
 import org.xast.kebab.utils.DialogKeys;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 
@@ -29,7 +29,7 @@ public class AboutDialog extends JDialog {
     
     private static final String COPYRIGHT = generateCopyright();
 
-    private final Font uiFont = KebabStyle.getCurrent().uiFont();
+    private final Font uiFont = Fonts.ui();
 
     public AboutDialog(JFrame owner) {
         super(owner, "About " + KebabInfo.APP_NAME, true);

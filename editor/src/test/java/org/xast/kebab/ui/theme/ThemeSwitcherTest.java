@@ -18,7 +18,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.xast.kebab.ui.NumberSpinner;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 
 class ThemeSwitcherTest {
 
@@ -91,7 +91,7 @@ class ThemeSwitcherTest {
 
     @Test
     void numberSpinnersKeepTheirAlignment() throws Exception {
-        KebabStyle.setCurrent(KebabStyle.defaultStyle());
+        Fonts.installKebabFonts();
         started();
         NumberSpinner spinner = new NumberSpinner(1, 0.1);
         int before = spinner.field().getHorizontalAlignment();

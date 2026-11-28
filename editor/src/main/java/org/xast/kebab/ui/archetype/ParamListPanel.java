@@ -15,29 +15,26 @@ import javax.swing.JScrollPane;
 
 import org.xast.kebab.archetype.ParamSpec;
 import org.xast.kebab.ui.validation.ValidationGroup;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 
 public class ParamListPanel extends JPanel {
 
-    private final KebabStyle style;
     private final ValidationGroup validation;
     private final JPanel rows = new JPanel();
 
     public ParamListPanel(
-        KebabStyle style, 
         ValidationGroup validation, 
         Map<String, ParamSpec> params
     ) {
-        this(style, validation);
+        this(validation);
 
         for (var entry : params.entrySet()) {
             addRow(entry.getKey(), entry.getValue());
         }
     }
 
-    public ParamListPanel(KebabStyle style, ValidationGroup validation) {
+    public ParamListPanel(ValidationGroup validation) {
         super(new BorderLayout(0, 4));
-        this.style = style;
         this.validation = validation;
 
         add(buildHeader(), BorderLayout.NORTH);
@@ -45,12 +42,12 @@ public class ParamListPanel extends JPanel {
     }
 
     public void addRow(String paramName, ParamSpec spec) {
-        rows.add(new ParamRowPanel(style, validation, this::removeRow, this::namesExcept, paramName, spec));
+        rows.add(new ParamRowPanel(validation, this::removeRow, this::namesExcept, paramName, spec));
         refresh();
     }
 
     public void addRow() {
-        rows.add(new ParamRowPanel(style, validation, this::removeRow, this::namesExcept));
+        rows.add(new ParamRowPanel(validation, this::removeRow, this::namesExcept));
         refresh();
     }
 
@@ -85,11 +82,11 @@ public class ParamListPanel extends JPanel {
         JPanel header = new JPanel(new BorderLayout());
 
         JLabel title = new JLabel("Parameters");
-        title.setFont(style.uiFont());
+        title.setFont(Fonts.ui());
         header.add(title, BorderLayout.WEST);
 
         JButton addButton = new JButton("Add");
-        addButton.setFont(style.uiFont());
+        addButton.setFont(Fonts.ui());
         addButton.addActionListener(e -> addRow());
         header.add(addButton, BorderLayout.EAST);
 

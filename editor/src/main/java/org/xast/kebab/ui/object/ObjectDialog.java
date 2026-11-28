@@ -36,7 +36,7 @@ import org.xast.kebab.archetype.instance.UnresolvedArchetype;
 import org.xast.kebab.editor.Editor;
 import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.utils.DialogKeys;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 
 public class ObjectDialog extends JDialog {
 
@@ -44,7 +44,6 @@ public class ObjectDialog extends JDialog {
 
     private final Editor editor;
     private final SceneNode node;
-    private final KebabStyle style = KebabStyle.getCurrent();
 
     private final DefaultListModel<NodeArchetype> model = new DefaultListModel<>();
     private final JList<NodeArchetype> list = new JList<>(model);
@@ -92,11 +91,11 @@ public class ObjectDialog extends JDialog {
         JPanel row = new JPanel(new BorderLayout(8, 0));
 
         JLabel nameLabel = new JLabel("Name");
-        nameLabel.setFont(style.uiFont());
+        nameLabel.setFont(Fonts.ui());
         row.add(nameLabel, BorderLayout.WEST);
 
         nameField.setText(Objects.toString(node.getName(), ""));
-        nameField.setFont(style.uiFont());
+        nameField.setFont(Fonts.ui());
         nameField.addActionListener(e -> commitName());
         nameField.addFocusListener(new FocusAdapter() {
             @Override
@@ -113,10 +112,10 @@ public class ObjectDialog extends JDialog {
         JPanel panel = new JPanel(new BorderLayout(8, 4));
 
         JLabel title = new JLabel("Archetypes");
-        title.setFont(style.uiFont());
+        title.setFont(Fonts.ui());
         panel.add(title, BorderLayout.NORTH);
 
-        list.setFont(style.uiFont());
+        list.setFont(Fonts.ui());
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         list.setCellRenderer(new DefaultListCellRenderer() {
             @Override
@@ -153,7 +152,7 @@ public class ObjectDialog extends JDialog {
         panel.add(scroll, BorderLayout.CENTER);
 
         for (JButton button : new JButton[] { addButton, editButton, removeButton }) {
-            button.setFont(style.uiFont());
+            button.setFont(Fonts.ui());
         }
         addButton.addActionListener(e -> addArchetype());
         editButton.addActionListener(e -> editSelected());
@@ -173,7 +172,7 @@ public class ObjectDialog extends JDialog {
 
     private JPanel buildFooter() {
         JButton closeButton = new JButton("Close");
-        closeButton.setFont(style.uiFont());
+        closeButton.setFont(Fonts.ui());
         closeButton.addActionListener(e -> {
             commitName();
             dispose();

@@ -14,7 +14,7 @@ import org.xast.kebab.archetype.definition.ArchetypeDefinition;
 import org.xast.kebab.editor.Editor;
 import org.xast.kebab.utils.DialogKeys;
 import org.xast.kebab.utils.ErrorDialogs;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 
 public class ArchetypeManagerDialog extends JDialog {
 
@@ -32,14 +32,13 @@ public class ArchetypeManagerDialog extends JDialog {
 
         this.editor = editor;
 
-        KebabStyle style = KebabStyle.getCurrent();
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
         setMinimumSize(new Dimension(640, 480));
 
-        add(buildCenter(style), BorderLayout.CENTER);
-        add(buildFooter(style), BorderLayout.SOUTH);
+        add(buildCenter(), BorderLayout.CENTER);
+        add(buildFooter(), BorderLayout.SOUTH);
 
         pack();
 
@@ -47,12 +46,12 @@ public class ArchetypeManagerDialog extends JDialog {
         setLocationRelativeTo(owner);
     }
 
-    private JComponent buildCenter(KebabStyle style) {
+    private JComponent buildCenter() {
         reload();
 
         archetypeList = new JList<>(model);
         archetypeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        archetypeList.setFont(style.uiFont());
+        archetypeList.setFont(Fonts.ui());
         archetypeList.setCellRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(
@@ -74,11 +73,11 @@ public class ArchetypeManagerDialog extends JDialog {
         return scroll;
     }
 
-    private JPanel buildFooter(KebabStyle style) {
+    private JPanel buildFooter() {
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
 
         createButton = new JButton("Create");
-        createButton.setFont(style.uiFont());
+        createButton.setFont(Fonts.ui());
         createButton.addActionListener(e -> 
             new CreateArchetypeDialog(this, this::existingIds, this::addArchetype)
                 .setVisible(true)
@@ -86,12 +85,12 @@ public class ArchetypeManagerDialog extends JDialog {
         footer.add(createButton);
 
         editButton = new JButton("Edit");
-        editButton.setFont(style.uiFont());
+        editButton.setFont(Fonts.ui());
         editButton.addActionListener(e -> editSelected());
         footer.add(editButton);
 
         duplicateAsButton = new JButton("Duplicate as...");
-        duplicateAsButton.setFont(style.uiFont());
+        duplicateAsButton.setFont(Fonts.ui());
         duplicateAsButton.addActionListener(e ->
             new DuplicateAsDialog(this, archetypeList.getSelectedValue(), this::existingIds, this::addArchetype)
                 .setVisible(true)
@@ -99,7 +98,7 @@ public class ArchetypeManagerDialog extends JDialog {
         footer.add(duplicateAsButton);
 
         deleteButton = new JButton("Delete");
-        deleteButton.setFont(style.uiFont());
+        deleteButton.setFont(Fonts.ui());
         deleteButton.addActionListener(e -> 
             removeArchetype(archetypeList.getSelectedValue())
         );

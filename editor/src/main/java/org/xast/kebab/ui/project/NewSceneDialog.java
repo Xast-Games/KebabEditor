@@ -31,7 +31,7 @@ import org.xast.kebab.ui.validation.Rules;
 import org.xast.kebab.ui.validation.ValidationGroup;
 import org.xast.kebab.utils.DialogKeys;
 import org.xast.kebab.utils.ErrorDialogs;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 import org.xast.kebab.utils.Maybe;
 
 /** Creates an empty scene in the open project, registers it and opens it. */
@@ -51,12 +51,11 @@ public class NewSceneDialog extends JDialog {
         this.root = assets.root();
         this.folderField = new JTextField(root.relativize(assets.scenesFolder()).toString().replace('\\', '/'), 24);
 
-        KebabStyle style = KebabStyle.getCurrent();
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        add(buildFields(style), BorderLayout.CENTER);
-        add(buildFooter(style), BorderLayout.SOUTH);
+        add(buildFields(), BorderLayout.CENTER);
+        add(buildFooter(), BorderLayout.SOUTH);
 
         validation.add(folderField, this::checkFolder);
         validation.add(nameField, Rules.all(Rules.notEmpty("Scene name"), this::checkName));
@@ -70,7 +69,7 @@ public class NewSceneDialog extends JDialog {
         setLocationRelativeTo(owner);
     }
 
-    private JPanel buildFields(KebabStyle style) {
+    private JPanel buildFields() {
         JPanel content = new JPanel(new GridBagLayout());
         content.setBorder(BorderFactory.createEmptyBorder(12, 16, 4, 16));
         GridBagConstraints constraints = new GridBagConstraints();
@@ -80,30 +79,30 @@ public class NewSceneDialog extends JDialog {
         constraints.insets = new Insets(4, 0, 8, 0);
 
         constraints.gridy = 0;
-        content.add(labeledRow(style, "Folder", Maybe.some("/"), folderField), constraints);
+        content.add(labeledRow("Folder", Maybe.some("/"), folderField), constraints);
 
         constraints.gridy = 1;
-        content.add(labeledRow(style, "Name", Maybe.some(".gltf"), nameField), constraints);
+        content.add(labeledRow("Name", Maybe.some(".gltf"), nameField), constraints);
 
         constraints.gridy = 2;
         JLabel hint = new JLabel("<html>The folder is relative to the asset root, " + escape(root.toString())
             + ". It starts as the project's scenes folder (Project &gt; Asset folders). "
             + "Leave it empty to put the scene in the root.</html>");
-        hint.setFont(style.uiFont().deriveFont(style.uiFont().getSize2D() - 1f));
+        hint.setFont(Fonts.ui().deriveFont(Fonts.ui().getSize2D() - 1f));
         hint.setForeground(UIManager.getColor("Label.disabledForeground"));
         content.add(hint, constraints);
 
         return content;
     }
 
-    private JPanel buildFooter(KebabStyle style) {
+    private JPanel buildFooter() {
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 10));
 
         JButton cancelButton = new JButton("Cancel");
-        cancelButton.setFont(style.uiFont());
+        cancelButton.setFont(Fonts.ui());
         cancelButton.addActionListener(e -> close());
 
-        createButton.setFont(style.uiFont());
+        createButton.setFont(Fonts.ui());
         createButton.addActionListener(e -> create());
 
         footer.add(cancelButton);
@@ -172,18 +171,18 @@ public class NewSceneDialog extends JDialog {
         return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
-    private static JPanel labeledRow(KebabStyle style, String label, Maybe<String> suffix, JComponent field) {
-        field.setFont(style.uiFont());
+    private static JPanel labeledRow(String label, Maybe<String> suffix, JComponent field) {
+        field.setFont(Fonts.ui());
 
         JPanel row = new JPanel(new BorderLayout(6, 6));
         JLabel text = new JLabel(label);
-        text.setFont(style.uiFont());
+        text.setFont(Fonts.ui());
         row.add(text, BorderLayout.NORTH);
         row.add(field, BorderLayout.CENTER);
 
         suffix.ifSome(suffixText -> {
             JLabel suffixLabel = new JLabel(suffixText);
-            suffixLabel.setFont(style.uiFont());
+            suffixLabel.setFont(Fonts.ui());
             row.add(suffixLabel, BorderLayout.EAST);
         });
         return row;

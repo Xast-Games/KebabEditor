@@ -6,17 +6,16 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 import org.xast.kebab.utils.Maybe;
 
 public class CheckItem implements MenuItem {
     private JCheckBoxMenuItem component;
 
     public CheckItem(String label, Maybe<String> keyStroke, Consumer<Boolean> onToggle) {
-        KebabStyle style = KebabStyle.getCurrent();
 
         component = new JCheckBoxMenuItem(label);
-        component.setFont(style.uiFont());
+        component.setFont(Fonts.ui());
         component.addActionListener(e -> onToggle.accept(component.isSelected()));
 
         keyStroke.ifSome(key -> component.setAccelerator(KeyStroke.getKeyStroke(key)));

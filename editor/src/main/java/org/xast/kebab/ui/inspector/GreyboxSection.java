@@ -36,7 +36,7 @@ import org.xast.kebab.scene.model.GreyboxColor;
 import org.xast.kebab.scene.model.GreyboxShape;
 import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.ui.NumberSpinner;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 import org.xast.kebab.utils.Maybe;
 
 /**
@@ -94,7 +94,7 @@ final class GreyboxSection extends InspectorSection {
     ) {
         JComboBox<T> combo = new JComboBox<>(items);
         combo.setName(name);
-        combo.setFont(KebabStyle.getCurrent().uiFont());
+        combo.setFont(Fonts.ui());
         combo.setMaximumRowCount(items.length);
         combo.setRenderer(new DefaultListCellRenderer() {
             @Override

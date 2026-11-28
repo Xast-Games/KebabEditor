@@ -12,7 +12,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
 import org.xast.kebab.utils.DialogKeys;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 
 public class KebabDialog extends JDialog {
 
@@ -25,7 +25,7 @@ public class KebabDialog extends JDialog {
         setResizable(false);
 
         JButton close = new JButton("Close");
-        close.setFont(KebabStyle.getCurrent().uiFont());
+        close.setFont(Fonts.ui());
         close.addActionListener(e -> dispose());
 
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.CENTER));

@@ -24,7 +24,7 @@ import org.xast.kebab.math.Vec3;
 import org.xast.kebab.playtest.PlayerStart;
 import org.xast.kebab.ui.menu.generic.MenuButton;
 import org.xast.kebab.utils.DialogKeys;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 import org.xast.kebab.utils.LucideIcon;
 import org.xast.kebab.utils.Maybe;
 
@@ -41,17 +41,16 @@ public final class PlayerStartDialog extends JDialog {
 
     private PlayerStartDialog(Window owner, List<PlayerStart> starts, PlayerStart suggested) {
         super(owner, "Choose player start", ModalityType.APPLICATION_MODAL);
-        KebabStyle style = KebabStyle.getCurrent();
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
 
         JLabel prompt = new JLabel("The level has " + starts.size() + " player starts. Where should the run begin?");
-        prompt.setFont(style.uiFont());
+        prompt.setFont(Fonts.ui());
         prompt.setBorder(BorderFactory.createEmptyBorder(12, 12, 8, 12));
 
         list = new JList<>(starts.toArray(PlayerStart[]::new));
-        list.setFont(style.uiFont());
+        list.setFont(Fonts.ui());
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         list.setCellRenderer(new StartRenderer());
         list.setSelectedValue(suggested, true);
@@ -71,12 +70,12 @@ public final class PlayerStartDialog extends JDialog {
         center.add(scroll, BorderLayout.CENTER);
 
         JButton playButton = new JButton("Play", LucideIcon.PLAY.icon(ICON_SIZE, MenuButton.PLAY_BUTTON_COLOR));
-        playButton.setFont(style.uiFont());
+        playButton.setFont(Fonts.ui());
         playButton.addActionListener(e -> play());
         list.addListSelectionListener(e -> playButton.setEnabled(list.getSelectedValue() != null));
 
         JButton cancelButton = new JButton("Cancel");
-        cancelButton.setFont(style.uiFont());
+        cancelButton.setFont(Fonts.ui());
         cancelButton.addActionListener(e -> dispose());
 
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));

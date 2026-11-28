@@ -14,14 +14,14 @@ import org.xast.kebab.archetype.ParamSpec;
 import org.xast.kebab.archetype.ParamType;
 import org.xast.kebab.math.Vec3;
 import org.xast.kebab.ui.validation.ValidationGroup;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 
 class ParamListPanelTest {
 
     @BeforeAll
     static void style() {
         System.setProperty("java.awt.headless", "true");
-        KebabStyle.setCurrent(KebabStyle.defaultStyle());
+        Fonts.installKebabFonts();
     }
 
     private static Map<String, ParamSpec> everyType() {
@@ -43,7 +43,7 @@ class ParamListPanelTest {
         AtomicReference<Map<String, ParamSpec>> result = new AtomicReference<>();
 
         SwingUtilities.invokeAndWait(() -> {
-            ParamListPanel panel = new ParamListPanel(KebabStyle.getCurrent(), new ValidationGroup(), specs);
+            ParamListPanel panel = new ParamListPanel(new ValidationGroup(), specs);
             result.set(panel.params());
         });
 

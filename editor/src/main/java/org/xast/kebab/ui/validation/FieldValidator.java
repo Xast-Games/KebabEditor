@@ -13,7 +13,7 @@ import javax.swing.event.DocumentListener;
 
 import com.formdev.flatlaf.FlatClientProperties;
 
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 import org.xast.kebab.utils.Maybe;
 
 public final class FieldValidator {
@@ -28,7 +28,7 @@ public final class FieldValidator {
         this.field = field;
         this.rule = rule;
 
-        message.setFont(KebabStyle.getCurrent().uiFont());
+        message.setFont(Fonts.ui());
         message.setForeground(UIManager.getColor("Component.error.focusedBorderColor"));
         message.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
         popup.setFocusable(false);

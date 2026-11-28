@@ -10,7 +10,7 @@ import org.xast.kebab.ui.MainWindow;
 import org.xast.kebab.ui.theme.ThemeSwitcher;
 import org.xast.kebab.utils.AppIdentity;
 import org.xast.kebab.utils.ConfigFolder;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 
 public class KebabApplication {
 
@@ -25,7 +25,7 @@ public class KebabApplication {
         });
 
         SwingUtilities.invokeLater(() -> {
-            KebabStyle.setCurrent(KebabStyle.defaultStyle());
+            Fonts.installKebabFonts();
 
             Editor editor = EditorSessions.create(new FileRecentProjects());
             ThemeSwitcher themes = new ThemeSwitcher(ConfigFolder.file(ThemeSwitcher.FILE));

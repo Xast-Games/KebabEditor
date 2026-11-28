@@ -16,13 +16,13 @@ import javax.swing.JTextArea;
 import javax.swing.border.EmptyBorder;
 
 import org.xast.kebab.utils.DialogKeys;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 
 public class LicenseDialog extends JDialog {
 
     private static final String LICENSE_RESOURCE = "/LICENSE";
 
-    private final Font uiFont = KebabStyle.getCurrent().uiFont();
+    private final Font uiFont = Fonts.ui();
 
     public LicenseDialog(JDialog owner) {
         super(owner, "MIT License", true);

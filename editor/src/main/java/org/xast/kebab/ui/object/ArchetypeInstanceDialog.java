@@ -33,7 +33,7 @@ import org.xast.kebab.scene.model.SceneNode;
 import org.xast.kebab.ui.archetype.ParamValueEditor;
 import org.xast.kebab.ui.validation.ValidationGroup;
 import org.xast.kebab.utils.DialogKeys;
-import org.xast.kebab.utils.KebabStyle;
+import org.xast.kebab.utils.Fonts;
 import org.xast.kebab.utils.Maybe;
 
 public class ArchetypeInstanceDialog extends JDialog {
@@ -41,7 +41,6 @@ public class ArchetypeInstanceDialog extends JDialog {
     private final Editor editor;
     private final SceneNode node;
     private final Maybe<ArchetypeInstance> editing;
-    private final KebabStyle style = KebabStyle.getCurrent();
     private final ValidationGroup validation = new ValidationGroup();
 
     private final JComboBox<ArchetypeDefinition> archetypeBox = new JComboBox<>();
@@ -113,10 +112,10 @@ public class ArchetypeInstanceDialog extends JDialog {
         JPanel row = new JPanel(new BorderLayout(8, 0));
 
         JLabel label = new JLabel("Archetype");
-        label.setFont(style.uiFont());
+        label.setFont(Fonts.ui());
         row.add(label, BorderLayout.WEST);
 
-        archetypeBox.setFont(style.uiFont());
+        archetypeBox.setFont(Fonts.ui());
         archetypeBox.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(
@@ -147,11 +146,11 @@ public class ArchetypeInstanceDialog extends JDialog {
     }
 
     private JPanel buildFooter() {
-        saveButton.setFont(style.uiFont());
+        saveButton.setFont(Fonts.ui());
         saveButton.addActionListener(e -> save());
 
         JButton cancelButton = new JButton("Cancel");
-        cancelButton.setFont(style.uiFont());
+        cancelButton.setFont(Fonts.ui());
         cancelButton.addActionListener(e -> dispose());
 
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
@@ -192,7 +191,7 @@ public class ArchetypeInstanceDialog extends JDialog {
             GridBagConstraints labelConstraints = rowAt(row, 0);
             parameters.add(label(entry.getKey() + "  (" + spec.type().displayName() + ")"), labelConstraints);
 
-            ParamValueEditor valueEditor = new ParamValueEditor(style, validation, editor::sceneNodes);
+            ParamValueEditor valueEditor = new ParamValueEditor(validation, editor::sceneNodes);
             valueEditor.setPathBase(() -> editor.currentSceneFile().map(file -> file.toAbsolutePath().getParent()));
             valueEditor.showFor(spec.type(), initialValue(definition, entry.getKey(), spec));
             GridBagConstraints editorConstraints = rowAt(row, 1);
@@ -253,7 +252,7 @@ public class ArchetypeInstanceDialog extends JDialog {
 
     private JLabel label(String text) {
         JLabel label = new JLabel(text);
-        label.setFont(style.uiFont());
+        label.setFont(Fonts.ui());
 
         return label;
     }
